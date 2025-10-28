@@ -1,6 +1,6 @@
 namespace AllocatrApi.Dtos;
 
-public record class CreateProject(
+public record class CreateProjectDto(
     string Id,
     string ProjectCode,
     string Title,
@@ -13,15 +13,15 @@ public record class CreateProject(
     DateOnly? DueDate,
     string Status,
     int Progress,
-    string Priority,
+    string? Priority,
     string UserId,
-    string AllocatId,
-    int TasksCount,
-    int MessagesCount,
-    DateTime LastActivity,
+    List<ProjectMemberDto>? Allocats,
+    int? TasksCount,
+    int? MessagesCount,
+    DateTime? LastActivity,
     bool IsPublic,
     bool AllowBids,
-    decimal Budget,
+    decimal? Budget,
     string Currency,
     string[] Attachments
 );

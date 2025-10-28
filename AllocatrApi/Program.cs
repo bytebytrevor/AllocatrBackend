@@ -14,7 +14,10 @@ app.MapGet("projects", () => projects);
 
 app.MapGet("projects/{id}", (string id) => projects.Find(project => project.Id == id));
 
+app.MapGet("/projects/new", (CreateProjectDto newProject) =>
+{
 
+});
 
 
 
