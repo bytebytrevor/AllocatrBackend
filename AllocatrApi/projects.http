@@ -7,3 +7,7 @@ GET http://localhost:5206/projects
 ###
 
 GET http://localhost:5206/projects/7d0c8331-3b24-4c7d-b6b7-5b517b92efc5
+
+####
+
+POST http://localhost:5206/projects
