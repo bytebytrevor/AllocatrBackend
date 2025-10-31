@@ -34,7 +34,7 @@ Content-Type: Application/json
       "projectId": "7f2c4b31-9d1a-4c71-b7ad-64b8e5f529d8",
       "userId": "a9123c41-f5a2-4c23-a5d1-74b4b012bfc8",
       "role": "Project Owner",
-      "isLead": true,
+      "isOwner": true,
       "joinedAt": "2025-10-25T09:05:00Z"
     },
     {
@@ -42,7 +42,7 @@ Content-Type: Application/json
       "projectId": "7f2c4b31-9d1a-4c71-b7ad-64b8e5f529d8",
       "userId": "2c54ffcb-1b72-4b6d-b21f-cb73a57a9b09",
       "role": "Electrical Engineer",
-      "isLead": false,
+      "isOwner": false,
       "joinedAt": "2025-10-26T10:20:00Z"
     },
     {
@@ -50,7 +50,7 @@ Content-Type: Application/json
       "projectId": "7f2c4b31-9d1a-4c71-b7ad-64b8e5f529d8",
       "userId": "3f1e9cb3-62cf-4dfc-91b0-6b1a9c6c22d1",
       "role": "Software Developer",
-      "isLead": false,
+      "isOwner": false,
       "joinedAt": "2025-10-26T11:15:00Z"
     }
   ],
