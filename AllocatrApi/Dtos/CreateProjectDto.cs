@@ -10,7 +10,7 @@ public record class CreateProjectDto(
     DateOnly? DueDate,
     string? Priority,
     string UserId,
-    List<ProjectMemberDto>? Allocats,
+    List<string>? Allocats,
     DateTime? LastActivity,
     bool IsPublic,
     bool AllowBids,

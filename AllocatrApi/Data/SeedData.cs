@@ -8,7 +8,8 @@ public static class SeedData
     public readonly static List<ProjectDto> Projects = new()
     {
         new (
-            "6842b2f8-1758-8013-bf37-894d525dcc41",
+            Guid.NewGuid().ToString(),
+            // "6842b2f8-1758-8013-bf37-894d525dcc41",
             "ALC-0001",
             "Home Plumbing Repair",
             "Fix major leaks and replace faulty faucets in a residential property.",
@@ -22,11 +23,10 @@ public static class SeedData
             60,
             "high",
             "1b02ab97-6b20-4b85-8c72-4f8c9e7f4a03",
-            new List<ProjectMemberDto>
-            {
-                new("c0a1a4d1-4b1f-45a3-8a7a-3a2f5a1c77c1", "Lead Plumber", true, DateTime.Parse("2025-02-02")),
-                new("ab23cd45-1234-4ef1-9b7a-99c2f8d5e888", "Apprentice", false, DateTime.Parse("2025-02-03"))
-            },
+            [
+                "c0a1a4d1-4b1f-45a3-8a7a-3a2f5a1c77c1",
+                "ab23cd45-1234-4ef1-9b7a-99c2f8d5e888",
+            ],
             4,
             12,
             DateTime.Parse("2025-09-09T09:30:00Z"),
@@ -34,7 +34,7 @@ public static class SeedData
             true,
             250,
             "USD",
-            new string[]{}
+            []
         ),
 
         new (
@@ -52,12 +52,11 @@ public static class SeedData
             40,
             "medium",
             "6e0f0d49-1f53-4211-b0cc-9f2b1c6d22a7",
-            new List<ProjectMemberDto>
-            {
-                new("7aa3db18-4f83-4a10-a11e-0f2e8cb2b1b3", "Frontend Developer", true, DateTime.Parse("2025-02-02")),
-                new("b3e6d914-985d-4b3b-9418-06b2f1a74fd9", "UI/UX Designer", false, DateTime.Parse("2025-02-04")),
-                new("fa71d249-5e8c-41a7-80c0-3e5c11f2d6e8", "SEO Specialist", false, DateTime.Parse("2025-02-05"))
-            },
+            [
+                "7aa3db18-4f83-4a10-a11e-0f2e8cb2b1b3",
+                "b3e6d914-985d-4b3b-9418-06b2f1a74fd9",
+                "fa71d249-5e8c-41a7-80c0-3e5c11f2d6e8",
+            ],
             5,
             9,
             DateTime.Parse("2025-09-14T15:00:00Z"),
@@ -65,7 +64,7 @@ public static class SeedData
             false,
             1200,
             "USD",
-            new string[]{}
+            []
         ),
 
         new (
@@ -83,10 +82,9 @@ public static class SeedData
             20,
             "high",
             "99cf451e-b012-4a51-95a3-3a02cf21a7f3",
-            new List<ProjectMemberDto>
-            {
-                new("e61791d9-dc24-43ba-b3ad-4a1b8b49c0e1", "Electrician", true, DateTime.Parse("2025-02-02")),
-            },
+            [
+                "e61791d9-dc24-43ba-b3ad-4a1b8b49c0e1",
+            ],
             3,
             4,
             DateTime.Parse("2025-09-14T12:00:00Z"),
@@ -94,7 +92,7 @@ public static class SeedData
             true,
             500,
             "USD",
-            new string[]{}
+            []
         ),
 
         new (
@@ -112,11 +110,10 @@ public static class SeedData
             45,
             "urgent",
             "27d11e2e-63f1-4d12-9f62-6d2bfb26dbd0",
-            new List<ProjectMemberDto>
-            {
-                new("3b82d613-74b3-4625-aac5-4f2fd5a1cce3", "Mobile Developer", true, DateTime.Parse("2025-02-02")),
-                new("1d4e6f27-5a2d-44fc-a12f-6e7a4c3f1a10", "UI Designer", false, DateTime.Parse("2025-02-03"))
-            },
+            [
+                "3b82d613-74b3-4625-aac5-4f2fd5a1cce3",
+                "1d4e6f27-5a2d-44fc-a12f-6e7a4c3f1a10",
+            ],
             5,
             15,
             DateTime.Parse("2025-09-18T11:00:00Z"),
@@ -124,7 +121,7 @@ public static class SeedData
             false,
             2800,
             "USD",
-            new string[]{}
+            []
         ),
 
         new (
@@ -142,10 +139,9 @@ public static class SeedData
             40,
             "high",
             "2b32f85e-9b51-4a8f-a52c-2a5f7e3db32a",
-            new List<ProjectMemberDto>
-            {
-                new("3a4e2e61-29f5-47f7-b12b-6fd2b50c8da3", "Mobile Developer", true, DateTime.Parse("2025-02-02")),
-            },
+            [
+                "3a4e2e61-29f5-47f7-b12b-6fd2b50c8da3",
+            ],
             4,
             18,
             DateTime.Parse("2025-10-09T11:30:00Z"),
@@ -153,7 +149,7 @@ public static class SeedData
             false,
             1800,
             "USD",
-            new string[]{}
+            []
         ),
 
         new (
@@ -171,10 +167,9 @@ public static class SeedData
             15,
             "medium",
             "3c92ef72-beb2-4baf-b3db-0e8b8941a2de",
-            new List<ProjectMemberDto>
-            {
-                new("6db0df26-f1b0-4dc0-8b7f-92ff084e02c9", "Data Analyst", true, DateTime.Parse("2025-02-02")),
-            },
+            [
+                "6db0df26-f1b0-4dc0-8b7f-92ff084e02c9",
+            ],
             4,
             10,
             DateTime.Parse("2025-10-07T15:00:00Z"),
@@ -182,7 +177,7 @@ public static class SeedData
             true,
             1200,
             "USD",
-            new string[]{}
+            []
         ),
     };
 }

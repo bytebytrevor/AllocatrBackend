@@ -15,7 +15,7 @@ public record class ProjectDto(
     int Progress,
     string? Priority,
     string UserId,
-    List<ProjectMemberDto>? Allocats,
+    List<string>? AllocatIds,
     int? TasksCount,
     int? MessagesCount,
     DateTime? LastActivity,

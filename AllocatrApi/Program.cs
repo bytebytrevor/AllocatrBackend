@@ -28,7 +28,7 @@ app.MapGet("projects/{id}", (string id) =>
 app.MapPost("projects", (CreateProjectDto newProject) =>
 {
 	ProjectDto project = new(
-		"7f2c4b31-9d1a-4c71-b7ad-64b8e5f529d8",
+		Guid.NewGuid().ToString(),
 		"ALC-0012",
 		newProject.Title,
 		newProject.Description,

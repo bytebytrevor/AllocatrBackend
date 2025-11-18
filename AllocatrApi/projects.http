@@ -14,7 +14,6 @@ POST http://localhost:5206/projects
 Content-Type: Application/json
 
 {
-  "id": "7f2c4b31-9d1a-4c71-b7ad-64b8e5f529d8",
   "title": "Smart Home Energy System",
   "description": "Develop and install an IoT-based smart home energy management system to monitor electricity usage, integrate solar panels, and automate lighting and appliances.",
   "type": "Energy & Environment",
@@ -27,31 +26,10 @@ Content-Type: Application/json
   "progress": 25,
   "priority": "high",
   "userId": "a9123c41-f5a2-4c23-a5d1-74b4b012bfc8",
-  "allocats": [
-    {
-      "id": "1e1e9b09-7b42-4a5b-9f9d-f8d7b5ef1b20",
-      "projectId": "7f2c4b31-9d1a-4c71-b7ad-64b8e5f529d8",
-      "userId": "a9123c41-f5a2-4c23-a5d1-74b4b012bfc8",
-      "role": "Project Owner",
-      "isOwner": true,
-      "joinedAt": "2025-10-25T09:05:00Z"
-    },
-    {
-      "id": "4c76d9e0-442b-4a11-b7a9-1a92c7b1ed67",
-      "projectId": "7f2c4b31-9d1a-4c71-b7ad-64b8e5f529d8",
-      "userId": "2c54ffcb-1b72-4b6d-b21f-cb73a57a9b09",
-      "role": "Electrical Engineer",
-      "isOwner": false,
-      "joinedAt": "2025-10-26T10:20:00Z"
-    },
-    {
-      "id": "cf3e2a5c-4c17-40a2-a7c3-8e3a0c31f9cb",
-      "projectId": "7f2c4b31-9d1a-4c71-b7ad-64b8e5f529d8",
-      "userId": "3f1e9cb3-62cf-4dfc-91b0-6b1a9c6c22d1",
-      "role": "Software Developer",
-      "isOwner": false,
-      "joinedAt": "2025-10-26T11:15:00Z"
-    }
+  "allocats": [    
+    "1e1e9b09-7b42-4a5b-9f9d-f8d7b5ef1b20",
+    "4c76d9e0-442b-4a11-b7a9-1a92c7b1ed67",
+    "cf3e2a5c-4c17-40a2-a7c3-8e3a0c31f9cb"
   ],
   "tasksCount": 12,
   "messagesCount": 24,
@@ -87,18 +65,8 @@ Content-Type: application/json
   "priority": "high",
   "userId": "1b02ab97-6b20-4b85-8c72-4f8c9e7f4a03",
   "allocats": [
-    {
-      "userId": "c0a1a4d1-4b1f-45a3-8a7a-3a2f5a1c77c1",
-      "role": "Lead Plumber",
-      "isActive": true,
-      "joinedAt": "2025-02-02T00:00:00Z"
-    },
-    {
-      "userId": "ab23cd45-1234-4ef1-9b7a-99c2f8d5e888",
-      "role": "Apprentice",
-      "isActive": false,
-      "joinedAt": "2025-02-03T00:00:00Z"
-    }
+    "c0a1a4d1-4b1f-45a3-8a7a-3a2f5a1c77c1",
+    "ab23cd45-1234-4ef1-9b7a-99c2f8d5e888",
   ],
   "tasksCount": 4,
   "messagesCount": 12,
