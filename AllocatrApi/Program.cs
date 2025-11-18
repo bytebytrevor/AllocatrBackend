@@ -4,7 +4,7 @@ using AllocatrApi.Data;
 var builder = WebApplication.CreateBuilder(args);
 var app = builder.Build();
 
-
+var GetProjectEndpointName = "Get Project";
 List<ProjectDto> projects = SeedData.Projects;
 Console.WriteLine(projects);
 
@@ -22,7 +22,7 @@ app.MapGet("projects/{id}", (string id) =>
 
 	return Results.Ok(project);
 
-}).WithName("GetProject");
+}).WithName(GetProjectEndpointName);
 
 // POST /projects
 app.MapPost("projects", (CreateProjectDto newProject) =>
@@ -53,15 +53,19 @@ app.MapPost("projects", (CreateProjectDto newProject) =>
 		newProject.Attachments
 	);
 
-	projects.Add(project);
+	if (project != null)
+		projects.Add(project);
 
-	return Results.CreatedAtRoute("GetProject", new { id = project.Id}, project);
+	return Results.CreatedAtRoute(GetProjectEndpointName, new { id = project?.Id }, project);
 });
 
 // POST /project/1
 app.MapPut("projects/{id}", (string id, UpdateProjectDto updatedProject) =>
 {
 	int index = projects.FindIndex(project => project.Id == id);
+	Console.WriteLine(index);
+	if (index < 0)
+		return Results.NotFound();
 
 	projects[index] = new ProjectDto(
 		updatedProject.Id,
@@ -88,6 +92,8 @@ app.MapPut("projects/{id}", (string id, UpdateProjectDto updatedProject) =>
 		updatedProject.Currency,
 		updatedProject.Attachments
 	);
+
+	return Results.Ok();
 });
 
 
