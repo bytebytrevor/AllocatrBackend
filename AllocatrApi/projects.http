@@ -46,11 +46,11 @@ Content-Type: Application/json
 
 ###
 
-PUT http://localhost:5206/projects/fed37242-7b5e-4096-9354-e32c3c70384c
+PUT http://localhost:5206/projects/e341e6db-7101-4cb0-a4d8-ffc533201cd8
 Content-Type: application/json
 
 {
-  "id": "fed37242-7b5e-4096-9354-e32c3c70384c",
+  "id": "e341e6db-7101-4cb0-a4d8-ffc533201cd8",
   "projectCode": "ALC-0001",
   "title": "Home Plumbing Repair",
   "description": "There are several leaks in my building. I need a major fix of leaks and replacement of faulty faucets in the residential property.",

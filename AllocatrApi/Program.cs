@@ -1,8 +1,11 @@
 using AllocatrApi.Dtos;
 using AllocatrApi.Data;
+using Microsoft.AspNetCore.Cors.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 var app = builder.Build();
+
+
 
 var GetProjectEndpointName = "Get Project";
 List<ProjectDto> projects = SeedData.Projects;
@@ -53,8 +56,8 @@ app.MapPost("projects", (CreateProjectDto newProject) =>
 		newProject.Attachments
 	);
 
-	if (project != null)
-		projects.Add(project);
+	if (project == null)
+		return Results.BadRequest();
 
 	return Results.CreatedAtRoute(GetProjectEndpointName, new { id = project?.Id }, project);
 });
@@ -93,14 +96,15 @@ app.MapPut("projects/{id}", (string id, UpdateProjectDto updatedProject) =>
 		updatedProject.Attachments
 	);
 
-	return Results.Ok();
+	return Results.NoContent();
 });
-
 
 // DELETE /projects/1
 app.MapDelete("projects/{id}", (string id) =>
 {
 	projects.RemoveAll(project => project.Id.Equals(id));
+
+	return Results.NoContent();
 });
 
 app.Run();
