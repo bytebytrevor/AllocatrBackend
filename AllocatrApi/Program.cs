@@ -3,7 +3,27 @@ using AllocatrApi.Data;
 using Microsoft.AspNetCore.Cors.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Cors setup
+var AllowSpecificOrigins = "_allowSpecificOrigins";
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(name: AllowSpecificOrigins,
+	policy =>
+    {
+        policy.WithOrigins(
+			"http://localhost:5173"
+		)
+		.AllowAnyHeader()
+		.AllowAnyMethod()
+		.AllowCredentials();
+    });
+});
+
 var app = builder.Build();
+
+app.UseCors("_allowSpecificOrigins");
 
 
 
@@ -58,6 +78,8 @@ app.MapPost("projects", (CreateProjectDto newProject) =>
 
 	if (project == null)
 		return Results.BadRequest();
+	
+	projects.Add(project);
 
 	return Results.CreatedAtRoute(GetProjectEndpointName, new { id = project?.Id }, project);
 });
