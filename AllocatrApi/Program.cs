@@ -9,16 +9,16 @@ var AllowSpecificOrigins = "_allowSpecificOrigins";
 
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy(name: AllowSpecificOrigins,
+	options.AddPolicy(name: AllowSpecificOrigins,
 	policy =>
-    {
-        policy.WithOrigins(
+	{
+		policy.WithOrigins(
 			"http://localhost:5173"
 		)
 		.AllowAnyHeader()
 		.AllowAnyMethod()
 		.AllowCredentials();
-    });
+	});
 });
 
 var app = builder.Build();
@@ -78,7 +78,7 @@ app.MapPost("projects", (CreateProjectDto newProject) =>
 
 	if (project == null)
 		return Results.BadRequest();
-	
+
 	projects.Add(project);
 
 	return Results.CreatedAtRoute(GetProjectEndpointName, new { id = project?.Id }, project);
