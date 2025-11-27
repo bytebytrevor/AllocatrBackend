@@ -84,7 +84,7 @@ app.MapPost("projects", (CreateProjectDto newProject) =>
 	return Results.CreatedAtRoute(GetProjectEndpointName, new { id = project?.Id }, project);
 });
 
-// POST /project/1
+// PUT /project/1
 app.MapPut("projects/{id}", (string id, UpdateProjectDto updatedProject) =>
 {
 	int index = projects.FindIndex(project => project.Id == id);
