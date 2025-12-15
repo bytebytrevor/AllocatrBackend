@@ -27,9 +27,7 @@ Content-Type: Application/json
   "priority": "high",
   "userId": "a9123c41-f5a2-4c23-a5d1-74b4b012bfc8",
   "allocats": [    
-    "1e1e9b09-7b42-4a5b-9f9d-f8d7b5ef1b20",
-    "4c76d9e0-442b-4a11-b7a9-1a92c7b1ed67",
-    "cf3e2a5c-4c17-40a2-a7c3-8e3a0c31f9cb"
+    
   ],
   "tasksCount": 12,
   "messagesCount": 24,
