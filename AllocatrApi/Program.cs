@@ -29,7 +29,8 @@ app.UseCors("_allowSpecificOrigins");
 
 var GetProjectEndpointName = "Get Project";
 List<ProjectDto> projects = SeedData.Projects;
-Console.WriteLine(projects);
+List<TaskDto> tasks = TasksSeedData.Tasks;
+
 
 app.MapGet("/", () => "Hello World!");
 
@@ -128,5 +129,28 @@ app.MapDelete("projects/{id}", (string id) =>
 
 	return Results.NoContent();
 });
+
+/********************************* TASKS *********************************/
+// GET /tasks
+app.MapGet("tasks", () => tasks);
+
+// GET /tasks/1
+app.MapGet("tasks/{id}", (Guid id) =>
+{
+	var task = tasks.Find(t => t.Id == id);
+	return task;
+});
+
+// GET /projects/{projectId}/tasks
+app.MapGet("projects/{projectId}/tasks", (Guid projectId) =>
+{
+	var projectTasks = tasks
+		.Where(t => t.ProjectId == projectId)
+		.ToList();
+
+	return projectTasks;
+});
+
+
 
 app.Run();
