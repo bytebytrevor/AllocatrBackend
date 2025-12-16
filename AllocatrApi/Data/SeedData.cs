@@ -8,8 +8,8 @@ public static class SeedData
     public readonly static List<ProjectDto> Projects = new()
     {
         new (
-            Guid.NewGuid().ToString(),
-            // "6842b2f8-1758-8013-bf37-894d525dcc41",
+            // Guid.NewGuid().ToString(),
+            "6842b2f8-1758-8013-bf37-894d525dcc41",
             "ALC-0001",
             "Home Plumbing Repair",
             "Fix major leaks and replace faulty faucets in a residential property.",
