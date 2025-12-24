@@ -53,28 +53,28 @@ app.MapPost("projects", (CreateProjectDto newProject) =>
 {
 	ProjectDto project = new(
 		Guid.NewGuid().ToString(),
-		"ALC-0012",
+		"ALC-0012", // ProjectCode
 		newProject.Title,
 		newProject.Description,
-		newProject.Type,
 		newProject.Category,
-		new DateTime(),
-		newProject.UpdatedAt,
+		newProject.Tags,
+		new DateTime(), // CreatedAt
+		new DateTime(), // UpdateAt
 		newProject.StartDate,
 		newProject.DueDate,
-		"pending",
-		0,
+		"pending", // Status
+		0, // Progress
 		newProject.Priority,
-		newProject.UserId,
-		newProject.Allocats,
-		0,
-		0,
-		new DateTime(),
+		Guid.NewGuid().ToString(), // UserId ** Use auth 
+		[], // AllocatIds
+		0, // TaskCount
+		0, // MessagesCount
+		new DateTime(), // LastActivity
 		newProject.IsPublic,
 		newProject.AllowBids,
 		newProject.Budget,
 		newProject.Currency,
-		newProject.Attachments
+		[] // Attachments
 	);
 
 	if (project == null)
@@ -98,8 +98,8 @@ app.MapPut("projects/{id}", (string id, UpdateProjectDto updatedProject) =>
 		updatedProject.ProjectCode,
 		updatedProject.Title,
 		updatedProject.Description,
-		updatedProject.Type,
 		updatedProject.Category,
+		updatedProject.Tags,
 		updatedProject.CreatedAt,
 		updatedProject.UpdatedAt,
 		updatedProject.StartDate,
@@ -150,7 +150,5 @@ app.MapGet("projects/{projectId}/tasks", (Guid projectId) =>
 
 	return projectTasks;
 });
-
-
 
 app.Run();

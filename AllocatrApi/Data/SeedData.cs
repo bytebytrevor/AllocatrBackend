@@ -14,7 +14,7 @@ public static class SeedData
             "Home Plumbing Repair",
             "Fix major leaks and replace faulty faucets in a residential property.",
             "home service",
-            "plumbing",
+            ["plumber", "plumbing", "fix bathtub"],
             DateTime.Parse("2025-09-01T08:00:00Z"),
             DateTime.Parse("2025-09-10T08:00:00Z"),
             DateOnly.Parse("2025-09-02"),
@@ -43,7 +43,7 @@ public static class SeedData
             "Electrical Wiring Upgrade",
             "Upgrade wiring in an old apartment to meet safety standards.",
             "home service",
-            "electrical",
+            ["electrical service", "electrician"],
             DateTime.Parse("2025-09-05T08:30:00Z"),
             DateTime.Parse("2025-09-15T08:30:00Z"),
             DateOnly.Parse("2025-09-06"),
@@ -71,7 +71,7 @@ public static class SeedData
             "Allocatr Mobile App",
             "Develop the Allocatr mobile app to improve accessibility for both clients and skilled professionals.",
             "digital",
-            "mobile development",
+            ["mobile development", "android developer", "mobile app"],
             DateTime.Parse("2025-09-20T08:00:00Z"),
             DateTime.Parse("2025-10-02T10:00:00Z"),
             DateOnly.Parse("2025-09-22"),
@@ -92,42 +92,14 @@ public static class SeedData
             "USD",
             []
         ),
-
-        new (
-            "9b3a7f12-4c88-4e6a-b2d1-91f3a7e12c11",
-            "ALC-0002",
-            "House Electrical Rewiring",
-            "Replace outdated wiring, install new sockets, and ensure electrical safety compliance.",
-            "home service",
-            "electrical",
-            DateTime.Parse("2025-09-03T08:00:00Z"),
-            DateTime.Parse("2025-09-15T17:00:00Z"),
-            DateOnly.Parse("2025-09-04"),
-            DateOnly.Parse("2025-09-16"),
-            "active",
-            45,
-            "urgent",
-            "6f4d2c77-1e8a-4a8f-9b8f-2a3d6c4e9b21",
-            [
-                "8d1f22c3-9a12-4f7a-b8f1-32a9f88c1001"
-            ],
-            3,
-            9,
-            DateTime.Parse("2025-09-10T14:20:00Z"),
-            false,
-            true,
-            180,
-            "USD",
-            []
-        ),
-
+        
         new (
             "7f8a1b32-98f4-4f1c-9b9e-12e7a4f99b02",
             "ALC-0003",
             "Door and Lock Replacement",
             "Replace broken doors and install new secure locking systems.",
             "home service",
-            "carpentry",
+            ["carpentry", "security"],
             DateTime.Parse("2025-09-05T08:00:00Z"),
             DateTime.Parse("2025-09-08T16:00:00Z"),
             DateOnly.Parse("2025-09-06"),
@@ -148,62 +120,5 @@ public static class SeedData
             "USD",
             []
         ),
-
-        new (
-            "4e91c9a2-6d55-4d8f-bc71-88a72a5c2203",
-            "ALC-0004",
-            "Boundary Wall Repair",
-            "Repair cracked bricks and reinforce a damaged boundary wall.",
-            "construction",
-            "masonry",
-            DateTime.Parse("2025-09-07T07:30:00Z"),
-            DateTime.Parse("2025-09-14T17:00:00Z"),
-            DateOnly.Parse("2025-09-08"),
-            DateOnly.Parse("2025-09-15"),
-            "active",
-            30,
-            "normal",
-            "a1d22f9e-4c7a-4f1b-b2a3-99c3f8110099",
-            [
-                "2c6a8f1e-0d2c-4f99-b981-7c2d11890003"
-            ],
-            5,
-            14,
-            DateTime.Parse("2025-09-12T10:00:00Z"),
-            false,
-            false,
-            300,
-            "USD",
-            []
-        ),
-
-        new (
-            "c7f2a8b1-11d4-4b99-a7b1-5a2d3f9e3304",
-            "ALC-0005",
-            "Post Construction Cleanup",
-            "Full cleanup after renovation including debris removal and deep cleaning.",
-            "home service",
-            "cleaning",
-            DateTime.Parse("2025-09-10T08:00:00Z"),
-            DateTime.Parse("2025-09-11T15:00:00Z"),
-            DateOnly.Parse("2025-09-11"),
-            DateOnly.Parse("2025-09-12"),
-            "active",
-            90,
-            "normal",
-            "b8c12d99-88f1-4a22-b2e9-118c9a771111",
-            [
-                "f4c2d9a7-5512-4f8a-9c9a-11a7c9900004"
-            ],
-            1,
-            3,
-            DateTime.Parse("2025-09-11T14:00:00Z"),
-            false,
-            true,
-            75,
-            "USD",
-            []
-        ),
-
     };
 }
