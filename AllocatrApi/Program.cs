@@ -38,7 +38,7 @@ app.MapGet("/", () => "Hello World!");
 app.MapGet("projects", () => projects);
 
 // GET /projects/1
-app.MapGet("projects/{id}", (string id) =>
+app.MapGet("projects/{id}", (Guid id) =>
 {
 	var project = projects.Find(project => project.Id == id);
 	if (project == null)
@@ -52,7 +52,7 @@ app.MapGet("projects/{id}", (string id) =>
 app.MapPost("projects", (CreateProjectDto newProject) =>
 {
 	ProjectDto project = new(
-		Guid.NewGuid().ToString(),
+		Guid.NewGuid(),
 		"ALC-0012", // ProjectCode
 		newProject.Title,
 		newProject.Description,
@@ -65,7 +65,7 @@ app.MapPost("projects", (CreateProjectDto newProject) =>
 		"pending", // Status
 		0, // Progress
 		newProject.Priority,
-		Guid.NewGuid().ToString(), // UserId ** Use auth 
+		Guid.NewGuid(), // UserId ** Use auth 
 		[], // AllocatIds
 		0, // TaskCount
 		0, // MessagesCount
@@ -86,7 +86,7 @@ app.MapPost("projects", (CreateProjectDto newProject) =>
 });
 
 // PUT /project/1
-app.MapPut("projects/{id}", (string id, UpdateProjectDto updatedProject) =>
+app.MapPut("projects/{id}", (Guid id, UpdateProjectDto updatedProject) =>
 {
 	int index = projects.FindIndex(project => project.Id == id);
 	Console.WriteLine(index);
@@ -130,6 +130,35 @@ app.MapDelete("projects/{id}", (string id) =>
 	return Results.NoContent();
 });
 
+// GET /projects/projectId/tasks
+app.MapGet("projects/{projectId}/tasks", (Guid projectId) =>
+{
+	var projectTasks = tasks
+		.Where(t => t.ProjectId == projectId)
+		.ToList();
+
+	return projectTasks;
+});
+
+// PUT /projects/projectId/allocats/find
+
+app.MapPut("projects/{projectId}/allocats/{allocatId}", (Guid projectId, Guid allocatId) =>
+{
+	var project = projects.FirstOrDefault(project => project.Id == projectId);
+
+	if (project == null)
+		return Results.NotFound();
+
+	if (!project.AllocatIds.Contains(allocatId))
+	{
+		project.AllocatIds.Add(allocatId);
+	}
+
+	return Results.NoContent();	
+});
+
+app.Run();
+
 /********************************* TASKS *********************************/
 // GET /tasks
 app.MapGet("tasks", () => tasks);
@@ -140,15 +169,3 @@ app.MapGet("tasks/{id}", (Guid id) =>
 	var task = tasks.Find(t => t.Id == id);
 	return task;
 });
-
-// GET /projects/{projectId}/tasks
-app.MapGet("projects/{projectId}/tasks", (Guid projectId) =>
-{
-	var projectTasks = tasks
-		.Where(t => t.ProjectId == projectId)
-		.ToList();
-
-	return projectTasks;
-});
-
-app.Run();

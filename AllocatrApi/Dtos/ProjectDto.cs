@@ -1,7 +1,7 @@
 namespace AllocatrApi.Dtos;
 
 public record class ProjectDto(
-    string Id,
+    Guid Id,
     string ProjectCode,
     string Title,
     string Description,
@@ -14,8 +14,8 @@ public record class ProjectDto(
     string Status,
     int Progress,
     string? Priority,
-    string UserId,
-    List<string>? AllocatIds,
+    Guid UserId,
+    List<Guid> AllocatIds,
     int? TasksCount,
     int? MessagesCount,
     DateTime? LastActivity,

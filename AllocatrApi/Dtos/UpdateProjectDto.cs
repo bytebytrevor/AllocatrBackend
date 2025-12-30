@@ -1,7 +1,7 @@
 namespace AllocatrApi.Dtos;
 
 public record class UpdateProjectDto(
-    string Id,
+    Guid Id,
     string ProjectCode,
     string Title,
     string Description,
@@ -14,8 +14,8 @@ public record class UpdateProjectDto(
     string Status,
     int Progress,
     string? Priority,
-    string UserId,
-    List<string>? Allocats,
+    Guid UserId,
+    List<Guid> Allocats,
     int? TasksCount,
     int? MessagesCount,
     DateTime? LastActivity,
