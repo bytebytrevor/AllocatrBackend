@@ -169,3 +169,9 @@ app.MapGet("tasks/{id}", (Guid id) =>
 	var task = tasks.Find(t => t.Id == id);
 	return task;
 });
+
+/********************************* ALLOCATS *********************************/
+app.MapGet("allocats/{allocatId}", (Guid allocatId) =>
+{
+	
+});

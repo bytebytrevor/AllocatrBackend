@@ -1,5 +1,5 @@
 namespace AllocatrApi.Dtos;
 
-public record class ProjectMemberDto(
+public record class AllocatDto(
     string UserId
 );
