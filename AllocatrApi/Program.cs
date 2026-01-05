@@ -1,6 +1,9 @@
 using AllocatrApi.Dtos;
 using AllocatrApi.Data;
 using Microsoft.AspNetCore.Cors.Infrastructure;
+using Microsoft.EntityFrameworkCore;
+using AllocatrApi.Extensions;
+using AllocatrApi.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,11 +24,24 @@ builder.Services.AddCors(options =>
 	});
 });
 
+builder.Services.AddDbContext<AllocatrDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("Migrations")));
+
+builder.Services.AddAuthorization();
+builder.Services.AddControllers();
+builder.Services.AddIdentityConfig();
+builder.Services.AddJwtAuth(builder.Configuration);
+builder.Services.AddScoped<TokenService>();
+
 var app = builder.Build();
 
 app.UseCors("_allowSpecificOrigins");
 
+app.UseHttpsRedirection();
 
+app.UseAuthentication();
+app.UseAuthorization();
+app.MapControllers();
 
 var GetProjectEndpointName = "Get Project";
 List<ProjectDto> projects = SeedData.Projects;
