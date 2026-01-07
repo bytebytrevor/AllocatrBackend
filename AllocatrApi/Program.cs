@@ -1,6 +1,5 @@
 using AllocatrApi.Dtos;
 using AllocatrApi.Data;
-using Microsoft.AspNetCore.Cors.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using AllocatrApi.Extensions;
 using AllocatrApi.Services;
@@ -25,13 +24,28 @@ builder.Services.AddCors(options =>
 });
 
 builder.Services.AddDbContext<AllocatrDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("Migrations")));
+	options.UseNpgsql(builder.Configuration.GetConnectionString("Migrations")));
 
 builder.Services.AddAuthorization();
 builder.Services.AddControllers();
 builder.Services.AddIdentityConfig();
 builder.Services.AddJwtAuth(builder.Configuration);
 builder.Services.AddScoped<TokenService>();
+
+builder.Services.ConfigureApplicationCookie(options =>
+{
+	options.Events.OnRedirectToLogin = context =>
+	{
+		context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+		return Task.CompletedTask;
+	};
+
+	options.Events.OnRedirectToAccessDenied = context =>
+	{
+		context.Response.StatusCode = StatusCodes.Status403Forbidden;
+		return Task.CompletedTask;
+	};
+});
 
 var app = builder.Build();
 
@@ -170,7 +184,7 @@ app.MapPut("projects/{projectId}/allocats/{allocatId}", (Guid projectId, Guid al
 		project.AllocatIds.Add(allocatId);
 	}
 
-	return Results.NoContent();	
+	return Results.NoContent();
 });
 
 app.Run();
@@ -189,5 +203,5 @@ app.MapGet("tasks/{id}", (Guid id) =>
 /********************************* ALLOCATS *********************************/
 app.MapGet("allocats/{allocatId}", (Guid allocatId) =>
 {
-	
+
 });

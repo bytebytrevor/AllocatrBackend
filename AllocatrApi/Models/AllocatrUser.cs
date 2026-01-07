@@ -6,6 +6,6 @@ namespace AllocatrApi.Models;
 public class AllocatrUser : IdentityUser
 {
     // Extend here
-    public string Fullname {get; set; } ="";
-    public bool IsAllocat { get; set; } = false;
+    // public string Fullname {get; set; } ="";
+    // public bool IsAllocat { get; set; } = false;
 }

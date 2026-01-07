@@ -2,6 +2,7 @@ using System;
 using System.Security.Claims;
 using AllocatrApi.Models;
 using AllocatrApi.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
@@ -29,11 +30,14 @@ public class AuthController : ControllerBase
         _tokenService = tokenService;
     }
 
+
     [HttpGet("me")]
+    [Authorize]
     public IActionResult Me()
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        return Ok(new { userId });
+        var email = User.FindFirstValue(ClaimTypes.Email);
+        return Ok(new { userId, email });
     }
 
     /************************** REGISTER *************************/
@@ -90,8 +94,10 @@ public class AuthController : ControllerBase
         Response.Cookies.Append("access_token", token, new CookieOptions
         {
             HttpOnly = true,
-            Secure = true,
-            SameSite = SameSiteMode.Strict
+            Secure = false, //Swith to None for production
+            // Secure = true,
+            SameSite = SameSiteMode.Lax,
+            Path = "/"
         });
 
         return Ok(new { user.Email });
@@ -101,7 +107,15 @@ public class AuthController : ControllerBase
     [HttpPost("logout")]
     public IActionResult Logout()
     {
-        Response.Cookies.Delete("access_token");
+        Response.Cookies.Delete("access_token", new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = false, //Swith back to true for production
+            // Secure = true,
+            SameSite = SameSiteMode.Lax, //Swith to None for production
+            Path = "/"
+        });
+
         return NoContent();
     }
 }
