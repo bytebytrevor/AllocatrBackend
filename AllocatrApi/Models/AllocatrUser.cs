@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Identity;
 
 namespace AllocatrApi.Models;
@@ -6,6 +7,9 @@ namespace AllocatrApi.Models;
 public class AllocatrUser : IdentityUser
 {
     // Extend here
-    // public string Fullname {get; set; } ="";
-    // public bool IsAllocat { get; set; } = false;
+    [Required]
+    public required string FullName { get; set; } = null!;
+    public string? IdNumber { get; set; }
+    [Required]
+    public bool IsAllocat { get; set; } = false;
 }

@@ -54,6 +54,7 @@ public class AuthController : ControllerBase
         {
             UserName = dto.Email,
             Email = dto.Email
+            
         };
 
         try
@@ -94,7 +95,7 @@ public class AuthController : ControllerBase
         Response.Cookies.Append("access_token", token, new CookieOptions
         {
             HttpOnly = true,
-            Secure = false, //Swith to None for production
+            Secure = false, //Swith to true for production
             // Secure = true,
             SameSite = SameSiteMode.Lax,
             Path = "/"

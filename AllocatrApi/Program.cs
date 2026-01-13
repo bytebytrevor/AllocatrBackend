@@ -24,7 +24,7 @@ builder.Services.AddCors(options =>
 });
 
 builder.Services.AddDbContext<AllocatrDbContext>(options =>
-	options.UseNpgsql(builder.Configuration.GetConnectionString("Migrations")));
+	options.UseNpgsql(builder.Configuration.GetConnectionString("Runtime")));
 
 builder.Services.AddAuthorization();
 builder.Services.AddControllers();
@@ -51,7 +51,11 @@ var app = builder.Build();
 
 app.UseCors("_allowSpecificOrigins");
 
-app.UseHttpsRedirection();
+if (!app.Environment.IsDevelopment())
+{
+	app.UseHttpsRedirection();
+}
+// app.UseHttpsRedirection();
 
 app.UseAuthentication();
 app.UseAuthorization();
