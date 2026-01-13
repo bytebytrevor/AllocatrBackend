@@ -24,7 +24,7 @@ builder.Services.AddCors(options =>
 });
 
 builder.Services.AddDbContext<AllocatrDbContext>(options =>
-	options.UseNpgsql(builder.Configuration.GetConnectionString("Runtime")));
+	options.UseNpgsql(builder.Configuration.GetConnectionString("Migrations")));
 
 builder.Services.AddAuthorization();
 builder.Services.AddControllers();

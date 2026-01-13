@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using AllocatrApi.Dtos.Auth;
 
 namespace AllocatrApi.Controllers;
 
@@ -42,7 +43,7 @@ public class AuthController : ControllerBase
 
     /************************** REGISTER *************************/
     [HttpPost("register")]
-    public async Task<IActionResult> Register(RegisterRequest dto)
+    public async Task<IActionResult> Register(Dtos.Auth.RegisterRequest dto)
     {
         // Fast-path check
         if (await _userManager.FindByEmailAsync(dto.Email) != null)
@@ -52,9 +53,9 @@ public class AuthController : ControllerBase
 
         var user = new AllocatrUser
         {
+            FullName = dto.FullName,
             UserName = dto.Email,
-            Email = dto.Email
-            
+            Email = dto.Email,
         };
 
         try
