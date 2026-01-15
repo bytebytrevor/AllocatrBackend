@@ -82,6 +82,8 @@ app.MapGet("projects/{id}", (Guid id) =>
 
 }).WithName(GetProjectEndpointName);
 
+
+
 // POST /projects
 app.MapPost("projects", (CreateProjectDto newProject) =>
 {

@@ -22,6 +22,7 @@
 
   <ItemGroup>
     <Folder Include="Controllers/" />
+    <Folder Include="Data\Configurations\" />
     <Folder Include="Extensions/" />
     <Folder Include="Services/" />
   </ItemGroup>
