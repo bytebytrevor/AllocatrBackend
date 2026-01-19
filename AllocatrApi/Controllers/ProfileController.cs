@@ -1,6 +1,8 @@
 using System.Security.Claims;
+using AllocatrApi.Models;
 using AllocatrApi.Services;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AllocatrApi.Controllers;
@@ -11,10 +13,14 @@ namespace AllocatrApi.Controllers;
 public class ProfileController : ControllerBase
 {
     private readonly SupabaseService _supabase;
+    private readonly UserManager<AllocatrUser> _userManager;
 
-    public ProfileController(SupabaseService supabase)
+    public ProfileController(
+        SupabaseService supabase,
+        UserManager<AllocatrUser> userManager)
     {
         _supabase = supabase;
+        _userManager = userManager;
     }
 
     [HttpPost("profile-picture")]
@@ -23,34 +29,37 @@ public class ProfileController : ControllerBase
         if (file == null || file.Length == 0)
             return BadRequest("No file uploaded");
 
-        // Get logged-in user's ID
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (string.IsNullOrEmpty(userId))
+        var user = await _userManager.GetUserAsync(User);
+        if (user == null)
             return Unauthorized();
 
-        // Read file into memory
         await using var ms = new MemoryStream();
         await file.CopyToAsync(ms);
         var bytes = ms.ToArray();
 
-        // Use a fixed path per user to overwrite
-        var path = $"/{userId}/profile.png";
+        var path = $"{user.Id}/profile.png";
 
-        // Upload to Supabase (with overwrite)
         await _supabase.Client
             .Storage
             .From("avatars")
             .Upload(bytes, path, new Supabase.Storage.FileOptions
             {
-                Upsert = true // overwrite if exists
+                Upsert = true
             });
 
-        // Get public URL
         var publicUrl = _supabase.Client
             .Storage
             .From("avatars")
             .GetPublicUrl(path);
 
-        return Ok(new { path, publicUrl });
+        // CACHE BUST
+        var cacheBustedUrl = $"{publicUrl}?v={DateTimeOffset.UtcNow.ToUnixTimeSeconds()}";
+
+        user.AvatarUrl = cacheBustedUrl;
+        await _userManager.UpdateAsync(user);
+
+        return Ok(new { avatarUrl = cacheBustedUrl });
     }
 }
+
+

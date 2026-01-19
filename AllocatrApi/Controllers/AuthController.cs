@@ -87,12 +87,9 @@ public class AuthController : ControllerBase
             userId = user.Id,
             email = user.Email,
             fullName = user.FullName,
-            // avatarUrl = user.AvatarUrl
+            avatarUrl = user?.AvatarUrl
         });
     }
-
-
-
 }
 
 
