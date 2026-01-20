@@ -48,6 +48,8 @@ builder.Services.AddControllers();
 builder.Services.AddAuthorization();
 builder.Services.AddSingleton<SupabaseService>();
 
+builder.Services.AddScoped<ProjectService>();
+
 var app = builder.Build();
 
 app.UseCors("AllowFrontend");
@@ -56,155 +58,102 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-var GetProjectEndpointName = "Get Project";
-List<ProjectDto> projects = SeedData.Projects;
-List<TaskDto> tasks = TasksSeedData.Tasks;
-
-
 app.MapGet("/", () => "Hello World!");
-
-// GET /projects
-app.MapGet("projects", () => projects);
-
-// GET /projects/1
-app.MapGet("projects/{id}", (Guid id) =>
-{
-	var project = projects.Find(project => project.Id == id);
-	if (project == null)
-		return Results.NotFound();
-
-	return Results.Ok(project);
-
-}).WithName(GetProjectEndpointName);
 
 
 
 // POST /projects
-app.MapPost("projects", (CreateProjectDto newProject) =>
-{
-	ProjectDto project = new(
-		Guid.NewGuid(),
-		"ALC-0012", // ProjectCode
-		newProject.Title,
-		newProject.Description,
-		newProject.Category,
-		newProject.Tags,
-		new DateTime(), // CreatedAt
-		new DateTime(), // UpdateAt
-		newProject.StartDate,
-		newProject.DueDate,
-		"pending", // Status
-		0, // Progress
-		newProject.Priority,
-		Guid.NewGuid(), // UserId ** Use auth 
-		[], // AllocatIds
-		0, // TaskCount
-		0, // MessagesCount
-		new DateTime(), // LastActivity
-		newProject.IsPublic,
-		newProject.AllowBids,
-		newProject.Budget,
-		newProject.Currency,
-		[] // Attachments
-	);
 
-	if (project == null)
-		return Results.BadRequest();
 
-	projects.Add(project);
+// // PUT /project/1
+// app.MapPut("projects/{id}", (Guid id, UpdateProjectDto updatedProject) =>
+// {
+// 	int index = projects.FindIndex(project => project.Id == id);
+// 	Console.WriteLine(index);
+// 	if (index < 0)
+// 		return Results.NotFound();
 
-	return Results.CreatedAtRoute(GetProjectEndpointName, new { id = project?.Id }, project);
-});
+// 	projects[index] = new ProjectDto(
+// 		updatedProject.Id,
+// 		updatedProject.ProjectCode,
+// 		updatedProject.Title,
+// 		updatedProject.Description,
+// 		updatedProject.Category,
+// 		updatedProject.Tags,
+// 		updatedProject.CreatedAt,
+// 		updatedProject.UpdatedAt,
+// 		updatedProject.StartDate,
+// 		updatedProject.DueDate,
+// 		updatedProject.Status,
+// 		updatedProject.Progress,
+// 		updatedProject.Priority,
+// 		updatedProject.UserId,
+// 		updatedProject.Allocats,
+// 		updatedProject.TasksCount,
+// 		updatedProject.MessagesCount,
+// 		updatedProject.LastActivity,
+// 		updatedProject.IsPublic,
+// 		updatedProject.AllowBids,
+// 		updatedProject.Budget,
+// 		updatedProject.Currency,
+// 		updatedProject.Attachments
+// 	);
 
-// PUT /project/1
-app.MapPut("projects/{id}", (Guid id, UpdateProjectDto updatedProject) =>
-{
-	int index = projects.FindIndex(project => project.Id == id);
-	Console.WriteLine(index);
-	if (index < 0)
-		return Results.NotFound();
+// 	return Results.NoContent();
+// });
 
-	projects[index] = new ProjectDto(
-		updatedProject.Id,
-		updatedProject.ProjectCode,
-		updatedProject.Title,
-		updatedProject.Description,
-		updatedProject.Category,
-		updatedProject.Tags,
-		updatedProject.CreatedAt,
-		updatedProject.UpdatedAt,
-		updatedProject.StartDate,
-		updatedProject.DueDate,
-		updatedProject.Status,
-		updatedProject.Progress,
-		updatedProject.Priority,
-		updatedProject.UserId,
-		updatedProject.Allocats,
-		updatedProject.TasksCount,
-		updatedProject.MessagesCount,
-		updatedProject.LastActivity,
-		updatedProject.IsPublic,
-		updatedProject.AllowBids,
-		updatedProject.Budget,
-		updatedProject.Currency,
-		updatedProject.Attachments
-	);
+// // DELETE /projects/1
+// app.MapDelete("projects/{id}", (string id) =>
+// {
+// 	projects.RemoveAll(project => project.Id.Equals(id));
 
-	return Results.NoContent();
-});
+// 	return Results.NoContent();
+// });
 
-// DELETE /projects/1
-app.MapDelete("projects/{id}", (string id) =>
-{
-	projects.RemoveAll(project => project.Id.Equals(id));
+// // GET /projects/projectId/tasks
+// app.MapGet("projects/{projectId}/tasks", (Guid projectId) =>
+// {
+// 	var projectTasks = tasks
+// 		.Where(t => t.ProjectId == projectId)
+// 		.ToList();
 
-	return Results.NoContent();
-});
+// 	return projectTasks;
+// });
 
-// GET /projects/projectId/tasks
-app.MapGet("projects/{projectId}/tasks", (Guid projectId) =>
-{
-	var projectTasks = tasks
-		.Where(t => t.ProjectId == projectId)
-		.ToList();
+// // PUT /projects/projectId/allocats/find
 
-	return projectTasks;
-});
+// app.MapPut("projects/{projectId}/allocats/{allocatId}", (Guid projectId, Guid allocatId) =>
+// {
+// 	var project = projects.FirstOrDefault(project => project.Id == projectId);
 
-// PUT /projects/projectId/allocats/find
+// 	if (project == null)
+// 		return Results.NotFound();
 
-app.MapPut("projects/{projectId}/allocats/{allocatId}", (Guid projectId, Guid allocatId) =>
-{
-	var project = projects.FirstOrDefault(project => project.Id == projectId);
+// 	if (!project.AllocatIds.Contains(allocatId))
+// 	{
+// 		project.AllocatIds.Add(allocatId);
+// 	}
 
-	if (project == null)
-		return Results.NotFound();
-
-	if (!project.AllocatIds.Contains(allocatId))
-	{
-		project.AllocatIds.Add(allocatId);
-	}
-
-	return Results.NoContent();
-});
+// 	return Results.NoContent();
+// });
 
 
 
-/********************************* TASKS *********************************/
-// GET /tasks
-app.MapGet("tasks", () => tasks);
 
-// GET /tasks/1
-app.MapGet("tasks/{id}", (Guid id) =>
-{
-	var task = tasks.Find(t => t.Id == id);
-	return task;
-});
+// // GET /tasks
+// app.MapGet("tasks", () => tasks);
 
-/********************************* ALLOCATS *********************************/
-app.MapGet("allocats/{allocatId}", (Guid allocatId) =>
-{
+// // GET /tasks/1
+// app.MapGet("tasks/{id}", (Guid id) =>
+// {
+// 	var task = tasks.Find(t => t.Id == id);
+// 	return task;
+// });
 
-});
+
+// app.MapGet("allocats/{allocatId}", (Guid allocatId) =>
+// {
+
+// });
 
 app.Run();
