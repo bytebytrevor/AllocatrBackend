@@ -33,7 +33,8 @@ public class AuthController : ControllerBase
         {
             FullName = dto.FullName,
             Email = dto.Email,
-            UserName = dto.Email
+            UserName = dto.Email,
+            IsAllocat = dto.IsAllocat
         };
 
         var result = await _userManager.CreateAsync(user, dto.Password);

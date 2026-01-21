@@ -13,4 +13,6 @@ public class RegisterRequest
 
     [MinLength(8)]
     public required string Password { get; init; }
+
+    public required bool IsAllocat { get; set; }
 }
