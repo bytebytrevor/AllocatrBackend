@@ -125,7 +125,6 @@ public class ProjectController : ControllerBase
             project.AllocatAssignments
         );
 
-
         return CreatedAtAction(
             nameof(GetProjectById),
             new { id = project.Id },

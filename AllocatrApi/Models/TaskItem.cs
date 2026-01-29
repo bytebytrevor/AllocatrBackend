@@ -11,12 +11,18 @@ public class TaskItem
     public string? Description { get; set; }
 
     public string Status { get; set; } = "todo";
-    public int Priority { get; set; }
+    public string Priority { get; set; } = null!;
+    public int Order { get; set; }
 
-    public string? AssignedToId { get; set; }
+    public Guid? AssignedToId { get; set; }
     public AllocatrUser? AssignedTo { get; set; }
+    public Guid? CreatedByUserId { get; set; }
+    public AllocatrUser? CreatedByUser { get; set; }
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? DueDate { get; set; }
     public DateTime? CompletedAt { get; set; }
+
+    public ICollection<TaskComment> Comments { get; set; } = new List<TaskComment>();
 }
