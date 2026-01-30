@@ -1,5 +1,4 @@
 using AllocatrApi.Data;
-using AllocatrApi.Dtos;
 using AllocatrApi.Models;
 using AllocatrApi.Services;
 using Microsoft.AspNetCore.Identity;

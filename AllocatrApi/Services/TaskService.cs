@@ -14,7 +14,7 @@ public class TaskService
         _db = db;
     }
 
-    public async Task<List<Task>> GetAllTasksAsync()
+    public async Task<List<TaskDto>> GetAllTasksAsync()
     {
         return await _db.Tasks
             .Select(t => new TaskDto(
@@ -24,13 +24,13 @@ public class TaskService
                 t.Status,
                 t.Priority,
                 t.Order,
-                t.AssignedTo,
+                t.AssignedToId,
                 t.UpdatedAt,
                 t.CreatedAt,
                 t.DueDate,
                 t.CompletedAt,
                 t.Comments,
-                t.CreatedByUser,
+                t.CreatedByUserId,
                 t.ProjectId
             ))
             .ToListAsync();

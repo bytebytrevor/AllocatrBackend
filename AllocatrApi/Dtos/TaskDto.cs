@@ -1,3 +1,5 @@
+using AllocatrApi.Models;
+
 namespace AllocatrApi.Dtos;
 
 
@@ -8,12 +10,12 @@ public record class TaskDto(
     string Status,
     string Priority,
     int Order,
-    string AssignedTo,
+    Guid? AssignedToId,
     DateTime? UpdatedAt,
     DateTime CreatedAt,
-    DateOnly? DueDate,
+    DateTime? DueDate,
     DateTime? CompletedAt,
-    List<TaskCommentDto>? Comments,
+    ICollection<TaskComment>? Comments,
     Guid? CreatedByUserId,
     Guid ProjectId
 );
