@@ -11,15 +11,17 @@ public class TaskItemConfiguration : IEntityTypeConfiguration<TaskItem>
         entity.HasKey(t => t.Id);
 
         entity.Property(t => t.Id)
-        .ValueGeneratedOnAdd()
-        .HasDefaultValueSql("gen_random_uuid()");
+            .ValueGeneratedOnAdd()
+            .HasDefaultValueSql("gen_random_uuid()");
 
         entity.Property(t => t.Title)
-        .IsRequired()
-        .HasMaxLength(200);
+            .IsRequired()
+            .HasMaxLength(200);
 
         entity.HasMany(t => t.Comments)
-        .WithOne(c => c.TaskItem)
-        .HasForeignKey(c => c.TaskItemId);        
+            .WithOne(c => c.TaskItem)
+            .HasForeignKey(c => c.TaskItemId);
+
+        entity.HasIndex(t => t.ProjectId);
     }
 }
