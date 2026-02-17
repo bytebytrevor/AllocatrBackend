@@ -30,7 +30,7 @@ public class ProjectController : ControllerBase
 
     // GET api/projects/id
     [HttpGet("{id}", Name = "GetProjectById")]
-    public async Task<IActionResult> GetProjectById(string id)
+    public async Task<IActionResult> GetProjectById(Guid id)
     {
         var project = await _db.Projects.FindAsync(id);
         if (project == null)
@@ -134,6 +134,6 @@ public class ProjectController : ControllerBase
 
     public string GenerateProjectCode()
     {
-        return "ALC00012026";
+        return "ALC00022026";
     }
 }
