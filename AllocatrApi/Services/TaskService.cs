@@ -114,6 +114,13 @@ public class TaskService
         return true;
     }
 
+    // public async Task<TaskItem> UpdateTaskAsync(TaskItem task)
+    // {
+    //     _context.Tasks.Update(task);
+    //     await _context.SaveChangesAsync();
+    //     return task;
+    // }
+
     /* --------------------------------------------------------
      * DELETE
      * -------------------------------------------------------- */

@@ -90,4 +90,25 @@ public class TaskController : ControllerBase
 
         return CreatedAtAction(nameof(GetTasksForProject), new { projectId }, newDto);
     }
+
+    // PATCH api/projects/tasks/task/{taskId}/status
+    [HttpPatch("task/{taskId:guid}/status")]
+    public async Task<IActionResult> UpdateTaskStatus(Guid taskId, [FromBody] UpdateTaskStatusDto dto)
+    {
+        var user = await _userManager.GetUserAsync(User);
+        if (user == null) return Unauthorized();
+
+        var task = await _taskService.GetTaskByIdAsync(taskId);
+        if (task == null) return NotFound();
+
+        var allowed = new[] { "pending", "active", "complete", "overdue" };
+        if (!allowed.Contains(dto.Status))
+            return BadRequest("Invalid status.");
+
+        // Authorization rules (creator, assigned user, project member, etc.)
+        task.Status = dto.Status;
+
+        var updated = await _taskService.UpdateTaskAsync(task);
+        return Ok(updated);
+    }
 }
