@@ -105,10 +105,40 @@ public class TaskController : ControllerBase
         if (!allowed.Contains(dto.Status))
             return BadRequest("Invalid status.");
 
-        // Authorization rules (creator, assigned user, project member, etc.)
         task.Status = dto.Status;
 
-        var updated = await _taskService.UpdateTaskAsync(task);
-        return Ok(updated);
+        // Update task
+        var updatedTask = await _taskService.UpdateTaskAsync(task);
+
+        // Recompute project progress
+        var updatedProject = await _taskService.RecalculateProjectProgressAsync(updatedTask.ProjectId);
+
+        var taskDto = new TaskDto(
+            updatedTask.Id,
+            updatedTask.Title,
+            updatedTask.Description,
+            updatedTask.Status,
+            updatedTask.Priority,
+            updatedTask.DueDate
+        );
+
+        // build project dto 
+        var projectDto = new ProjectDto(
+            updatedProject.Id,
+            updatedProject.ProjectCode,
+            updatedProject.Title,
+            updatedProject.Description,
+            updatedProject.Category,
+            updatedProject.Status,
+            updatedProject.Progress,
+            updatedProject.Priority,
+            updatedProject.Budget,
+            updatedProject.Currency,
+            updatedProject.StartDate,
+            updatedProject.DueDate,
+            updatedProject.AllocatAssignments
+        );
+
+        return Ok(new UpdateTaskStatusResultDto(taskDto, projectDto));
     }
 }

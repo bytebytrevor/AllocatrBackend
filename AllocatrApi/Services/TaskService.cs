@@ -1,6 +1,7 @@
 using AllocatrApi.Data;
 using AllocatrApi.Dtos;
 using AllocatrApi.Models;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 
 namespace AllocatrApi.Services;
@@ -92,13 +93,13 @@ public class TaskService
      * UPDATE
      * -------------------------------------------------------- */
 
-    public async Task<bool> UpdateTaskAsync(TaskItem updatedTask)
+    public async Task<TaskItem> UpdateTaskAsync(TaskItem updatedTask)
     {
         var existingTask = await _db.TaskItems
             .FirstOrDefaultAsync(t => t.Id == updatedTask.Id);
 
         if (existingTask == null)
-            return false;
+            return null!;
 
         existingTask.Title = updatedTask.Title;
         existingTask.Description = updatedTask.Description;
@@ -111,7 +112,7 @@ public class TaskService
         existingTask.UpdatedAt = DateTime.UtcNow;
 
         await _db.SaveChangesAsync();
-        return true;
+        return updatedTask;
     }
 
     // public async Task<TaskItem> UpdateTaskAsync(TaskItem task)
@@ -166,5 +167,28 @@ public class TaskService
 
         await _db.SaveChangesAsync();
         return true;
+    }
+
+    public async Task<Project> RecalculateProjectProgressAsync(Guid projectId)
+    {
+        var project = await _db.Projects.FindAsync(projectId);
+        if (project == null) throw new Exception("Project not found");
+
+        var tasks = await _db.TaskItems
+            .Where(t => t.ProjectId == projectId)
+            .ToListAsync();
+
+        if (tasks.Count == 0)
+        {
+            project.Progress = 0;
+        }
+        else
+        {
+            var completed = tasks.Count(t => t.Status == "complete");
+            project.Progress = (int)Math.Round((completed * 100.0) / tasks.Count);
+        }
+
+        await _db.SaveChangesAsync();
+        return project;
     }
 }
