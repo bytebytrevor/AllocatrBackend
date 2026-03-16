@@ -134,6 +134,6 @@ public class ProjectController : ControllerBase
 
     public string GenerateProjectCode()
     {
-        return "ALC00022026";
+        return $"PRJ-{Guid.NewGuid().ToString("N").ToUpper()}";
     }
 }
