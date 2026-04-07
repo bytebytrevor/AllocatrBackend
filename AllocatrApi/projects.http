@@ -79,3 +79,26 @@ Content-Type: application/json
 ###
 
 DELETE http://localhost:5206/projects/7d0c8331-3b24-4c7d-b6b7-5b517b92efc5
+
+###
+
+POST http://localhost:5206/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "user5@email.com",
+  "password": "User5@email.com"
+}
+
+###
+
+POST http://localhost:5206/api/allocats/profiles
+Content-Type: application/json
+Cookie: .AspNetCore.Identity.Application=CfDJ8A3yLi3MGfNFvHoCNYfEHBBgCEjikS2USi7PCKC5vRPwy1iqGWKyPX2ldsmigmrokqw5x4EyvjlL3ixdBV0Juh6VbTPVdUMlLAxGZy2kEhQQv8xrFUSC1rsj-r0mDQI6d6T0J-z-x3KjUrFnhHp9JE8EeiZVyGn1OHiHrV3drwvhEFFLWDUPbFiGjj3lvq1QdLyiXATuMHy8y7IA8rO44mL2VXKc8XBV2tefswADcJYB7fuuXmvnZF7WBLeCOpwzpr9qELaO4HVu3B1ETFzQxPi-58yaEf2hzk511uAI4BgiirBAUkzfx5EPlHopLjuTpjezMCTJnEUIc_SsTrIf2pCy8712yOA1wQD57Cg0ygnYqKOimLO6Kp_fswxGZE5EGdCgjVMq9fAyvnRTec_cbjGhfxcCAuqN_fRO6ovsm-UmhLJLTnX7n9GldQLM-Bick7WwQZSvLRIFtm-nOHCYYSgnWwA8G7oYIj89nvc_EXKpRkM9nm94eN3JjNWzk0dOtnyudiFogSIYQkjDNEDjCz4VNR6d7-N7QYZ91LYQN36B8GijBsVb5yTVP83RIfSU0Um0rfrFaYPDoLvc889BJUj-hrg7pU23hLgL_kwJXOIMmx_8fXNa9lf3R7Z9Cxr9ub_scEbvzUlasvwJv9o8dXoi4jEJ8Sm4LwImXtl6cbqTwQPU21hNmKkIcEmjXXSY-dlrnL0qcy3xi6K2A8iVSVu5jgOi8Qp0cFL3SMlCiTkhMibSep23xfOECDSa_FY_Iw
+
+{
+  "idNumber": "00000000B00",
+  "hourlyRate": 28.00,
+  "bio": "I am an allocat",
+  "yearsExperience": 7
+}

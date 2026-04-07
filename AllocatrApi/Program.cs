@@ -49,6 +49,7 @@ builder.Services.AddAuthorization();
 builder.Services.AddSingleton<SupabaseService>();
 
 builder.Services.AddScoped<ProjectService>();
+builder.Services.AddScoped<AllocatProfileService>();
 builder.Services.AddScoped<TaskService>();
 
 var app = builder.Build();

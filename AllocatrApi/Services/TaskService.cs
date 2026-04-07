@@ -20,37 +20,34 @@ public class TaskService
      * -------------------------------------------------------- */
 
     // All tasks (admin / dashboard use)
-    public async Task<List<TaskItem>> GetAllTasksAsync()
-    {
-        return await _db.TaskItems
-            // .Include(t => t.AssignedTo)
-            // .Include(t => t.CreatedByUser)
-            // .Include(t => t.Comments)
-            // .OrderBy(t => t.Order)
-            .ToListAsync();
-
-    }
-
-    // All tasks for a specific project
-    public async Task<List<TaskDto>> GetTasksByProjectAsync(Guid projectId)
+    public async Task<List<TaskDto>> GetAllTasksAsync()
     {
         // return await _db.TaskItems
-        //     .Where(t => t.ProjectId == projectId)
+        //     .Include(t => t.AssignedTo)
+        //     .Include(t => t.CreatedByUser)
+        //     .Include(t => t.Comments)
         //     .OrderBy(t => t.Order)
-        //     .Select(t => new TaskDto(
-        //         t.Id,
-        //         t.Title,
-        //         t.Description,
-        //         t.Status,
-        //         t.Priority,
-        //         t.DueDate,
-        //         t.AssignedTo != null ? t.AssignedTo : null,
-        //         t.CreatedByUser != null ? t.CreatedByUser : null
-        //     ))
         //     .ToListAsync();
 
         return await _db.TaskItems
+            .Select(t => new TaskDto (
+                t.Id,
+                t.Title,
+                t.Description,
+                t.Status,
+                t.Priority,
+                t.DueDate
+                // t.CreatedByUser
+            ))
+            .ToListAsync();
+    }
+
+    // All tasks for a specific project
+    public async Task<List<TaskDto>> GetTasksByProjectIdAsync(Guid projectId)
+    {
+        return await _db.TaskItems
             .Where(t => t.ProjectId == projectId)
+            // .OrderBy(t => t.Order)
             .Select(t => new TaskDto(
                 t.Id,
                 t.Title,
@@ -58,6 +55,7 @@ public class TaskService
                 t.Status,
                 t.Priority,
                 t.DueDate
+                // t.CreatedByUser
             ))
             .ToListAsync();
     }

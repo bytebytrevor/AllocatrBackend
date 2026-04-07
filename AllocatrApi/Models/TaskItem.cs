@@ -14,8 +14,8 @@ public class TaskItem
     public AllocatrUser? AssignedTo { get; set; }
     public string CreatedByUserId { get; set; } = null!;
     public AllocatrUser CreatedByUser { get; set; } = null!;
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime CreatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
     public DateTime? DueDate { get; set; }
     public DateTime? CompletedAt { get; set; }
     public ICollection<TaskComment> Comments { get; set; } = new List<TaskComment>();

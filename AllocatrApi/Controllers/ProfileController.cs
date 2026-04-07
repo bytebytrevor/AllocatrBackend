@@ -61,5 +61,3 @@ public class ProfileController : ControllerBase
         return Ok(new { avatarUrl = cacheBustedUrl });
     }
 }
-
-

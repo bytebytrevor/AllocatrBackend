@@ -31,7 +31,7 @@ public class TaskController : ControllerBase
         if (user == null)
             return Unauthorized();
 
-        var tasks = await _taskService.GetTasksByProjectAsync(projectId);
+        var tasks = await _taskService.GetTasksByProjectIdAsync(projectId);
         return Ok(tasks);
     }
 
@@ -86,6 +86,7 @@ public class TaskController : ControllerBase
             createdTask.Status,
             createdTask.Priority,
             createdTask.DueDate
+            // createdTask.CreatedByUser
         );
 
         return CreatedAtAction(nameof(GetTasksForProject), new { projectId }, newDto);
@@ -109,6 +110,8 @@ public class TaskController : ControllerBase
 
         // Update task
         var updatedTask = await _taskService.UpdateTaskAsync(task);
+        if (updatedTask == null)
+            return NotFound("Update task error: task update failed");
 
         // Recompute project progress
         var updatedProject = await _taskService.RecalculateProjectProgressAsync(updatedTask.ProjectId);
@@ -120,6 +123,7 @@ public class TaskController : ControllerBase
             updatedTask.Status,
             updatedTask.Priority,
             updatedTask.DueDate
+            // updatedTask.CreatedByUser   
         );
 
         // build project dto 
