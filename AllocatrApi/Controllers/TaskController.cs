@@ -86,7 +86,7 @@ public class TaskController : ControllerBase
             createdTask.Status,
             createdTask.Priority,
             createdTask.DueDate
-            // createdTask.CreatedByUser
+        // createdTask.CreatedByUser
         );
 
         return CreatedAtAction(nameof(GetTasksForProject), new { projectId }, newDto);
@@ -123,7 +123,7 @@ public class TaskController : ControllerBase
             updatedTask.Status,
             updatedTask.Priority,
             updatedTask.DueDate
-            // updatedTask.CreatedByUser   
+        // updatedTask.CreatedByUser   
         );
 
         // build project dto 
@@ -138,6 +138,7 @@ public class TaskController : ControllerBase
             updatedProject.Priority,
             updatedProject.Budget,
             updatedProject.Currency,
+            updatedProject.CreatedAt,
             updatedProject.StartDate,
             updatedProject.DueDate,
             updatedProject.AllocatAssignments

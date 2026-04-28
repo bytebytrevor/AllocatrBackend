@@ -21,7 +21,14 @@ public class AllocatProfileController : ControllerBase
         AllocatProfileService allocatProfileService)
     {
         _userManager = userManager;
-        _allocatProfileService = allocatProfileService;        
+        _allocatProfileService = allocatProfileService;
+    }
+
+    // GET api/allocats/profiles
+    [HttpGet("")]
+    public async Task<IActionResult> GetAllAllocats()
+    {
+        return Ok();
     }
 
     // GET api/allocats/profiles/{allocatProfileId}
@@ -31,8 +38,8 @@ public class AllocatProfileController : ControllerBase
         var allocatProfile = await _allocatProfileService.GetAllocatProfileByUserIdAsync(allocatProfileId);
         if (allocatProfile == null)
             return NotFound();
-        
-        return Ok(allocatProfile);        
+
+        return Ok(allocatProfile);
     }
 
     [HttpPost("")]
@@ -42,18 +49,18 @@ public class AllocatProfileController : ControllerBase
             return BadRequest(ModelState);
 
         var user = await _userManager.GetUserAsync(User);
-        
+
         if (user == null)
             return Unauthorized();
-        
+
         if (!user.IsAllocat)
             return Forbid("User is not allocat");
 
-        var existingProfile = await _allocatProfileService.GetAllocatProfileByUserIdAsync(user.Id);        
-        
+        var existingProfile = await _allocatProfileService.GetAllocatProfileByUserIdAsync(user.Id);
+
         if (existingProfile != null)
-            return BadRequest("Profile already exists");        
-        
+            return BadRequest("Profile already exists");
+
         var allocatProfile = new AllocatProfile
         {
             AllocatrUserId = user.Id,
@@ -65,7 +72,7 @@ public class AllocatProfileController : ControllerBase
             IsVisible = true,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
-        };       
+        };
 
         var createdAllocatProfile = await _allocatProfileService.CreateAllocatProfileAsync(allocatProfile);
 
@@ -85,6 +92,6 @@ public class AllocatProfileController : ControllerBase
             nameof(GetAllocatProfileByUserId),
             new { allocatProfileId = createdAllocatProfile.AllocatrUserId },
             result
-        );        
+        );
     }
 }

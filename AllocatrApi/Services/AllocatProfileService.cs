@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.CompilerServices;
 using AllocatrApi.Data;
 using AllocatrApi.Dtos;
 using AllocatrApi.Models;
@@ -12,7 +13,7 @@ public class AllocatProfileService
 
     public AllocatProfileService(AllocatrDbContext db)
     {
-        _db = db;        
+        _db = db;
     }
 
     public async Task<AllocatProfile> CreateAllocatProfileAsync(AllocatProfile allocatProfile)
@@ -23,7 +24,7 @@ public class AllocatProfileService
         _db.AllocatProfiles.Add(allocatProfile);
         await _db.SaveChangesAsync();
 
-        return allocatProfile;        
+        return allocatProfile;
     }
 
     // Get allocat profile by user id
@@ -31,7 +32,7 @@ public class AllocatProfileService
     {
         return await _db.AllocatProfiles
             .Where(a => a.AllocatrUserId == allocatId)
-            .Select(a => new AllocatProfileDto (
+            .Select(a => new AllocatProfileDto(
                 a.AllocatrUserId,
                 a.IdNumber,
                 a.HourlyRate,
@@ -42,8 +43,24 @@ public class AllocatProfileService
                 a.CreatedAt,
                 a.UpdatedAt
         ))
-        .FirstOrDefaultAsync();   
+        .FirstOrDefaultAsync();
     }
 
-
+    // Get all allocats
+    public async Task<List<AllocatProfileDto>> GetAllAllocatsProfilesAsync()
+    {
+        return await _db.AllocatProfiles
+            .Select(a => new AllocatProfileDto(
+                a.AllocatrUserId,
+                a.IdNumber,
+                a.HourlyRate,
+                a.Bio,
+                a.Availability,
+                a.YearsExperience,
+                a.IsVisible,
+                a.CreatedAt,
+                a.UpdatedAt
+            ))
+            .ToListAsync();
+    }
 }

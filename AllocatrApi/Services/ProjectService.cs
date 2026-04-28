@@ -31,6 +31,7 @@ public class ProjectService
                 p.Priority,
                 p.Budget,
                 p.Currency,
+                p.CreatedAt,
                 p.StartDate,
                 p.DueDate,
                 p.AllocatAssignments
@@ -53,6 +54,7 @@ public class ProjectService
                 p.Priority,
                 p.Budget,
                 p.Currency,
+                p.CreatedAt,
                 p.StartDate,
                 p.DueDate,
                 p.AllocatAssignments

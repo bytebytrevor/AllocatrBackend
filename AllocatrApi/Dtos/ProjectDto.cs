@@ -13,6 +13,7 @@ public record class ProjectDto(
     string? Priority,
     decimal? Budget,
     string Currency,
+    DateTime CreatedAt,
     DateOnly? StartDate,
     DateOnly? DueDate,
     ICollection<ProjectAllocat> AllocatAssignments

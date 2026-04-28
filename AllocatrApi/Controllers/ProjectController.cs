@@ -47,6 +47,7 @@ public class ProjectController : ControllerBase
             project.Priority,
             project.Budget,
             project.Currency,
+            project.CreatedAt,
             project.StartDate,
             project.DueDate,
             project.AllocatAssignments
@@ -120,6 +121,7 @@ public class ProjectController : ControllerBase
             project.Priority,
             project.Budget,
             project.Currency,
+            project.CreatedAt,
             project.StartDate,
             project.DueDate,
             project.AllocatAssignments
