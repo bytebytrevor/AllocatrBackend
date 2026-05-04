@@ -47,7 +47,7 @@ public class AllocatProfileService
     }
 
     // Get all allocats
-    public async Task<List<AllocatProfileDto>> GetAllAllocatsProfilesAsync()
+    public async Task<List<AllocatProfileDto>> GetAllAllocatProfilesAsync()
     {
         return await _db.AllocatProfiles
             .Select(a => new AllocatProfileDto(

@@ -28,7 +28,11 @@ public class AllocatProfileController : ControllerBase
     [HttpGet("")]
     public async Task<IActionResult> GetAllAllocats()
     {
-        return Ok();
+        var allocatProfiles = await _allocatProfileService.GetAllAllocatProfilesAsync();
+        if (allocatProfiles == null)
+            return NotFound();
+            
+        return Ok(allocatProfiles);
     }
 
     // GET api/allocats/profiles/{allocatProfileId}
