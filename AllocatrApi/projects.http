@@ -86,19 +86,19 @@ POST http://localhost:5206/api/auth/login
 Content-Type: application/json
 
 {
-  "email": "user5@email.com",
-  "password": "User5@email.com"
+  "email": "user6@email.com",
+  "password": "User6@email.com"
 }
 
 ###
 
 POST http://localhost:5206/api/allocats/profiles
 Content-Type: application/json
-Cookie: .AspNetCore.Identity.Application=CfDJ8A3yLi3MGfNFvHoCNYfEHBBgCEjikS2USi7PCKC5vRPwy1iqGWKyPX2ldsmigmrokqw5x4EyvjlL3ixdBV0Juh6VbTPVdUMlLAxGZy2kEhQQv8xrFUSC1rsj-r0mDQI6d6T0J-z-x3KjUrFnhHp9JE8EeiZVyGn1OHiHrV3drwvhEFFLWDUPbFiGjj3lvq1QdLyiXATuMHy8y7IA8rO44mL2VXKc8XBV2tefswADcJYB7fuuXmvnZF7WBLeCOpwzpr9qELaO4HVu3B1ETFzQxPi-58yaEf2hzk511uAI4BgiirBAUkzfx5EPlHopLjuTpjezMCTJnEUIc_SsTrIf2pCy8712yOA1wQD57Cg0ygnYqKOimLO6Kp_fswxGZE5EGdCgjVMq9fAyvnRTec_cbjGhfxcCAuqN_fRO6ovsm-UmhLJLTnX7n9GldQLM-Bick7WwQZSvLRIFtm-nOHCYYSgnWwA8G7oYIj89nvc_EXKpRkM9nm94eN3JjNWzk0dOtnyudiFogSIYQkjDNEDjCz4VNR6d7-N7QYZ91LYQN36B8GijBsVb5yTVP83RIfSU0Um0rfrFaYPDoLvc889BJUj-hrg7pU23hLgL_kwJXOIMmx_8fXNa9lf3R7Z9Cxr9ub_scEbvzUlasvwJv9o8dXoi4jEJ8Sm4LwImXtl6cbqTwQPU21hNmKkIcEmjXXSY-dlrnL0qcy3xi6K2A8iVSVu5jgOi8Qp0cFL3SMlCiTkhMibSep23xfOECDSa_FY_Iw
+Cookie: .AspNetCore.Identity.Application=CfDJ8EsamDq6kVVAuPkH6O2ckLvzYtLkCpLY-0nsqFH0kR0rrYWOJhWmiPUwd1C10opC3j5YPjSg-UOEHo42NF4UxfI4vfLdKtXFdR4ULu3Zr-Cx9hY5lqvJFxzLFr-60KBY_nE1FbqbZZQZoMmRuvUNZMyrHUi3yoEF_P25ZTA9pcGf2aFWfXI6Idq2ECcNYZ5UeGEmtaQcnqANmXG93oysMQlY6ZE68Iv4I8TPzZOR6egF3mBmB3TqQJdCoFMO6nlOKxcoFPnB95TiqzoKw5V3rd8IXdwG85G6bAH6XYVvQSdMNrC_ESXrgnoYTU2foiX7QcCJdJsBm_UFoU7OJwgeFELQUepHgt0Llz3wI2-bHOCN2-agcyCEjavvB8U_WKN0sE74-WwK1UpA_O2a1CCj-DAESTquf04qGlAGOmAH5L7UrofjPHNpv7M6Ly6nHFSqLS0aiYc6ba_Owg37AND6YAqo6OqnxyPb8OQznosthPVCxoA7j03u1vnifHJtyIDgzmDuBFsqoRudLfvmCG4FYcgQwSABZWSzJFAHwxCmsQUedg2TNElXzTaCVEYZe-9eQZbNbDfnhjz9uCA_OcyfS6TgBxWOUgTYYk7QfqO0hm1n-wm3LuAIAwBfMbcfv7SuUOT-PT9eNX5wjRABcQiHYLOXstyyYudIRQDE6VX9RCGiXAWH1F14DcxaoHcrCI6eOjL8J1lPjM6IuQbzJ_Hb0MVMQaasdP-XKnGhWyWThbrvHcJ1TTZGkP0Of7oEGUHUeA
 
 {
-  "idNumber": "00000000B00",
-  "hourlyRate": 28.00,
-  "bio": "I am an allocat",
-  "yearsExperience": 7
+  "idNumber": "00000000C00",
+  "hourlyRate": 21.00,
+  "bio": "I the newest allocat on th block. I have 4 years of experience in home services and I'm ready to take on new projects and challenges.",
+  "yearsExperience": 4
 }

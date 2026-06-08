@@ -81,7 +81,7 @@ public class AllocatProfileController : ControllerBase
         var createdAllocatProfile = await _allocatProfileService.CreateAllocatProfileAsync(allocatProfile);
 
         var result = new AllocatProfileDto(
-            createdAllocatProfile.AllocatrUserId,
+            createdAllocatProfile.AllocatrUser.FullName,
             createdAllocatProfile.IdNumber,
             createdAllocatProfile.HourlyRate,
             createdAllocatProfile.Bio,

@@ -1,7 +1,8 @@
 namespace AllocatrApi.Dtos;
 
 public record class AllocatProfileDto (
-    string AllocatrUserId,
+    string? FullName,
+    // string AllocatrUserId,
     string? IdNumber,
     decimal? HourlyRate,
     string? Bio,

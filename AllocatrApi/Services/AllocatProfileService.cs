@@ -51,7 +51,7 @@ public class AllocatProfileService
     {
         return await _db.AllocatProfiles
             .Select(a => new AllocatProfileDto(
-                a.AllocatrUserId,
+                a.AllocatrUser.FullName,
                 a.IdNumber,
                 a.HourlyRate,
                 a.Bio,
