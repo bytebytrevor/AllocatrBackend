@@ -14,8 +14,8 @@ public class AllocatProfile
     public string? Bio { get; set; }
     public string? Availability { get; set; }
     public int? YearsExperience { get; set; }
+    public float Rating { get; set;} = 0.0f;
     public bool IsVisible { get; set; } = true;
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
-
 }
