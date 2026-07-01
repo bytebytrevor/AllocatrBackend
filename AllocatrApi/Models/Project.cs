@@ -1,4 +1,4 @@
-using AllocatrApi.Models;
+namespace AllocatrApi.Models;
 
 public class Project
 {
@@ -18,7 +18,7 @@ public class Project
     public string? Priority { get; set; }
 
     // Ownership
-    public string UserId { get; set; } = null!;
+    public Guid UserId { get; set; }
     public AllocatrUser User { get; set; } = null!;
 
     // Dates
@@ -41,5 +41,6 @@ public class Project
     public ICollection<ProjectAttachment> Attachments { get; set; } = new List<ProjectAttachment>();
     public ICollection<TaskItem> Tasks { get; set; } = new List<TaskItem>();
     public ICollection<ProjectMessage> Messages { get; set; } = new List<ProjectMessage>();
+    public ICollection<Review> Reviews { get; set; } = [];
 }
 

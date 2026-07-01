@@ -28,12 +28,13 @@ public class AllocatProfileService
     }
 
     // Get allocat profile by user id
-    public async Task<AllocatProfileDto?> GetAllocatProfileByUserIdAsync(string allocatId)
+    public async Task<AllocatProfileDto?> GetAllocatProfileByUserIdAsync(Guid allocatId)
     {
         return await _db.AllocatProfiles
             .Where(a => a.AllocatrUserId == allocatId)
             .Select(a => new AllocatProfileDto(
                 a.AllocatrUserId,
+                a.AllocatrUser.FullName,
                 a.IdNumber,
                 a.HourlyRate,
                 a.Bio,
@@ -51,6 +52,7 @@ public class AllocatProfileService
     {
         return await _db.AllocatProfiles
             .Select(a => new AllocatProfileDto(
+                a.AllocatrUserId,
                 a.AllocatrUser.FullName,
                 a.IdNumber,
                 a.HourlyRate,

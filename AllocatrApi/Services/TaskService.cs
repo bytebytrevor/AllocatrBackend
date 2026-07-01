@@ -30,14 +30,14 @@ public class TaskService
         //     .ToListAsync();
 
         return await _db.TaskItems
-            .Select(t => new TaskDto (
+            .Select(t => new TaskDto(
                 t.Id,
                 t.Title,
                 t.Description,
                 t.Status,
                 t.Priority,
                 t.DueDate
-                // t.CreatedByUser
+            // t.CreatedByUser
             ))
             .ToListAsync();
     }
@@ -55,7 +55,7 @@ public class TaskService
                 t.Status,
                 t.Priority,
                 t.DueDate
-                // t.CreatedByUser
+            // t.CreatedByUser
             ))
             .ToListAsync();
     }
@@ -160,7 +160,7 @@ public class TaskService
         if (task == null)
             return false;
 
-        task.AssignedToId = userId.ToString();
+        task.AssignedToId = userId;
         task.UpdatedAt = DateTime.UtcNow;
 
         await _db.SaveChangesAsync();

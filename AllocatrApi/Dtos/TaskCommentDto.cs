@@ -5,6 +5,6 @@ public record class TaskCommentDto(
     DateTime CreatedAt,
     DateTime? UpdatedAt,
     string Comment,
-    string CreatedById,
+    Guid CreatedById,
     Guid TaskItemId
 );

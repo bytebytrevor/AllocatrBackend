@@ -15,7 +15,7 @@ public class ProjectService
     }
 
     // Get all projects for logged in user
-    public async Task<List<ProjectDto>> GetProjectsByUserAsync(string userId)
+    public async Task<List<ProjectDto>> GetProjectsByUserAsync(Guid userId)
     {
         return await _db.Projects
             .Where(p => p.UserId == userId)

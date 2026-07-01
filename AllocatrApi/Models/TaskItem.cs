@@ -10,9 +10,9 @@ public class TaskItem
     public string Status { get; set; } = "todo";
     public string Priority { get; set; } = null!;
     public int Order { get; set; }
-    public string? AssignedToId { get; set; }
+    public Guid? AssignedToId { get; set; }
     public AllocatrUser? AssignedTo { get; set; }
-    public string CreatedByUserId { get; set; } = null!;
+    public Guid CreatedByUserId { get; set; }
     public AllocatrUser CreatedByUser { get; set; } = null!;
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }

@@ -24,7 +24,7 @@ builder.Services.AddDbContext<AllocatrDbContext>(options =>
 );
 
 // ----------------- Identity -----------------
-builder.Services.AddIdentity<AllocatrUser, IdentityRole>(options =>
+builder.Services.AddIdentity<AllocatrUser, IdentityRole<Guid>>(options =>
 {
 	options.Password.RequireDigit = true;
 	options.Password.RequireNonAlphanumeric = false;

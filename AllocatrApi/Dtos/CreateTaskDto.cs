@@ -4,6 +4,6 @@ public record class CreateTaskDto(
     string Title,
     string? Description,
     DateTime? DueDate,
-    string? AssignedToId,
+    Guid? AssignedToId,
     string Priority = "standard"
 );

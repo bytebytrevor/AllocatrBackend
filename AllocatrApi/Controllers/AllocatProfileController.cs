@@ -31,13 +31,13 @@ public class AllocatProfileController : ControllerBase
         var allocatProfiles = await _allocatProfileService.GetAllAllocatProfilesAsync();
         if (allocatProfiles == null)
             return NotFound();
-            
+
         return Ok(allocatProfiles);
     }
 
     // GET api/allocats/profiles/{allocatProfileId}
     [HttpGet("{allocatProfileId:guid}")]
-    public async Task<IActionResult> GetAllocatProfileByUserId(string allocatProfileId)
+    public async Task<IActionResult> GetAllocatProfileByUserId(Guid allocatProfileId)
     {
         var allocatProfile = await _allocatProfileService.GetAllocatProfileByUserIdAsync(allocatProfileId);
         if (allocatProfile == null)
@@ -81,6 +81,7 @@ public class AllocatProfileController : ControllerBase
         var createdAllocatProfile = await _allocatProfileService.CreateAllocatProfileAsync(allocatProfile);
 
         var result = new AllocatProfileDto(
+            createdAllocatProfile.AllocatrUserId,
             createdAllocatProfile.AllocatrUser.FullName,
             createdAllocatProfile.IdNumber,
             createdAllocatProfile.HourlyRate,

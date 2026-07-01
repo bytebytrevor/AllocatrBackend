@@ -1,4 +1,3 @@
-using System;
 using AllocatrApi.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -15,7 +14,7 @@ public class AllocatProfileConfiguration : IEntityTypeConfiguration<AllocatProfi
 
         entity.HasOne(a => a.AllocatrUser)
             .WithOne(u => u.AllocatProfile)
-            .HasForeignKey<AllocatProfile> (a => a.AllocatrUserId)
+            .HasForeignKey<AllocatProfile>(a => a.AllocatrUserId)
             .OnDelete(DeleteBehavior.Cascade);
 
         entity.Property(a => a.AllocatrUserId)

@@ -1,14 +1,14 @@
 namespace AllocatrApi.Dtos;
 
-public record class AllocatProfileDto (
+public record class AllocatProfileDto(
+    Guid AllocatrUserId,
     string? FullName,
-    // string AllocatrUserId,
     string? IdNumber,
     decimal? HourlyRate,
     string? Bio,
-    string?Availability,
+    string? Availability,
     int? YearsExperience,
     bool IsVisible,
     DateTime CreatedAt,
-    DateTime UpdatedAt    
+    DateTime UpdatedAt
 );

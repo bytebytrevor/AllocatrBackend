@@ -1,3 +1,5 @@
+using AllocatrApi.Models;
+
 public class ProjectAttachment
 {
     public Guid Id { get; set; }

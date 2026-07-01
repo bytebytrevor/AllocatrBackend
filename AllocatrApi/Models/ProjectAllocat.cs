@@ -5,7 +5,7 @@ public class ProjectAllocat
     public Guid ProjectId { get; set; }
     public Project Project { get; set; } = null!;
 
-    public string AllocatId { get; set; } = null!;
+    public Guid AllocatId { get; set; }
     public AllocatrUser Allocat { get; set; } = null!;
 
     public DateTime AssignedAt { get; set; } = DateTime.UtcNow;

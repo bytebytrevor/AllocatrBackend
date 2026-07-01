@@ -7,7 +7,7 @@ public class ProjectMessage
     public Guid ProjectId { get; set; }
     public Project Project { get; set; } = null!;
 
-    public string SenderId { get; set; } = null!;
+    public Guid SenderId { get; set; }
     public AllocatrUser Sender { get; set; } = null!;
 
     public string Message { get; set; } = string.Empty;

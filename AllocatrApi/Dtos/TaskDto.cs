@@ -10,14 +10,14 @@ public record class TaskDto(
     string Status,
     string Priority,
     // int Order,
-    // string? AssignedToId,
+    // Guid? AssignedToId,
     // DateTime? UpdatedAt,
     // DateTime CreatedAt,
     DateTime? DueDate
-    // DateTime? CompletedAt,
-    // ICollection<TaskComment>? Comments,
-    // string AssignedToId,
-    // AllocatrUser AssignedTo,
-    // AllocatrUser CreatedByUser
-    // Guid ProjectId
+// DateTime? CompletedAt,
+// ICollection<TaskComment>? Comments,
+// Guid AssignedToId,
+// AllocatrUser AssignedTo,
+// AllocatrUser CreatedByUser
+// Guid ProjectId
 );
