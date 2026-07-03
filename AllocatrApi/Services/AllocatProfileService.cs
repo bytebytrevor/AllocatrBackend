@@ -1,5 +1,3 @@
-using System;
-using System.Runtime.CompilerServices;
 using AllocatrApi.Data;
 using AllocatrApi.Dtos;
 using AllocatrApi.Models;
@@ -25,6 +23,12 @@ public class AllocatProfileService
         await _db.SaveChangesAsync();
 
         return allocatProfile;
+    }
+
+    //Get allocat profile
+    public async Task<AllocatProfileDto> GetAllocatProfile()
+    {
+        var user = await _userManager
     }
 
     // Get allocat profile by user id

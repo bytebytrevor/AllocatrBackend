@@ -46,8 +46,8 @@ public class AllocatProfileController : ControllerBase
         return Ok(allocatProfile);
     }
 
-    [HttpPost("")]
-    public async Task<IActionResult> CreateAllocatProfile(CreateAllocatProfileDto dto)
+    [HttpPost("create")]
+    public async Task<IActionResult> CreateAllocatProfile([FromForm] CreateAllocatProfileDto dto)
     {
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
@@ -70,12 +70,10 @@ public class AllocatProfileController : ControllerBase
             AllocatrUserId = user.Id,
             IdNumber = dto.IdNumber,
             HourlyRate = dto.HourlyRate,
+            YearsExperience = dto.YearsExperience,
             Bio = dto.Bio,
             Availability = "available",
-            YearsExperience = dto.YearsExperience,
             IsVisible = true,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
         };
 
         var createdAllocatProfile = await _allocatProfileService.CreateAllocatProfileAsync(allocatProfile);
@@ -98,5 +96,11 @@ public class AllocatProfileController : ControllerBase
             new { allocatProfileId = createdAllocatProfile.AllocatrUserId },
             result
         );
+    }
+
+    [HttpGet("me")]
+    public async Task<IActionResult> GetAllocatProfile()
+    {
+
     }
 }

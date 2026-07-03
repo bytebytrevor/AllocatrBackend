@@ -1,8 +1,17 @@
+using Microsoft.AspNetCore.Http;
+
 namespace AllocatrApi.Dtos;
 
-public record class CreateAllocatProfileDto (
-    string? IdNumber,
-    decimal? HourlyRate,
-    string? Bio,
-    int? YearsExperience
-);
+public class CreateAllocatProfileDto
+{
+    public string? IdNumber { get; set; }
+    public decimal? HourlyRate { get; set; }
+    public string? Bio { get; set; }
+    public int? YearsExperience { get; set; }
+
+    public List<string> Skills { get; set; } = [];
+
+    public IFormFile? IdDocument { get; set; }
+
+    public List<IFormFile> CredentialFiles { get; set; } = [];
+}
