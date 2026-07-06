@@ -1,3 +1,6 @@
+using System.Collections;
+using AllocatrApi.Models;
+
 namespace AllocatrApi.Dtos;
 
 public record class AllocatProfileDto(
@@ -9,6 +12,7 @@ public record class AllocatProfileDto(
     string? Availability,
     int? YearsExperience,
     bool IsVisible,
+    List<String> Skills,
     DateTime CreatedAt,
     DateTime UpdatedAt
 );

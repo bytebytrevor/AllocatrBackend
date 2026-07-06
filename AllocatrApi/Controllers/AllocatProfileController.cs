@@ -1,4 +1,3 @@
-using System;
 using AllocatrApi.Dtos;
 using AllocatrApi.Models;
 using AllocatrApi.Services;
@@ -22,28 +21,6 @@ public class AllocatProfileController : ControllerBase
     {
         _userManager = userManager;
         _allocatProfileService = allocatProfileService;
-    }
-
-    // GET api/allocats/profiles
-    [HttpGet("")]
-    public async Task<IActionResult> GetAllAllocats()
-    {
-        var allocatProfiles = await _allocatProfileService.GetAllAllocatProfilesAsync();
-        if (allocatProfiles == null)
-            return NotFound();
-
-        return Ok(allocatProfiles);
-    }
-
-    // GET api/allocats/profiles/{allocatProfileId}
-    [HttpGet("{allocatProfileId:guid}")]
-    public async Task<IActionResult> GetAllocatProfileByUserId(Guid allocatProfileId)
-    {
-        var allocatProfile = await _allocatProfileService.GetAllocatProfileByUserIdAsync(allocatProfileId);
-        if (allocatProfile == null)
-            return NotFound();
-
-        return Ok(allocatProfile);
     }
 
     [HttpPost("create")]
@@ -74,6 +51,7 @@ public class AllocatProfileController : ControllerBase
             Bio = dto.Bio,
             Availability = "available",
             IsVisible = true,
+            Skills = dto.Skills
         };
 
         var createdAllocatProfile = await _allocatProfileService.CreateAllocatProfileAsync(allocatProfile);
@@ -87,20 +65,55 @@ public class AllocatProfileController : ControllerBase
             createdAllocatProfile.Availability,
             createdAllocatProfile.YearsExperience,
             createdAllocatProfile.IsVisible,
+            createdAllocatProfile.Skills
+                .Select(ps => ps.Skill.Name)
+                .ToList(),
             createdAllocatProfile.CreatedAt,
             createdAllocatProfile.UpdatedAt
         );
 
         return CreatedAtAction(
-            nameof(GetAllocatProfileByUserId),
+            nameof(GetAllocatProfileById),
             new { allocatProfileId = createdAllocatProfile.AllocatrUserId },
             result
         );
     }
 
     [HttpGet("me")]
-    public async Task<IActionResult> GetAllocatProfile()
+    public async Task<IActionResult> GetMyAllocatProfile()
     {
+        var user = await _userManager.GetUserAsync(User);
 
+        if (user == null)
+            return Unauthorized();
+
+        var allocatProfile = await _allocatProfileService.GetAllocatProfileByUserIdAsync(user.Id);
+        if (allocatProfile == null)
+            return NotFound();
+
+        return Ok(allocatProfile);
+    }
+
+    // GET api/allocats/profiles/{allocatProfileId}
+    [AllowAnonymous]
+    [HttpGet("{allocatProfileId:guid}")]
+    public async Task<IActionResult> GetAllocatProfileById(Guid allocatProfileId)
+    {
+        var allocatProfile = await _allocatProfileService.GetAllocatProfileByUserIdAsync(allocatProfileId);
+        if (allocatProfile == null)
+            return NotFound();
+
+        return Ok(allocatProfile);
+    }
+
+    // GET api/allocats/profiles
+    [HttpGet("")]
+    public async Task<IActionResult> GetAllAllocatProfiles()
+    {
+        var allocatProfiles = await _allocatProfileService.GetAllAllocatProfilesAsync();
+        if (allocatProfiles == null)
+            return NotFound();
+
+        return Ok(allocatProfiles);
     }
 }

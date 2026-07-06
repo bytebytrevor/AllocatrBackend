@@ -1,6 +1,7 @@
 using AllocatrApi.Data;
 using AllocatrApi.Dtos;
 using AllocatrApi.Models;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace AllocatrApi.Services;
@@ -25,12 +26,6 @@ public class AllocatProfileService
         return allocatProfile;
     }
 
-    //Get allocat profile
-    public async Task<AllocatProfileDto> GetAllocatProfile()
-    {
-        var user = await _userManager
-    }
-
     // Get allocat profile by user id
     public async Task<AllocatProfileDto?> GetAllocatProfileByUserIdAsync(Guid allocatId)
     {
@@ -45,6 +40,9 @@ public class AllocatProfileService
                 a.Availability,
                 a.YearsExperience,
                 a.IsVisible,
+                a.Skills
+                    .Select(ps => ps.Skill.Name)
+                    .ToList(),
                 a.CreatedAt,
                 a.UpdatedAt
         ))
@@ -64,6 +62,9 @@ public class AllocatProfileService
                 a.Availability,
                 a.YearsExperience,
                 a.IsVisible,
+                a.Skills
+                    .Select(ps => ps.Skill.Name)
+                    .ToList(),
                 a.CreatedAt,
                 a.UpdatedAt
             ))

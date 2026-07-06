@@ -16,6 +16,9 @@ public class AllocatrDbContext(DbContextOptions<AllocatrDbContext> options)
     public DbSet<AllocatProfile> AllocatProfiles { get; set; } = null!;
     public DbSet<TaskComment> TaskComments { get; set; } = null!;
     public DbSet<Review> Reviews { get; set; } = null!;
+    public DbSet<Skill> Skills { get; set; } = null!;
+    public DbSet<AllocatProfileSkill> AllocatProfileSkills { get; set; } = null!;
+    public DbSet<SkillCategory> SkillCategories { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

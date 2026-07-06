@@ -19,4 +19,5 @@ public class AllocatProfile
     public DateTime UpdatedAt { get; set; }
 
     public ICollection<Review> Reviews { get; set; } = [];
+    public ICollection<AllocatProfileSkill> Skills { get; set; } = [];
 }
