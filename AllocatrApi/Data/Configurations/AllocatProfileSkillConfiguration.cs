@@ -2,6 +2,8 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using AllocatrApi.Models;
 using Microsoft.EntityFrameworkCore;
 
+namespace AllocatrApi.Data.Configurations;
+
 class AllocatProfileSkillConfiguration : IEntityTypeConfiguration<AllocatProfileSkill>
 {
     public void Configure(EntityTypeBuilder<AllocatProfileSkill> builder)

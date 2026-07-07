@@ -2,7 +2,7 @@ using AllocatrApi.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace AllocatrApi.Configurations;
+namespace AllocatrApi.Data.Configurations;
 
 public class TaskCommentConfiguration : IEntityTypeConfiguration<TaskComment>
 {

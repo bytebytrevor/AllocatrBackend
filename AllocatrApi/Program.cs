@@ -51,6 +51,7 @@ builder.Services.AddSingleton<SupabaseService>();
 builder.Services.AddScoped<ProjectService>();
 builder.Services.AddScoped<AllocatProfileService>();
 builder.Services.AddScoped<TaskService>();
+builder.Services.AddScoped<SkillCategoryService>();
 
 var app = builder.Build();
 
@@ -61,5 +62,13 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.MapGet("/", () => "Hello World!");
+
+// ----------------- Database seeder and auto migrations -----------------
+using (var scope = app.Services.CreateScope())
+{
+	var db = scope.ServiceProvider.GetRequiredService<AllocatrDbContext>();
+	await db.Database.MigrateAsync();
+	await DatabaseSeeder.SeedAsync(db);
+}
 
 app.Run();

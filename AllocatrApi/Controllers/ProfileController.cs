@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace AllocatrApi.Controllers;
 
 [ApiController]
-[Route("api/profile")]
+[Route("api/profiles")]
 [Authorize]
 public class ProfileController : ControllerBase
 {

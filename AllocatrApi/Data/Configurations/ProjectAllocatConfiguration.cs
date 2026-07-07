@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
+namespace AllocatrApi.Data.Configurations;
+
 public class ProjectAllocatConfiguration : IEntityTypeConfiguration<ProjectAllocat>
 {
     public void Configure(EntityTypeBuilder<ProjectAllocat> builder)

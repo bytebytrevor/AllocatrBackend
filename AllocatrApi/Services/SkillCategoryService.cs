@@ -14,20 +14,40 @@ public class SkillCategoryService
         _db = db;
     }
 
-    public async Task<SkillCategory> CreateSkillCategoryAsync(SkillCategory skillCategory)
+    public async Task<SkillCategoryDto> CreateSkillCategoryAsync(CreateSkillCategoryDto dto)
     {
-        skillCategory.CreatedAt = DateTime.Now;
-        skillCategory.UpdatedAt = DateTime.Now;
+        var skillCategory = new SkillCategory
+        {
+            Id = Guid.NewGuid(),
+            Name = dto.Name.Trim(),
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
 
         _db.SkillCategories.Add(skillCategory);
         await _db.SaveChangesAsync();
 
-        return skillCategory;
+        return new SkillCategoryDto(
+            skillCategory.Id,
+            skillCategory.Name
+        );
     }
 
-    public async Task<List<SkillCategoryDto>> GetAllSkillCategories()
+    public async Task<SkillCategoryDto?> GetSkillCategoryByIdAsync(Guid id)
     {
         return await _db.SkillCategories
+            .Where(sc => sc.Id == id)
+            .Select(sc => new SkillCategoryDto(
+                sc.Id,
+                sc.Name
+            ))
+            .FirstOrDefaultAsync();
+    }
+
+    public async Task<List<SkillCategoryDto>> GetAllSkillCategoriesAsync()
+    {
+        return await _db.SkillCategories
+            .OrderBy(sc => sc.Name)
             .Select(sc => new SkillCategoryDto(
                 sc.Id,
                 sc.Name
