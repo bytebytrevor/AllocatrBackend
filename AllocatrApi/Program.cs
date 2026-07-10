@@ -52,6 +52,7 @@ builder.Services.AddScoped<ProjectService>();
 builder.Services.AddScoped<AllocatProfileService>();
 builder.Services.AddScoped<TaskService>();
 builder.Services.AddScoped<SkillCategoryService>();
+builder.Services.AddScoped<SkillService>();
 
 var app = builder.Build();
 
