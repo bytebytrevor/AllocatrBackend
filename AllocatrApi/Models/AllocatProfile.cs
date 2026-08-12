@@ -20,4 +20,5 @@ public class AllocatProfile
 
     public ICollection<Review> Reviews { get; set; } = [];
     public ICollection<AllocatProfileSkill> Skills { get; set; } = [];
+    public ICollection<ProjectAllocat> ProjectAssignments { get; set; } = [];
 }
