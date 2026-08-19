@@ -242,4 +242,38 @@ public class ProjectAllocatController : ControllerBase
             return Forbid();
         }
     }
+
+    // GET:
+    // // api/projects/{projectId}/allocats/members
+    [HttpGet("members")]
+    public async Task<ActionResult<List<ProjectAllocatMemberDto>>> GetProjectMembers(
+        Guid projectId)
+    {
+        var user = await _userManager.GetUserAsync(User);
+
+        if (user == null)
+            return Unauthorized();
+
+        try
+        {
+            var members =
+                await _projectAllocatService.GetProjectMembersAsync(
+                    projectId,
+                    user.Id
+                );
+
+            return Ok(members);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new
+            {
+                message = ex.Message
+            });
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Forbid();
+        }
+    }
 }

@@ -13,6 +13,7 @@ public record class ProjectDto(
     string? Priority,
     decimal? Budget,
     string Currency,
+    // bool HasAcceptedAllocat,
     DateTime CreatedAt,
     DateOnly? StartDate,
     DateOnly? DueDate,

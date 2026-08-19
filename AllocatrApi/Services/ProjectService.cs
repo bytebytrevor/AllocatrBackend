@@ -57,7 +57,7 @@ public class ProjectService
                 p.CreatedAt,
                 p.StartDate,
                 p.DueDate,
-                p.AllocatAssignments
+                p.AllocatAssignments,
             ))
             .ToListAsync();
     }

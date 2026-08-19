@@ -261,7 +261,86 @@ public class ProjectAllocatService
                 pa.RemovedAt
             ))
             .ToListAsync();
-    }    
+    }
+
+    // public async Task<List<ProjectAllocatMemberDto>> GetProjectMembersAsync(
+    //     Guid projectId,
+    //     Guid currentUserId)
+    // {
+    //     var project = await _db.Projects
+    //         .AsNoTracking()
+    //         .FirstOrDefaultAsync(p => p.Id == projectId);
+
+    //     if (project == null)
+    //         throw new KeyNotFoundException("Project not found.");
+
+    //     if (project.UserId != currentUserId)
+    //         throw new UnauthorizedAccessException(
+    //             "You do not have permission to view this project's members."
+    //         );
+
+    //     var members = await _db.ProjectAllocats
+    //         .AsNoTracking()
+    //         .Where(pa =>
+    //             pa.ProjectId == projectId &&
+    //             (
+    //                 pa.Status == ProjectAllocatStatus.Invited ||
+    //                 pa.Status == ProjectAllocatStatus.Accepted
+    //             )
+    //         )
+
+    //         // Sort entities BEFORE creating the DTO
+    //         .OrderBy(pa => pa.Status)
+    //         .ThenBy(pa => pa.AllocatProfile.AllocatrUser.FullName)
+
+    //         .Select(pa => new ProjectAllocatMemberDto(
+    //             pa.AllocatProfileId,
+    //             pa.AllocatProfile.AllocatrUser.FullName,
+    //             pa.AllocatProfile.AllocatrUser.AvatarUrl,
+    //             pa.Status,
+    //             pa.InvitedAt,
+    //             pa.RespondedAt
+    //         ))
+    //         .ToListAsync();
+
+    //     return members;
+    // }
+
+    public async Task<List<ProjectAllocatMemberDto>> GetProjectMembersAsync(
+        Guid projectId,
+        Guid currentUserId)
+    {
+        var project = await _db.Projects
+            .AsNoTracking()
+            .FirstOrDefaultAsync(p => p.Id == projectId);
+
+        if (project == null)
+            throw new KeyNotFoundException("Project not found.");
+
+        if (project.UserId != currentUserId)
+            throw new UnauthorizedAccessException(
+                "You do not have permission to view this project's members."
+            );
+
+        return await _db.ProjectAllocats
+            .AsNoTracking()
+            .Where(pa =>
+                pa.ProjectId == projectId &&
+                (
+                    pa.Status == ProjectAllocatStatus.Invited ||
+                    pa.Status == ProjectAllocatStatus.Accepted
+                )
+            )
+            .Select(pa => new ProjectAllocatMemberDto(
+                pa.AllocatProfileId,
+                pa.AllocatProfile.AllocatrUser.FullName,
+                pa.AllocatProfile.AllocatrUser.AvatarUrl,
+                pa.Status,
+                pa.InvitedAt,
+                pa.RespondedAt
+            ))
+            .ToListAsync();
+    }   
 
     private ProjectAllocatDto ToDto(ProjectAllocat projectAllocat)
     {
