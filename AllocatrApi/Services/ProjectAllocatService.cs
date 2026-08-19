@@ -216,7 +216,52 @@ public class ProjectAllocatService
         return ToDto(relationship);
     }
 
-    
+    public async Task<ProjectAllocatDto?> GetProjectAllocatAsync(
+        Guid projectId,
+        Guid allocatProfileId)
+    {
+        var projectAllocat = await _db.ProjectAllocats
+            .AsNoTracking()
+            .FirstOrDefaultAsync(pa =>
+                pa.ProjectId == projectId &&
+                pa.AllocatProfileId == allocatProfileId
+            );
+
+        if (projectAllocat is null)
+            return null;
+
+        return ToDto(projectAllocat);
+    }
+
+    public async Task<List<ProjectAllocatDto>> GetProjectAllocatsAsync(
+        Guid projectId,
+        Guid currentUserId)
+    {
+        var project = await _db.Projects
+            .AsNoTracking()
+            .FirstOrDefaultAsync(p => p.Id == projectId);
+
+        if (project == null)
+            throw new KeyNotFoundException("Project not found.");
+
+        if (project.UserId != currentUserId)
+            throw new UnauthorizedAccessException(
+                "You do not have permission to view this project's Allocats."
+            );
+
+        return await _db.ProjectAllocats
+            .AsNoTracking()
+            .Where(pa => pa.ProjectId == projectId)
+            .Select(pa => new ProjectAllocatDto(
+                pa.ProjectId,
+                pa.AllocatProfileId,
+                pa.Status,
+                pa.InvitedAt,
+                pa.RespondedAt,
+                pa.RemovedAt
+            ))
+            .ToListAsync();
+    }    
 
     private ProjectAllocatDto ToDto(ProjectAllocat projectAllocat)
     {
@@ -225,7 +270,8 @@ public class ProjectAllocatService
             projectAllocat.AllocatProfileId,
             projectAllocat.Status,
             projectAllocat.InvitedAt,
-            projectAllocat.RespondedAt
+            projectAllocat.RespondedAt,
+            projectAllocat.RemovedAt
         );
     }
 }

@@ -66,11 +66,11 @@ app.MapControllers();
 app.MapGet("/", () => "Hello World!");
 
 // ----------------- Database seeder and auto migrations -----------------
-using (var scope = app.Services.CreateScope())
-{
-	var db = scope.ServiceProvider.GetRequiredService<AllocatrDbContext>();
-	await db.Database.MigrateAsync();
-	await DatabaseSeeder.SeedAsync(db);
-}
+// using (var scope = app.Services.CreateScope())
+// {
+// 	var db = scope.ServiceProvider.GetRequiredService<AllocatrDbContext>();
+// 	await db.Database.MigrateAsync();
+// 	await DatabaseSeeder.SeedAsync(db);
+// }
 
 app.Run();

@@ -1,3 +1,4 @@
+using AllocatrApi.Dtos;
 using AllocatrApi.Models;
 using AllocatrApi.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -187,6 +188,58 @@ public class ProjectAllocatController : ControllerBase
             {
                 message = ex.Message
             });
+        }
+    }
+
+    // GET:
+    // api/projects/{projectId}/allocats/{allocatProfileId}
+    [HttpGet("{allocatProfileId:guid}")]
+    public async Task<ActionResult<ProjectAllocatDto>> GetProjectAllocat(
+        Guid projectId,
+        Guid allocatProfileId)
+    {
+        var projectAllocat =
+            await _projectAllocatService.GetProjectAllocatAsync(
+                projectId,
+                allocatProfileId
+            );
+
+        if (projectAllocat is null)
+            return NotFound();
+
+        return Ok(projectAllocat);
+    }
+
+    // GET:
+    // api/projects/{projectId}/allocats
+    [HttpGet]
+    public async Task<IActionResult> GetProjectAllocats(Guid projectId)
+    {
+        var user = await _userManager.GetUserAsync(User);
+
+        if (user == null)
+            return Unauthorized();
+
+        try
+        {
+            var result =
+                await _projectAllocatService.GetProjectAllocatsAsync(
+                    projectId,
+                    user.Id
+                );
+
+            return Ok(result);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new
+            {
+                message = ex.Message
+            });
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Forbid();
         }
     }
 }

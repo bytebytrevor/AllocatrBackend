@@ -7,5 +7,6 @@ public record class ProjectAllocatDto(
     Guid AllocatProfileId,
     ProjectAllocatStatus Status,
     DateTime InvitedAt,
-    DateTime? RespondedAt
+    DateTime? RespondedAt,
+    DateTime? RemovededAt
 );
