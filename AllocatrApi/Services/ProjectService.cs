@@ -1,6 +1,6 @@
-using System;
 using AllocatrApi.Data;
 using AllocatrApi.Dtos;
+using AllocatrApi.Enums;
 using Microsoft.EntityFrameworkCore;
 
 namespace AllocatrApi.Services;
@@ -18,9 +18,9 @@ public class ProjectService
     public async Task<List<ProjectDto>> GetProjectsByUserAsync(Guid userId)
     {
         return await _db.Projects
+            .AsNoTracking()
             .Where(p => p.UserId == userId)
-            .Select(p => new ProjectDto
-            (
+            .Select(p => new ProjectDto(
                 p.Id,
                 p.ProjectCode,
                 p.Title,
@@ -31,6 +31,12 @@ public class ProjectService
                 p.Priority,
                 p.Budget,
                 p.Currency,
+
+                // Argument 11
+                p.AllocatAssignments.Any(pa =>
+                    pa.Status == ProjectAllocatStatus.Accepted
+                ),
+
                 p.CreatedAt,
                 p.StartDate,
                 p.DueDate,
@@ -43,6 +49,7 @@ public class ProjectService
     public async Task<List<ProjectDto>> GetAllProjectsAsync()
     {
         return await _db.Projects
+            .AsNoTracking()
             .Select(p => new ProjectDto(
                 p.Id,
                 p.ProjectCode,
@@ -54,6 +61,12 @@ public class ProjectService
                 p.Priority,
                 p.Budget,
                 p.Currency,
+
+                // Argument 11
+                p.AllocatAssignments.Any(pa =>
+                    pa.Status == ProjectAllocatStatus.Accepted
+                ),
+
                 p.CreatedAt,
                 p.StartDate,
                 p.DueDate,
@@ -61,5 +74,33 @@ public class ProjectService
             ))
             .ToListAsync();
     }
-}
 
+    public async Task<ProjectDto?> GetProjectByIdAsync(Guid projectId)
+    {
+        return await _db.Projects
+            .AsNoTracking()
+            .Where(p => p.Id == projectId)
+            .Select(p => new ProjectDto(
+                p.Id,
+                p.ProjectCode,
+                p.Title,
+                p.Description,
+                p.Category,
+                p.Status,
+                p.Progress,
+                p.Priority,
+                p.Budget,
+                p.Currency,
+
+                p.AllocatAssignments.Any(pa =>
+                    pa.Status == ProjectAllocatStatus.Accepted
+                ),
+
+                p.CreatedAt,
+                p.StartDate,
+                p.DueDate,
+                p.AllocatAssignments
+            ))
+            .FirstOrDefaultAsync();
+    }
+}

@@ -276,4 +276,27 @@ public class ProjectAllocatController : ControllerBase
             return Forbid();
         }
     }
+
+    [HttpGet("/api/allocats/me/projects")]
+    public async Task<ActionResult<List<AllocatWorkProjectDto>>> GetMyWorkProjects()
+    {
+        var user = await _userManager.GetUserAsync(User);
+
+        if (user == null)
+            return Unauthorized();
+
+        try
+        {
+            var result =
+                await _projectAllocatService.GetMyWorkProjectsAsync(
+                    user.Id
+                );
+
+            return Ok(result);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Forbid();
+        }
+    }
 }

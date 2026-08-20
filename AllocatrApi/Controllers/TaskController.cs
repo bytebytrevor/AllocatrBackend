@@ -4,6 +4,7 @@ using AllocatrApi.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using AllocatrApi.Enums;
 
 namespace AllocatrApi.Controllers;
 
@@ -138,6 +139,9 @@ public class TaskController : ControllerBase
             updatedProject.Priority,
             updatedProject.Budget,
             updatedProject.Currency,
+            updatedProject.AllocatAssignments.Any(pa =>
+                pa.Status == ProjectAllocatStatus.Accepted
+            ),
             updatedProject.CreatedAt,
             updatedProject.StartDate,
             updatedProject.DueDate,

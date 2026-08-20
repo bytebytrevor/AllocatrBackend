@@ -104,9 +104,11 @@ public class ProjectAllocatService
             );
 
         var relationship = await _db.ProjectAllocats
+            .Include(pa => pa.Project)
             .FirstOrDefaultAsync(pa =>
                 pa.ProjectId == projectId &&
-                pa.AllocatProfileId == allocatProfile.AllocatrUserId
+                pa.AllocatProfileId ==
+                    allocatProfile.AllocatrUserId
             );
 
         if (relationship == null)
@@ -114,7 +116,10 @@ public class ProjectAllocatService
                 "Invitation not found."
             );
 
-        if (relationship.Status != ProjectAllocatStatus.Invited)
+        if (
+            relationship.Status !=
+            ProjectAllocatStatus.Invited
+        )
             throw new InvalidOperationException(
                 "This invitation is no longer pending."
             );
@@ -124,6 +129,13 @@ public class ProjectAllocatService
 
         relationship.RespondedAt =
             DateTime.UtcNow;
+
+        /*
+        * First accepted Allocat activates the project.
+        *
+        * Other Allocats may remain Invited.
+        */
+        relationship.Project.Status = "active";
 
         await _db.SaveChangesAsync();
 
@@ -263,49 +275,6 @@ public class ProjectAllocatService
             .ToListAsync();
     }
 
-    // public async Task<List<ProjectAllocatMemberDto>> GetProjectMembersAsync(
-    //     Guid projectId,
-    //     Guid currentUserId)
-    // {
-    //     var project = await _db.Projects
-    //         .AsNoTracking()
-    //         .FirstOrDefaultAsync(p => p.Id == projectId);
-
-    //     if (project == null)
-    //         throw new KeyNotFoundException("Project not found.");
-
-    //     if (project.UserId != currentUserId)
-    //         throw new UnauthorizedAccessException(
-    //             "You do not have permission to view this project's members."
-    //         );
-
-    //     var members = await _db.ProjectAllocats
-    //         .AsNoTracking()
-    //         .Where(pa =>
-    //             pa.ProjectId == projectId &&
-    //             (
-    //                 pa.Status == ProjectAllocatStatus.Invited ||
-    //                 pa.Status == ProjectAllocatStatus.Accepted
-    //             )
-    //         )
-
-    //         // Sort entities BEFORE creating the DTO
-    //         .OrderBy(pa => pa.Status)
-    //         .ThenBy(pa => pa.AllocatProfile.AllocatrUser.FullName)
-
-    //         .Select(pa => new ProjectAllocatMemberDto(
-    //             pa.AllocatProfileId,
-    //             pa.AllocatProfile.AllocatrUser.FullName,
-    //             pa.AllocatProfile.AllocatrUser.AvatarUrl,
-    //             pa.Status,
-    //             pa.InvitedAt,
-    //             pa.RespondedAt
-    //         ))
-    //         .ToListAsync();
-
-    //     return members;
-    // }
-
     public async Task<List<ProjectAllocatMemberDto>> GetProjectMembersAsync(
         Guid projectId,
         Guid currentUserId)
@@ -335,6 +304,46 @@ public class ProjectAllocatService
                 pa.AllocatProfileId,
                 pa.AllocatProfile.AllocatrUser.FullName,
                 pa.AllocatProfile.AllocatrUser.AvatarUrl,
+                pa.Status,
+                pa.InvitedAt,
+                pa.RespondedAt
+            ))
+            .ToListAsync();
+    }
+
+    public async Task<List<AllocatWorkProjectDto>> GetMyWorkProjectsAsync(
+        Guid currentUserId)
+    {
+        var allocatExists = await _db.AllocatProfiles
+            .AsNoTracking()
+            .AnyAsync(a => a.AllocatrUserId == currentUserId);
+
+        if (!allocatExists)
+            throw new UnauthorizedAccessException(
+                "You do not have an Allocat profile."
+            );
+
+        return await _db.ProjectAllocats
+            .AsNoTracking()
+            .Where(pa =>
+                pa.AllocatProfileId == currentUserId &&
+                pa.Status != ProjectAllocatStatus.Declined &&
+                pa.Status != ProjectAllocatStatus.Removed
+            )
+            .Select(pa => new AllocatWorkProjectDto(
+                pa.Project.Id,
+                pa.Project.Title,
+                pa.Project.Description,
+                pa.Project.Status,
+                pa.Project.Progress,
+                pa.Project.Priority,
+                pa.Project.StartDate,
+                pa.Project.DueDate,
+                pa.Project.Budget,
+                pa.Project.Currency,
+                pa.Project.AllocatAssignments.Any(a =>
+                    a.Status == ProjectAllocatStatus.Accepted
+                ),
                 pa.Status,
                 pa.InvitedAt,
                 pa.RespondedAt
