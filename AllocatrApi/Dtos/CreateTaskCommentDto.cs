@@ -1,6 +1,6 @@
 namespace AllocatrApi.Dtos;
 
 public record class CreateTaskCommentDto(
-    Guid Id,
+    // Guid Id,
     string Comment
 );

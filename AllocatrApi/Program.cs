@@ -61,6 +61,7 @@ builder.Services.AddSingleton<SupabaseService>();
 builder.Services.AddScoped<ProjectService>();
 builder.Services.AddScoped<AllocatProfileService>();
 builder.Services.AddScoped<TaskService>();
+builder.Services.AddScoped<TaskCommentService>();
 builder.Services.AddScoped<SkillCategoryService>();
 builder.Services.AddScoped<SkillService>();
 builder.Services.AddScoped<ProjectAllocatService>();

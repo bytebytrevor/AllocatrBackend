@@ -67,8 +67,8 @@ public class TaskService
         return await _db.TaskItems
             .Include(t => t.AssignedTo)
             .Include(t => t.CreatedByUser)
-            .Include(t => t.Comments)
-                .ThenInclude(c => c.CreatedBy)
+            // .Include(t => t.Comments)
+            //     .ThenInclude(c => c.CreatedBy)
             .FirstOrDefaultAsync(t => t.Id == taskId);
     }
 
