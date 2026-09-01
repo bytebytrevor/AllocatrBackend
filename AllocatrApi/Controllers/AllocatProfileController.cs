@@ -59,6 +59,7 @@ public class AllocatProfileController : ControllerBase
         var result = new AllocatProfileDto(
             createdAllocatProfile.AllocatrUserId,
             createdAllocatProfile.AllocatrUser.FullName,
+            createdAllocatProfile.AllocatrUser.AvatarUrl,
             createdAllocatProfile.IdNumber,
             createdAllocatProfile.HourlyRate,
             createdAllocatProfile.Bio,

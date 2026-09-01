@@ -34,6 +34,7 @@ public class AllocatProfileService
             .Select(a => new AllocatProfileDto(
                 a.AllocatrUserId,
                 a.AllocatrUser.FullName,
+                a.AllocatrUser.AvatarUrl,
                 a.IdNumber,
                 a.HourlyRate,
                 a.Bio,
@@ -56,6 +57,7 @@ public class AllocatProfileService
             .Select(a => new AllocatProfileDto(
                 a.AllocatrUserId,
                 a.AllocatrUser.FullName,
+                a.AllocatrUser.AvatarUrl,
                 a.IdNumber,
                 a.HourlyRate,
                 a.Bio,

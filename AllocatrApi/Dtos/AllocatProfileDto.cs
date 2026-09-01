@@ -6,7 +6,8 @@ namespace AllocatrApi.Dtos;
 public record class AllocatProfileDto(
     Guid AllocatrUserId,
     string? FullName,
-    string? IdNumber,
+    string? AvatarUrl,
+    string? IdNumber,    
     decimal? HourlyRate,
     string? Bio,
     string? Availability,
