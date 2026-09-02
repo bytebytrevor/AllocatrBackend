@@ -4,6 +4,7 @@ using AllocatrApi.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json.Serialization;
+using AllocatrApi.Configuration;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -43,6 +44,23 @@ builder.Services.ConfigureApplicationCookie(options =>
 	options.Cookie.SameSite = SameSiteMode.Lax; // or None for cross-origin
 });
 
+// ----------------- Email Verification -----------------
+builder.Services.Configure<EmailSettings>(
+    builder.Configuration.GetSection(
+        EmailSettings.SectionName
+    )
+);
+
+builder.Services.Configure<DataProtectionTokenProviderOptions>(
+    options =>
+    {
+        options.TokenLifespan =
+            TimeSpan.FromHours(24);
+    }
+);
+
+
+
 // ----------------- Controllers -----------------
 // builder.Services.AddControllers();
 builder.Services
@@ -58,6 +76,7 @@ builder.Services.AddAuthorization();
 
 builder.Services.AddSingleton<SupabaseService>();
 
+builder.Services.AddScoped<ProfileService>();
 builder.Services.AddScoped<ProjectService>();
 builder.Services.AddScoped<AllocatProfileService>();
 builder.Services.AddScoped<TaskService>();
@@ -65,6 +84,7 @@ builder.Services.AddScoped<TaskCommentService>();
 builder.Services.AddScoped<SkillCategoryService>();
 builder.Services.AddScoped<SkillService>();
 builder.Services.AddScoped<ProjectAllocatService>();
+builder.Services.AddScoped<IEmailService, EmailService>();
 
 var app = builder.Build();
 

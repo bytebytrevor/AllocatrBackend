@@ -1,3 +1,5 @@
+using System.Text;
+using Microsoft.AspNetCore.WebUtilities;
 using AllocatrApi.Dtos.Auth;
 using AllocatrApi.Models;
 using Microsoft.AspNetCore.Authorization;
@@ -5,6 +7,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using AllocatrApi.Dtos;
 
 namespace AllocatrApi.Controllers;
 
@@ -91,6 +94,100 @@ public class AuthController : ControllerBase
             avatarUrl = user?.AvatarUrl,
             isAllocat = user?.IsAllocat
         });
+    }
+
+    // ----------------- EMAIL VERIFICATION -----------------
+
+    [HttpPost("confirm-email")]
+    [AllowAnonymous]
+    public async Task<IActionResult> ConfirmEmail(
+        [FromBody] ConfirmEmailDto request
+    )
+    {
+        if (request.UserId == Guid.Empty)
+        {
+            return BadRequest(
+                new { message = "The verification link is invalid." }
+            );
+        }
+
+        if (string.IsNullOrWhiteSpace(request.Token))
+        {
+            return BadRequest(
+                new { message = "The verification link is invalid." }
+            );
+        }
+
+        var user = await _userManager.FindByIdAsync(
+            request.UserId.ToString()
+        );
+
+        if (user == null)
+        {
+            return BadRequest(
+                new { message = "The verification link is invalid." }
+            );
+        }
+
+        /*
+        * Confirmation is intentionally idempotent.
+        *
+        * Opening an already-used verification link should not
+        * look like an error to the user.
+        */
+        if (user.EmailConfirmed)
+        {
+            return Ok(
+                new
+                {
+                    message = "Your email address is already verified.",
+                    alreadyVerified = true,
+                }
+            );
+        }
+
+        string token;
+
+        try
+        {
+            var tokenBytes = WebEncoders.Base64UrlDecode(
+                request.Token
+            );
+
+            token = Encoding.UTF8.GetString(tokenBytes);
+        }
+        catch
+        {
+            return BadRequest(
+                new
+                {
+                    message = "The verification link is invalid or malformed."
+                }
+            );
+        }
+
+        var result = await _userManager.ConfirmEmailAsync(
+            user,
+            token
+        );
+
+        if (!result.Succeeded)
+        {
+            return BadRequest(
+                new
+                {
+                    message = "The verification link is invalid or has expired."
+                }
+            );
+        }
+
+        return Ok(
+            new
+            {
+                message = "Your email address has been verified.",
+                alreadyVerified = false,
+            }
+        );
     }
 }
 

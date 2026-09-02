@@ -1,19 +1,35 @@
 using AllocatrApi.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+
 namespace AllocatrApi.Data.Configurations;
 
-public class UserConfiguration : IEntityTypeConfiguration<AllocatrUser>
+public class AllocatrUserConfiguration :
+    IEntityTypeConfiguration<AllocatrUser>
 {
-    public void Configure(EntityTypeBuilder<AllocatrUser> entity)
+    public void Configure(
+        EntityTypeBuilder<AllocatrUser> builder
+    )
     {
-        entity.Property(u => u.FullName)
+        builder.Property(user => user.FullName)
             .IsRequired()
-            .HasMaxLength(60);
+            .HasMaxLength(150);
 
-        entity.Property(u => u.IsAllocat)
-            .IsRequired();
+        builder.Property(user => user.Location)
+            .HasMaxLength(150);
 
-        entity.HasIndex(u => u.IsAllocat);
+        builder.Property(user => user.AvatarUrl)
+            .HasMaxLength(1000);
+
+        builder.Property(user => user.IsAllocat)
+            .IsRequired()
+            .HasDefaultValue(false);
+
+        builder.Property(user => user.CreatedAt)
+            .IsRequired()
+            .HasDefaultValueSql("CURRENT_TIMESTAMP")
+            .ValueGeneratedOnAdd();
+
+        builder.HasIndex(user => user.IsAllocat);
     }
 }
