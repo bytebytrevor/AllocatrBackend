@@ -228,10 +228,41 @@ public class ProjectAllocatService
         return ToDto(relationship);
     }
 
+    // public async Task<ProjectAllocatDto?> GetProjectAllocatAsync(
+    //     Guid projectId,
+    //     Guid allocatProfileId)
+    // {
+    //     var projectAllocat = await _db.ProjectAllocats
+    //         .AsNoTracking()
+    //         .FirstOrDefaultAsync(pa =>
+    //             pa.ProjectId == projectId &&
+    //             pa.AllocatProfileId == allocatProfileId
+    //         );
+
+    //     if (projectAllocat is null)
+    //         return null;
+
+    //     return ToDto(projectAllocat);
+    // }
+
     public async Task<ProjectAllocatDto?> GetProjectAllocatAsync(
         Guid projectId,
-        Guid allocatProfileId)
+        Guid allocatProfileId,
+        Guid currentUserId)
     {
+        var project = await _db.Projects
+            .AsNoTracking()
+            .FirstOrDefaultAsync(p => p.Id == projectId);
+
+        if (project == null)
+            return null;
+
+        var canView = project.UserId == currentUserId ||
+            allocatProfileId == currentUserId;
+
+        if (!canView)
+            throw new UnauthorizedAccessException();
+
         var projectAllocat = await _db.ProjectAllocats
             .AsNoTracking()
             .FirstOrDefaultAsync(pa =>
@@ -239,10 +270,7 @@ public class ProjectAllocatService
                 pa.AllocatProfileId == allocatProfileId
             );
 
-        if (projectAllocat is null)
-            return null;
-
-        return ToDto(projectAllocat);
+        return projectAllocat == null ? null : ToDto(projectAllocat);
     }
 
     public async Task<List<ProjectAllocatDto>> GetProjectAllocatsAsync(
@@ -311,29 +339,33 @@ public class ProjectAllocatService
             .ToListAsync();
     }
 
-    public async Task<List<AllocatWorkProjectDto>> GetMyWorkProjectsAsync(
-        Guid currentUserId)
+    public async Task<List<AllocatWorkProjectDto>> GetMyWorkProjectsAsync(Guid currentUserId)
     {
         var allocatExists = await _db.AllocatProfiles
             .AsNoTracking()
             .AnyAsync(a => a.AllocatrUserId == currentUserId);
 
         if (!allocatExists)
-            throw new UnauthorizedAccessException(
-                "You do not have an Allocat profile."
-            );
+            throw new UnauthorizedAccessException("You do not have an Allocat profile.");
 
         return await _db.ProjectAllocats
             .AsNoTracking()
             .Where(pa =>
                 pa.AllocatProfileId == currentUserId &&
-                pa.Status != ProjectAllocatStatus.Declined &&
-                pa.Status != ProjectAllocatStatus.Removed
+                pa.Project.UserId != currentUserId &&
+                pa.RemovedAt == null &&
+                (
+                    pa.Status == ProjectAllocatStatus.Invited ||
+                    pa.Status == ProjectAllocatStatus.Accepted
+                )
             )
+            .OrderByDescending(pa => pa.InvitedAt)
             .Select(pa => new AllocatWorkProjectDto(
                 pa.Project.Id,
+                pa.Project.ProjectCode,
                 pa.Project.Title,
                 pa.Project.Description,
+                pa.Project.Category,
                 pa.Project.Status,
                 pa.Project.Progress,
                 pa.Project.Priority,
@@ -342,8 +374,10 @@ public class ProjectAllocatService
                 pa.Project.Budget,
                 pa.Project.Currency,
                 pa.Project.AllocatAssignments.Any(a =>
-                    a.Status == ProjectAllocatStatus.Accepted
+                    a.Status == ProjectAllocatStatus.Accepted &&
+                    a.RemovedAt == null
                 ),
+                pa.Project.CreatedAt,
                 pa.Status,
                 pa.InvitedAt,
                 pa.RespondedAt

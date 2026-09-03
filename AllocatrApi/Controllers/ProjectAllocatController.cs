@@ -198,17 +198,45 @@ public class ProjectAllocatController : ControllerBase
         Guid projectId,
         Guid allocatProfileId)
     {
-        var projectAllocat =
-            await _projectAllocatService.GetProjectAllocatAsync(
+        var user = await _userManager.GetUserAsync(User);
+
+        if (user == null)
+            return Unauthorized();
+
+        try
+        {
+            var projectAllocat = await _projectAllocatService.GetProjectAllocatAsync(
                 projectId,
-                allocatProfileId
+                allocatProfileId,
+                user.Id
             );
 
-        if (projectAllocat is null)
-            return NotFound();
+            if (projectAllocat == null)
+                return NotFound();
 
-        return Ok(projectAllocat);
+            return Ok(projectAllocat);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Forbid();
+        }
     }
+    // [HttpGet("{allocatProfileId:guid}")]
+    // public async Task<ActionResult<ProjectAllocatDto>> GetProjectAllocat(
+    //     Guid projectId,
+    //     Guid allocatProfileId)
+    // {
+    //     var projectAllocat =
+    //         await _projectAllocatService.GetProjectAllocatAsync(
+    //             projectId,
+    //             allocatProfileId
+    //         );
+
+    //     if (projectAllocat is null)
+    //         return NotFound();
+
+    //     return Ok(projectAllocat);
+    // }
 
     // GET:
     // api/projects/{projectId}/allocats

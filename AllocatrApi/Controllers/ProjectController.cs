@@ -27,58 +27,93 @@ public class ProjectController : ControllerBase
         _projectService = projectService;
     }
 
-    // GET api/projects/{id}
+    /* =====================================================
+       GET ACCESSIBLE PROJECTS
+    ===================================================== */
+
+    [HttpGet]
+    public async Task<IActionResult> GetProjects()
+    {
+        var user = await _userManager.GetUserAsync(User);
+
+        if (user == null)
+        {
+            return Unauthorized();
+        }
+
+        var projects = await _projectService.GetAccessibleProjectsAsync(
+            user.Id,
+            user.IsAllocat
+        );
+
+        return Ok(projects);
+    }
+
+    /* =====================================================
+       GET PROJECT
+    ===================================================== */
+
     [HttpGet("{id:guid}", Name = "GetProjectById")]
     public async Task<IActionResult> GetProjectById(Guid id)
     {
-        var project =
-            await _projectService.GetProjectByIdAsync(id);
+        var user = await _userManager.GetUserAsync(User);
+
+        if (user == null)
+        {
+            return Unauthorized();
+        }
+
+        var project = await _projectService.GetAccessibleProjectByIdAsync(
+            id,
+            user.Id,
+            user.IsAllocat
+        );
 
         if (project == null)
-            return NotFound("Project not found.");
+        {
+            return NotFound(new
+            {
+                message = "Project not found."
+            });
+        }
 
         return Ok(project);
     }
 
-    // GET api/projects/mine
+    /* =====================================================
+       GET OWN PROJECTS
+    ===================================================== */
+
     [HttpGet("mine")]
-    public async Task<IActionResult> GetProjectsByUserId()
+    public async Task<IActionResult> GetMyProjects()
     {
         var user = await _userManager.GetUserAsync(User);
 
         if (user == null)
+        {
             return Unauthorized();
+        }
 
-        var projects =
-            await _projectService.GetProjectsByUserAsync(user.Id);
+        var projects = await _projectService.GetProjectsByUserAsync(
+            user.Id
+        );
 
         return Ok(projects);
     }
 
-    // GET api/projects
-    [HttpGet]
-    public async Task<IActionResult> GetAllProjects()
-    {
-        var user = await _userManager.GetUserAsync(User);
+    /* =====================================================
+       CREATE PROJECT
+    ===================================================== */
 
-        if (user == null)
-            return Unauthorized();
-
-        var projects =
-            await _projectService.GetAllProjectsAsync();
-
-        return Ok(projects);
-    }
-
-    // POST api/projects
     [HttpPost]
-    public async Task<IActionResult> CreateProject(
-        CreateProjectDto dto)
+    public async Task<IActionResult> CreateProject(CreateProjectDto dto)
     {
         var user = await _userManager.GetUserAsync(User);
 
         if (user == null)
+        {
             return Unauthorized();
+        }
 
         var project = new Project
         {
@@ -88,15 +123,14 @@ public class ProjectController : ControllerBase
             Category = dto.Category,
 
             Tags = dto.Tags
-                .Select(t => new ProjectTag
+                .Select(tag => new ProjectTag
                 {
-                    Tag = t
+                    Tag = tag
                 })
                 .ToList(),
 
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow,
-
             StartDate = dto.StartDate,
             DueDate = dto.DueDate,
 
@@ -114,7 +148,6 @@ public class ProjectController : ControllerBase
         };
 
         _db.Projects.Add(project);
-
         await _db.SaveChangesAsync();
 
         var result = new ProjectDto(
@@ -128,11 +161,7 @@ public class ProjectController : ControllerBase
             project.Priority,
             project.Budget,
             project.Currency,
-
-            // Brand new project cannot have
-            // an accepted Allocat yet.
             false,
-
             project.CreatedAt,
             project.StartDate,
             project.DueDate,
@@ -148,6 +177,53 @@ public class ProjectController : ControllerBase
             result
         );
     }
+
+    /* =====================================================
+       UPDATE PROJECT
+    ===================================================== */
+
+    [HttpPatch("{id:guid}")]
+    public async Task<IActionResult> UpdateProject(
+        Guid id,
+        UpdateProjectDto dto)
+    {
+        var user = await _userManager.GetUserAsync(User);
+
+        if (user == null)
+        {
+            return Unauthorized();
+        }
+
+        try
+        {
+            var project = await _projectService.UpdateOwnedProjectAsync(
+                id,
+                user.Id,
+                dto
+            );
+
+            if (project == null)
+            {
+                return NotFound(new
+                {
+                    message = "Project not found."
+                });
+            }
+
+            return Ok(project);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new
+            {
+                message = ex.Message
+            });
+        }
+    }
+
+    /* =====================================================
+       HELPERS
+    ===================================================== */
 
     private static string GenerateProjectCode()
     {
