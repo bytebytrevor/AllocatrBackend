@@ -16,15 +16,18 @@ public class ProjectController : ControllerBase
     private readonly UserManager<AllocatrUser> _userManager;
     private readonly AllocatrDbContext _db;
     private readonly ProjectService _projectService;
+    private readonly ProjectAccessService _projectAccessService;
 
     public ProjectController(
         UserManager<AllocatrUser> userManager,
         AllocatrDbContext db,
-        ProjectService projectService)
+        ProjectService projectService,
+        ProjectAccessService projectAccessService)
     {
         _userManager = userManager;
         _db = db;
         _projectService = projectService;
+        _projectAccessService = projectAccessService;
     }
 
     /* =====================================================
@@ -219,6 +222,52 @@ public class ProjectController : ControllerBase
                 message = ex.Message
             });
         }
+    }
+
+    /* =====================================================
+       PROJECT PERMISSIONS
+    ===================================================== */
+
+    [HttpGet("{id:guid}/permissions")]
+    public async Task<IActionResult> GetProjectPermissions(Guid id)
+    {
+        var user = await _userManager.GetUserAsync(User);
+
+        if (user == null)
+        {
+            return Unauthorized();
+        }
+
+        var canView = await _projectAccessService.CanViewProjectAsync(
+            id,
+            user.Id,
+            user.IsAllocat
+        );
+
+        if (!canView)
+        {
+            return NotFound(new { message = "Project not found." });
+        }
+
+        var isOwner = await _projectAccessService.IsProjectOwnerAsync(
+            id,
+            user.Id
+        );
+
+        var isAcceptedAllocat =
+            user.IsAllocat &&
+            await _projectAccessService.IsAcceptedAllocatAsync(
+                id,
+                user.Id
+            );
+
+        return Ok(
+            new ProjectPermissionsDto(
+                isOwner,
+                isAcceptedAllocat,
+                isAcceptedAllocat
+            )
+        );
     }
 
     /* =====================================================
