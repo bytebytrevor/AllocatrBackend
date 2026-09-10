@@ -1,197 +1,3 @@
-// using AllocatrApi.Data;
-// using AllocatrApi.Dtos;
-// using AllocatrApi.Models;
-// using Microsoft.AspNetCore.Http.HttpResults;
-// using Microsoft.EntityFrameworkCore;
-
-// namespace AllocatrApi.Services;
-
-// public class TaskService
-// {
-//     private readonly AllocatrDbContext _db;
-
-//     public TaskService(AllocatrDbContext db)
-//     {
-//         _db = db;
-//     }
-
-//     /* --------------------------------------------------------
-//      * READ
-//      * -------------------------------------------------------- */
-
-//     // All tasks (admin / dashboard use)
-//     public async Task<List<TaskDto>> GetAllTasksAsync()
-//     {
-//         // return await _db.TaskItems
-//         //     .Include(t => t.AssignedTo)
-//         //     .Include(t => t.CreatedByUser)
-//         //     .Include(t => t.Comments)
-//         //     .OrderBy(t => t.Order)
-//         //     .ToListAsync();
-
-//         return await _db.TaskItems
-//             .Select(t => new TaskDto(
-//                 t.Id,
-//                 t.Title,
-//                 t.Description,
-//                 t.Status,
-//                 t.Priority,
-//                 t.DueDate
-//             // t.CreatedByUser
-//             ))
-//             .ToListAsync();
-//     }
-
-//     // All tasks for a specific project
-//     public async Task<List<TaskDto>> GetTasksByProjectIdAsync(Guid projectId)
-//     {
-//         return await _db.TaskItems
-//             .Where(t => t.ProjectId == projectId)
-//             // .OrderBy(t => t.Order)
-//             .Select(t => new TaskDto(
-//                 t.Id,
-//                 t.Title,
-//                 t.Description,
-//                 t.Status,
-//                 t.Priority,
-//                 t.DueDate
-//             // t.CreatedByUser
-//             ))
-//             .ToListAsync();
-//     }
-
-
-//     // Single task
-//     public async Task<TaskItem?> GetTaskByIdAsync(Guid taskId)
-//     {
-//         return await _db.TaskItems
-//             .Include(t => t.AssignedTo)
-//             .Include(t => t.CreatedByUser)
-//             // .Include(t => t.Comments)
-//             //     .ThenInclude(c => c.CreatedBy)
-//             .FirstOrDefaultAsync(t => t.Id == taskId);
-//     }
-
-//     /* --------------------------------------------------------
-//      * CREATE
-//      * -------------------------------------------------------- */
-
-//     public async Task<TaskItem> CreateTaskAsync(TaskItem task)
-//     {
-//         task.CreatedAt = DateTime.UtcNow;
-//         task.UpdatedAt = DateTime.UtcNow;
-
-//         _db.TaskItems.Add(task);
-//         await _db.SaveChangesAsync();
-
-//         return task;
-//     }
-
-//     /* --------------------------------------------------------
-//      * UPDATE
-//      * -------------------------------------------------------- */
-
-//     public async Task<TaskItem> UpdateTaskAsync(TaskItem updatedTask)
-//     {
-//         var existingTask = await _db.TaskItems
-//             .FirstOrDefaultAsync(t => t.Id == updatedTask.Id);
-
-//         if (existingTask == null)
-//             return null!;
-
-//         existingTask.Title = updatedTask.Title;
-//         existingTask.Description = updatedTask.Description;
-//         existingTask.Status = updatedTask.Status;
-//         existingTask.Priority = updatedTask.Priority;
-//         existingTask.Order = updatedTask.Order;
-//         existingTask.AssignedToId = updatedTask.AssignedToId;
-//         existingTask.DueDate = updatedTask.DueDate;
-//         existingTask.CompletedAt = updatedTask.CompletedAt;
-//         existingTask.UpdatedAt = DateTime.UtcNow;
-
-//         await _db.SaveChangesAsync();
-//         return updatedTask;
-//     }
-
-//     // public async Task<TaskItem> UpdateTaskAsync(TaskItem task)
-//     // {
-//     //     _context.Tasks.Update(task);
-//     //     await _context.SaveChangesAsync();
-//     //     return task;
-//     // }
-
-//     /* --------------------------------------------------------
-//      * DELETE
-//      * -------------------------------------------------------- */
-
-//     public async Task<bool> DeleteTaskAsync(Guid taskId)
-//     {
-//         var task = await _db.TaskItems.FindAsync(taskId);
-//         if (task == null)
-//             return false;
-
-//         _db.TaskItems.Remove(task);
-//         await _db.SaveChangesAsync();
-
-//         return true;
-//     }
-
-//     /* --------------------------------------------------------
-//      * STATUS HELPERS
-//      * -------------------------------------------------------- */
-
-//     public async Task<bool> MarkTaskCompletedAsync(Guid taskId)
-//     {
-//         var task = await _db.TaskItems.FindAsync(taskId);
-//         if (task == null)
-//             return false;
-
-//         task.Status = "done";
-//         task.CompletedAt = DateTime.UtcNow;
-//         task.UpdatedAt = DateTime.UtcNow;
-
-//         await _db.SaveChangesAsync();
-//         return true;
-//     }
-
-//     public async Task<bool> AssignTaskAsync(Guid taskId, Guid? userId)
-//     {
-//         var task = await _db.TaskItems.FindAsync(taskId);
-//         if (task == null)
-//             return false;
-
-//         task.AssignedToId = userId;
-//         task.UpdatedAt = DateTime.UtcNow;
-
-//         await _db.SaveChangesAsync();
-//         return true;
-//     }
-
-//     public async Task<Project> RecalculateProjectProgressAsync(Guid projectId)
-//     {
-//         var project = await _db.Projects.FindAsync(projectId);
-//         if (project == null) throw new Exception("Project not found");
-
-//         var tasks = await _db.TaskItems
-//             .Where(t => t.ProjectId == projectId)
-//             .ToListAsync();
-
-//         if (tasks.Count == 0)
-//         {
-//             project.Progress = 0;
-//         }
-//         else
-//         {
-//             var completed = tasks.Count(t => t.Status == "complete");
-//             project.Progress = (int)Math.Round((completed * 100.0) / tasks.Count);
-//         }
-
-//         await _db.SaveChangesAsync();
-//         return project;
-//     }
-// }
-
-
 using AllocatrApi.Data;
 using AllocatrApi.Dtos;
 using AllocatrApi.Models;
@@ -459,9 +265,14 @@ public class TaskService
         Guid userId,
         bool isAllocat)
     {
+        if (!isAllocat)
+        {
+            return false;
+        }
+
         var projectId = await GetTaskProjectIdAsync(taskId);
 
-        if (!projectId.HasValue || !isAllocat)
+        if (!projectId.HasValue)
         {
             return false;
         }
@@ -477,7 +288,10 @@ public class TaskService
         }
 
         var task = await _db.TaskItems
-            .FirstOrDefaultAsync(t => t.Id == taskId);
+            .FirstOrDefaultAsync(t =>
+                t.Id == taskId &&
+                t.ProjectId == projectId.Value
+            );
 
         if (task == null)
         {
