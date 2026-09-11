@@ -23,98 +23,191 @@ public class AllocatProfileController : ControllerBase
         _allocatProfileService = allocatProfileService;
     }
 
-    [HttpPost("create")]
-    public async Task<IActionResult> CreateAllocatProfile([FromForm] CreateAllocatProfileDto dto)
+    [HttpPost]
+    public async Task<ActionResult<MyAllocatProfileDto>>
+        CreateAllocatProfile(
+            [FromBody] CreateAllocatProfileDto dto)
     {
-        if (!ModelState.IsValid)
-            return BadRequest(ModelState);
-
         var user = await _userManager.GetUserAsync(User);
 
         if (user == null)
+        {
             return Unauthorized();
+        }
 
         if (!user.IsAllocat)
-            return Forbid("User is not allocat");
-
-        var existingProfile = await _allocatProfileService.GetAllocatProfileByUserIdAsync(user.Id);
-
-        if (existingProfile != null)
-            return BadRequest("Profile already exists");
-
-        var allocatProfile = new AllocatProfile
         {
-            AllocatrUserId = user.Id,
-            IdNumber = dto.IdNumber,
-            HourlyRate = dto.HourlyRate,
-            YearsExperience = dto.YearsExperience,
-            Bio = dto.Bio,
-            Availability = "available",
-            IsVisible = true,
-            Skills = dto.Skills
-        };
+            return Problem(
+                statusCode: StatusCodes.Status403Forbidden,
+                title: "Allocat access required",
+                detail:
+                    "This account is not registered as an Allocat."
+            );
+        }
 
-        var createdAllocatProfile = await _allocatProfileService.CreateAllocatProfileAsync(allocatProfile);
-
-        var result = new AllocatProfileDto(
-            createdAllocatProfile.AllocatrUserId,
-            createdAllocatProfile.AllocatrUser.FullName,
-            createdAllocatProfile.AllocatrUser.AvatarUrl,
-            createdAllocatProfile.IdNumber,
-            createdAllocatProfile.HourlyRate,
-            createdAllocatProfile.Bio,
-            createdAllocatProfile.Availability,
-            createdAllocatProfile.YearsExperience,
-            createdAllocatProfile.IsVisible,
-            createdAllocatProfile.Skills
-                .Select(ps => ps.Skill.Name)
-                .ToList(),
-            createdAllocatProfile.CreatedAt,
-            createdAllocatProfile.UpdatedAt
-        );
+        var profile =
+            await _allocatProfileService
+                .CreateAllocatProfileAsync(
+                    user.Id,
+                    dto
+                );
 
         return CreatedAtAction(
             nameof(GetAllocatProfileById),
-            new { allocatProfileId = createdAllocatProfile.AllocatrUserId },
-            result
+            new
+            {
+                allocatUserId =
+                    profile.AllocatrUserId
+            },
+            profile
         );
     }
 
     [HttpGet("me")]
-    public async Task<IActionResult> GetMyAllocatProfile()
+    public async Task<ActionResult<MyAllocatProfileDto>>
+        GetMyAllocatProfile()
     {
         var user = await _userManager.GetUserAsync(User);
 
         if (user == null)
+        {
             return Unauthorized();
+        }
 
-        var allocatProfile = await _allocatProfileService.GetAllocatProfileByUserIdAsync(user.Id);
-        if (allocatProfile == null)
+        var profile =
+            await _allocatProfileService
+                .GetMyAllocatProfileAsync(user.Id);
+
+        if (profile == null)
+        {
             return NotFound();
+        }
 
-        return Ok(allocatProfile);
+        return Ok(profile);
     }
 
-    // GET api/allocats/profiles/{allocatProfileId}
+    [HttpPut("me")]
+    public async Task<ActionResult<MyAllocatProfileDto>>
+        UpdateMyAllocatProfile(
+            [FromBody] UpdateAllocatProfileDto dto)
+    {
+        var user = await _userManager.GetUserAsync(User);
+
+        if (user == null)
+        {
+            return Unauthorized();
+        }
+
+        if (!user.IsAllocat)
+        {
+            return Problem(
+                statusCode: StatusCodes.Status403Forbidden,
+                title: "Allocat access required",
+                detail:
+                    "This account is not registered as an Allocat."
+            );
+        }
+
+        var profile =
+            await _allocatProfileService
+                .UpdateAllocatProfileAsync(
+                    user.Id,
+                    dto
+                );
+
+        if (profile == null)
+        {
+            return NotFound();
+        }
+
+        return Ok(profile);
+    }
+
+    [HttpPatch("me/visibility")]
+    public async Task<IActionResult> SetVisibility(
+        [FromBody] SetAllocatVisibilityDto dto)
+    {
+        var user = await _userManager.GetUserAsync(User);
+
+        if (user == null)
+        {
+            return Unauthorized();
+        }
+
+        var updated =
+            await _allocatProfileService
+                .SetVisibilityAsync(
+                    user.Id,
+                    dto.IsVisible
+                );
+
+        if (!updated)
+        {
+            return NotFound();
+        }
+
+        return NoContent();
+    }
+
+    [HttpPatch("me/availability")]
+    public async Task<IActionResult> SetAvailability(
+        [FromBody] SetAllocatAvailabilityDto dto)
+    {
+        var user = await _userManager.GetUserAsync(User);
+
+        if (user == null)
+        {
+            return Unauthorized();
+        }
+
+        var updated =
+            await _allocatProfileService
+                .SetAvailabilityAsync(
+                    user.Id,
+                    dto.Availability
+                );
+
+        if (!updated)
+        {
+            return NotFound();
+        }
+
+        return NoContent();
+    }
+
     [AllowAnonymous]
-    [HttpGet("{allocatProfileId:guid}")]
-    public async Task<IActionResult> GetAllocatProfileById(Guid allocatProfileId)
+    [HttpGet("{allocatUserId:guid}")]
+    public async Task<ActionResult<AllocatProfileDto>>
+        GetAllocatProfileById(
+            Guid allocatUserId)
     {
-        var allocatProfile = await _allocatProfileService.GetAllocatProfileByUserIdAsync(allocatProfileId);
-        if (allocatProfile == null)
-            return NotFound();
+        var profile =
+            await _allocatProfileService
+                .GetPublicAllocatProfileAsync(
+                    allocatUserId
+                );
 
-        return Ok(allocatProfile);
+        if (profile == null)
+        {
+            return NotFound();
+        }
+
+        return Ok(profile);
     }
 
-    // GET api/allocats/profiles
-    [HttpGet("")]
-    public async Task<IActionResult> GetAllAllocatProfiles()
+    [AllowAnonymous]
+    [HttpGet]
+    public async Task<
+        ActionResult<
+            PagedResultDto<AllocatProfileListItemDto>
+        >
+    > GetAllAllocatProfiles(
+        [FromQuery] AllocatProfileSearchDto query)
     {
-        var allocatProfiles = await _allocatProfileService.GetAllAllocatProfilesAsync();
-        if (allocatProfiles == null)
-            return NotFound();
+        var profiles =
+            await _allocatProfileService
+                .GetAllAllocatProfilesAsync(query);
 
-        return Ok(allocatProfiles);
+        return Ok(profiles);
     }
 }

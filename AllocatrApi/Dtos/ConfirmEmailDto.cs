@@ -1,6 +1,6 @@
 namespace AllocatrApi.Dtos;
 
-public record ConfirmEmailDto(
+public record class ConfirmEmailDto(
     Guid UserId,
     string Token
 );

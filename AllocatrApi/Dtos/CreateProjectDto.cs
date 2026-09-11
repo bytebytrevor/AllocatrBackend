@@ -12,5 +12,5 @@ public record class CreateProjectDto(
     bool AllowBids,
     decimal? Budget,
     string Currency
-    // string[] Attachments
+// string[] Attachments
 );

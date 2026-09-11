@@ -1,13 +1,15 @@
 namespace AllocatrApi.Dtos;
 
-public record AllocatProfileDto(
+public record MyAllocatProfileDto(
     Guid AllocatrUserId,
     string FullName,
     string? AvatarUrl,
+    string Email,
+    string? IdNumber,
     string? Bio,
     string? Headline,
     string? Title,
-    IReadOnlyList<string> Skills,
+    IReadOnlyList<SkillOptionDto> Skills,
     decimal Rating,
     int RatingCount,
     int CompletedProjects,
@@ -20,6 +22,10 @@ public record AllocatProfileDto(
     int? ResponseTime,
     int Level,
     int ProfessionalScore,
+    bool IsVisible,
     DateTime JoinedAt,
+    DateTime CreatedAt,
+    DateTime UpdatedAt,
     IReadOnlyList<AllocatProjectSummaryDto> Projects
+
 );

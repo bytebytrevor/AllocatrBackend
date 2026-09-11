@@ -1,6 +1,8 @@
 using AllocatrApi.Data;
+using AllocatrApi.Dtos;
 using AllocatrApi.Models;
 using Microsoft.EntityFrameworkCore;
+
 namespace AllocatrApi.Services;
 
 public class SkillService
@@ -14,32 +16,59 @@ public class SkillService
 
     public async Task<SkillDto> CreateSkillAsync(CreateSkillDto dto)
     {
-        var category = await _db.SkillCategories
-            .AsNoTracking()
-            .FirstOrDefaultAsync(c => c.Id == dto.SkillCategoryId) ?? throw new KeyNotFoundException(
-                "The selected skill category does not exist."
-            );
-
         var normalizedName = dto.Name.Trim();
 
-        var alreadyExists = await _db.Skills.AnyAsync(s =>
-            s.SkillCategoryId == dto.SkillCategoryId &&
-            s.Name.ToLower().Equals(normalizedName.ToLower())
-        );
+        if (string.IsNullOrWhiteSpace(normalizedName))
+        {
+            throw new ArgumentException(
+                "Skill name is required."
+            );
+        }
+
+        if (normalizedName.Length > 80)
+        {
+            throw new ArgumentException(
+                "Skill name cannot exceed 80 characters."
+            );
+        }
+
+        var category = await _db.SkillCategories
+            .AsNoTracking()
+            .FirstOrDefaultAsync(c =>
+                c.Id == dto.SkillCategoryId
+            );
+
+        if (category == null)
+        {
+            throw new KeyNotFoundException(
+                "The selected skill category does not exist."
+            );
+        }
+
+        var normalizedNameLower = normalizedName.ToLowerInvariant();
+
+        var alreadyExists = await _db.Skills
+            .AnyAsync(s =>
+                s.SkillCategoryId == dto.SkillCategoryId &&
+                s.Name.ToLower() == normalizedNameLower
+            );
 
         if (alreadyExists)
+        {
             throw new InvalidOperationException(
                 "A skill with that name already exists in this category."
             );
+        }
 
         var skill = new Skill
         {
             Id = Guid.NewGuid(),
-            Name = dto.Name,
+            Name = normalizedName,
             SkillCategoryId = dto.SkillCategoryId
         };
 
         _db.Skills.Add(skill);
+
         await _db.SaveChangesAsync();
 
         return new SkillDto(
@@ -62,5 +91,20 @@ public class SkillService
                 s.SkillCategory.Name
             ))
             .FirstOrDefaultAsync();
+    }
+
+    public async Task<List<SkillOptionDto>> GetAllSkillsAsync()
+    {
+        return await _db.Skills
+            .AsNoTracking()
+            .OrderBy(s => s.SkillCategory.DisplayOrder)
+            .ThenBy(s => s.Name)
+            .Select(s => new SkillOptionDto(
+                s.Id,
+                s.Name,
+                s.SkillCategoryId,
+                s.SkillCategory.Name
+            ))
+            .ToListAsync();
     }
 }

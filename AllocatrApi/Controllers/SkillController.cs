@@ -1,3 +1,4 @@
+using AllocatrApi.Dtos;
 using AllocatrApi.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -32,10 +33,20 @@ public class SkillController : ControllerBase
     }
 
     [AllowAnonymous]
+    [HttpGet]
+    public async Task<ActionResult<List<SkillOptionDto>>> GetSkills()
+    {
+        var skills = await _skillService.GetAllSkillsAsync();
+
+        return Ok(skills);
+    }
+
+    [AllowAnonymous]
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> GetSkillById(Guid id)
     {
         var result = await _skillService.GetSkillByIdAsync(id);
+
         if (result == null)
             return NotFound("Skill not found.");
 

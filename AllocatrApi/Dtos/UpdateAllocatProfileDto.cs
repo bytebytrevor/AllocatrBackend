@@ -1,6 +1,6 @@
 namespace AllocatrApi.Dtos;
 
-public class CreateAllocatProfileDto
+public class UpdateAllocatProfileDto
 {
     public string? IdNumber { get; set; }
 
