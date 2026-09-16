@@ -9,4 +9,6 @@ public class Skill
     public SkillCategory SkillCategory { get; set; } = null!;
 
     public ICollection<AllocatProfileSkill> AllocatProfiles { get; set; } = [];
+
+    public ICollection<ProjectSkill> ProjectSkills { get; set; } = new List<ProjectSkill>();
 }

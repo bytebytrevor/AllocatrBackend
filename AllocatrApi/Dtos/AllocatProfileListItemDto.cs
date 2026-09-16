@@ -6,7 +6,7 @@ public record AllocatProfileListItemDto(
     string? AvatarUrl,
     string? Headline,
     string? Title,
-    IReadOnlyList<string> Skills,
+    IReadOnlyList<SkillOptionDto> Skills,
     decimal Rating,
     int RatingCount,
     int CompletedProjects,

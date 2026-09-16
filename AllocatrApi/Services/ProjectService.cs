@@ -1,3 +1,4 @@
+using System.Linq;
 using AllocatrApi.Data;
 using AllocatrApi.Dtos;
 using AllocatrApi.Enums;
@@ -184,14 +185,25 @@ public class ProjectService
                 p.Priority,
                 p.Budget,
                 p.Currency,
+
                 p.AllocatAssignments.Any(pa =>
                     pa.Status == ProjectAllocatStatus.Accepted &&
                     pa.RemovedAt == null
                 ),
+
                 p.CreatedAt,
                 p.StartDate,
                 p.DueDate,
-                p.AllocatAssignments
+                p.AllocatAssignments,
+
+                p.ProjectSkills
+                    .Select(ps => new ProjectSkillDto(
+                        ps.Skill.Id,
+                        ps.Skill.Name,
+                        ps.Skill.SkillCategoryId,
+                        ps.Skill.SkillCategory.Name
+                    ))
+                    .ToList()
             )
         );
     }

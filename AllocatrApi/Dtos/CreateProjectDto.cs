@@ -4,7 +4,7 @@ public record class CreateProjectDto(
     string Title,
     string Description,
     string Category,
-    List<string> Tags,
+    List<Guid> SkillIds,
     DateOnly? StartDate,
     DateOnly? DueDate,
     string? Priority,

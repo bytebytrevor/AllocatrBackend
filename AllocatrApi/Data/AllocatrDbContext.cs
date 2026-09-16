@@ -13,6 +13,7 @@ public class AllocatrDbContext(DbContextOptions<AllocatrDbContext> options)
     public DbSet<ProjectMessage> ProjectMessages { get; set; } = null!;
     public DbSet<ProjectTag> ProjectTags { get; set; } = null!;
     public DbSet<ProjectAllocat> ProjectAllocats { get; set; } = null!;
+    public DbSet<ProjectSkill> ProjectSkills { get; set; } = null!;
     public DbSet<AllocatProfile> AllocatProfiles { get; set; } = null!;
     public DbSet<TaskComment> TaskComments { get; set; } = null!;
     public DbSet<Review> Reviews { get; set; } = null!;

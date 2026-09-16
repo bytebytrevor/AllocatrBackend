@@ -5,6 +5,7 @@ using AllocatrApi.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace AllocatrApi.Controllers;
 
@@ -118,17 +119,30 @@ public class ProjectController : ControllerBase
             return Unauthorized();
         }
 
+        var validSkillIds = await _db.Skills
+            .Where(s => dto.SkillIds.Contains(s.Id))
+            .Select(s => s.Id)
+            .ToListAsync();
+
+        if (validSkillIds.Count != dto.SkillIds.Count)
+        {
+            return BadRequest(new
+            {
+                message = "One or more selected skills are invalid."
+            });
+        }
+
         var project = new Project
         {
             ProjectCode = GenerateProjectCode(),
-            Title = dto.Title,
-            Description = dto.Description,
-            Category = dto.Category,
+            Title = dto.Title.Trim(),
+            Description = dto.Description.Trim(),
+            Category = dto.Category.Trim(),
 
-            Tags = dto.Tags
-                .Select(tag => new ProjectTag
+            ProjectSkills = dto.SkillIds
+                .Select(skillId => new ProjectSkill
                 {
-                    Tag = tag
+                    SkillId = skillId
                 })
                 .ToList(),
 
@@ -143,33 +157,31 @@ public class ProjectController : ControllerBase
 
             UserId = user.Id,
 
-            IsPublic = true,
-            AllowBids = true,
+            IsPublic = dto.IsPublic,
+            AllowBids = dto.AllowBids,
 
             Budget = dto.Budget,
             Currency = dto.Currency
         };
 
         _db.Projects.Add(project);
+
         await _db.SaveChangesAsync();
 
-        var result = new ProjectDto(
-            project.Id,
-            project.ProjectCode,
-            project.Title,
-            project.Description,
-            project.Category,
-            project.Status,
-            project.Progress,
-            project.Priority,
-            project.Budget,
-            project.Currency,
-            false,
-            project.CreatedAt,
-            project.StartDate,
-            project.DueDate,
-            project.AllocatAssignments
-        );
+        var result = await _projectService
+            .GetAccessibleProjectByIdAsync(
+                project.Id,
+                user.Id,
+                user.IsAllocat
+            );
+
+        if (result == null)
+        {
+            return StatusCode(500, new
+            {
+                message = "Project was created but could not be loaded."
+            });
+        }
 
         return CreatedAtAction(
             nameof(GetProjectById),

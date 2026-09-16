@@ -2,7 +2,25 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace AllocatrApi.Dtos;
 
-public record class ProjectDto(
+// public record class ProjectDto(
+//     Guid Id,
+//     string ProjectCode,
+//     string Title,
+//     string Description,
+//     string Category,
+//     string Status,
+//     int Progress,
+//     string? Priority,
+//     decimal? Budget,
+//     string Currency,
+//     bool HasAcceptedAllocat,
+//     DateTime CreatedAt,
+//     DateOnly? StartDate,
+//     DateOnly? DueDate,
+//     ICollection<ProjectAllocat> AllocatAssignments
+// );
+
+public record ProjectDto(
     Guid Id,
     string ProjectCode,
     string Title,
@@ -13,9 +31,10 @@ public record class ProjectDto(
     string? Priority,
     decimal? Budget,
     string Currency,
-    bool HasAcceptedAllocat,
+    bool HasAllocat,
     DateTime CreatedAt,
     DateOnly? StartDate,
     DateOnly? DueDate,
-    ICollection<ProjectAllocat> AllocatAssignments
+    ICollection<ProjectAllocat> AllocatAssignments,
+    List<ProjectSkillDto> Skills
 );

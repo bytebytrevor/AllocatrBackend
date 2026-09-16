@@ -293,9 +293,19 @@ public class AllocatProfileService
                 IsVerified = a.IsVerified,
                 Level = a.Level,
 
+                // Skills = a.Skills
+                //     .OrderBy(s => s.Skill.Name)
+                //     .Select(s => s.Skill.Name)
+                //     .ToList(),
+                
                 Skills = a.Skills
                     .OrderBy(s => s.Skill.Name)
-                    .Select(s => s.Skill.Name)
+                    .Select(s => new SkillOptionDto(
+                        s.SkillId,
+                        s.Skill.Name,
+                        s.Skill.SkillCategoryId,
+                        s.Skill.SkillCategory.Name
+                    ))
                     .ToList(),
 
                 CompletedProjects =
@@ -1054,7 +1064,8 @@ public class AllocatProfileService
 
         public DateTime JoinedAt { get; set; }
 
-        public List<string> Skills { get; set; } = [];
+        // public List<string> Skills { get; set; } = [];
+        public List<SkillOptionDto> Skills { get; set; } = [];
     }
 
     private sealed record NormalizedProfileInput(

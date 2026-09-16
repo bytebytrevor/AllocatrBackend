@@ -37,6 +37,7 @@ public class Project
 
     // Navigation collections
     public ICollection<ProjectTag> Tags { get; set; } = new List<ProjectTag>();
+    public ICollection<ProjectSkill> ProjectSkills { get; set; } = new List<ProjectSkill>();
     public ICollection<ProjectAllocat> AllocatAssignments { get; set; } = new List<ProjectAllocat>();
     public ICollection<ProjectAttachment> Attachments { get; set; } = new List<ProjectAttachment>();
     public ICollection<TaskItem> Tasks { get; set; } = new List<TaskItem>();
