@@ -39,4 +39,6 @@ public class UpdateProjectDto
     public DateOnly? DueDate { get; set; }
 
     public string Priority { get; set; } = "standard";
+
+    public List<Guid>? SkillIds { get; set; }
 }

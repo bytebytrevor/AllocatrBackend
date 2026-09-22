@@ -20,6 +20,8 @@ public class AllocatrDbContext(DbContextOptions<AllocatrDbContext> options)
     public DbSet<Skill> Skills { get; set; } = null!;
     public DbSet<AllocatProfileSkill> AllocatProfileSkills { get; set; } = null!;
     public DbSet<SkillCategory> SkillCategories { get; set; } = null!;
+    public DbSet<CalendarPlanningBlock> CalendarPlanningBlocks { get; set; } = null!;
+    public DbSet<CalendarFocusTask> CalendarFocusTasks { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

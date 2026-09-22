@@ -78,7 +78,7 @@ public class ProjectService
     }
 
     /* =====================================================
-       UPDATE OWN PROJECT
+    UPDATE OWN PROJECT
     ===================================================== */
 
     public async Task<ProjectDto?> UpdateOwnedProjectAsync(
@@ -86,8 +86,8 @@ public class ProjectService
         Guid currentUserId,
         UpdateProjectDto dto)
     {
-        // Ownership is enforced as part of the database query.
         var project = await _db.Projects
+            .Include(p => p.ProjectSkills)
             .FirstOrDefaultAsync(p =>
                 p.Id == projectId &&
                 p.UserId == currentUserId
@@ -145,6 +145,46 @@ public class ProjectService
             );
         }
 
+
+        // Validate updated skills
+        List<Guid>? skillIds = null;
+
+        if (dto.SkillIds != null)
+        {
+            skillIds = dto.SkillIds
+                .Distinct()
+                .ToList();
+
+            if (skillIds.Count == 0)
+            {
+                throw new ArgumentException(
+                    "Select at least one skill for this project."
+                );
+            }
+
+            if (skillIds.Count > 15)
+            {
+                throw new ArgumentException(
+                    "A project cannot have more than 15 skills."
+                );
+            }
+
+            var validSkillIds = await _db.Skills
+                .Where(s => skillIds.Contains(s.Id))
+                .Select(s => s.Id)
+                .ToListAsync();
+
+            if (validSkillIds.Count != skillIds.Count)
+            {
+                throw new ArgumentException(
+                    "One or more selected skills are invalid."
+                );
+            }
+        }
+
+
+        // Update project
+
         project.Title = title;
         project.Description = description;
         project.StartDate = dto.StartDate;
@@ -152,9 +192,29 @@ public class ProjectService
         project.Priority = priority;
         project.UpdatedAt = DateTime.UtcNow;
 
+
+        // Update project skills
+
+        if (skillIds != null)
+        {
+            _db.ProjectSkills.RemoveRange(
+                project.ProjectSkills
+            );
+
+            project.ProjectSkills = skillIds
+                .Select(skillId => new ProjectSkill
+                {
+                    ProjectId = project.Id,
+                    SkillId = skillId
+                })
+                .ToList();
+        }
+
         await _db.SaveChangesAsync();
 
-        // Query a fresh DTO rather than serializing the tracked entity graph.
+
+        // Return fresh dto
+
         var updatedProjectQuery = _db.Projects
             .AsNoTracking()
             .Where(p =>
