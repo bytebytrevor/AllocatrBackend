@@ -4,6 +4,7 @@ using AllocatrApi.Dtos;
 using AllocatrApi.Enums;
 using AllocatrApi.Models;
 using Microsoft.EntityFrameworkCore;
+using AllocatrApi.Constants;
 
 namespace AllocatrApi.Services;
 
@@ -96,6 +97,16 @@ public class ProjectService
         if (project == null)
         {
             return null;
+        }
+
+        if (
+            project.Status == ProjectStatuses.CompletionRequested ||
+            project.Status == ProjectStatuses.Completed
+        )
+        {
+            throw new InvalidOperationException(
+                "This project cannot be edited in its current state."
+            );
         }
 
         var title = dto.Title?.Trim() ?? string.Empty;
@@ -227,6 +238,282 @@ public class ProjectService
     }
 
     /* =====================================================
+   COMPLETE OWN PROJECT
+    ===================================================== */
+
+    public async Task<ProjectDto?> CompleteOwnedProjectAsync(
+        Guid projectId,
+        Guid currentUserId)
+    {
+        var project = await _db.Projects
+            .FirstOrDefaultAsync(p =>
+                p.Id == projectId &&
+                p.UserId == currentUserId
+            );
+
+        if (project == null)
+        {
+            return null;
+        }
+
+        /*
+        * Treat completion as idempotent.
+        *
+        * If the client submits the request twice,
+        * simply return the already completed project.
+        */
+        if (
+            project.Status ==
+            ProjectStatuses.Completed
+        )
+        {
+            return await ProjectDtoQuery(
+                    _db.Projects
+                        .AsNoTracking()
+                        .Where(p =>
+                            p.Id == projectId
+                        )
+                )
+                .FirstOrDefaultAsync();
+        }
+
+        /*
+        * A pending project has not started yet.
+        *
+        * Projects become active when the first
+        * invited Allocat accepts.
+        */
+        if (
+            project.Status !=
+            ProjectStatuses.Active
+        )
+        {
+            throw new InvalidOperationException(
+                "Only active projects can be completed."
+            );
+        }
+
+        /*
+        * Defensive validation.
+        *
+        * An active project should already have at
+        * least one accepted Allocat, but we protect
+        * against inconsistent data.
+        */
+        var hasAcceptedAllocat =
+            await _db.ProjectAllocats
+                .AsNoTracking()
+                .AnyAsync(pa =>
+                    pa.ProjectId == projectId &&
+                    pa.Status ==
+                        ProjectAllocatStatus.Accepted &&
+                    pa.RemovedAt == null
+                );
+
+        if (!hasAcceptedAllocat)
+        {
+            throw new InvalidOperationException(
+                "A project must have at least one accepted Allocat before it can be completed."
+            );
+        }
+
+        /*
+        * If tasks exist, every task must be complete.
+        *
+        * Projects with no tasks can still be confirmed
+        * complete by the client.
+        */
+        var hasIncompleteTasks =
+            await _db.TaskItems
+                .AsNoTracking()
+                .AnyAsync(t =>
+                    t.ProjectId == projectId &&
+                    t.Status != "complete"
+                );
+
+        if (hasIncompleteTasks)
+        {
+            throw new InvalidOperationException(
+                "All project tasks must be completed before the project can be confirmed complete."
+            );
+        }
+
+        var now = DateTime.UtcNow;
+
+        project.Status =
+            ProjectStatuses.Completed;
+
+        project.Progress = 100;
+
+        project.CompletedAt = now;
+
+        project.UpdatedAt = now;
+
+        await _db.SaveChangesAsync();
+
+        return await ProjectDtoQuery(
+                _db.Projects
+                    .AsNoTracking()
+                    .Where(p =>
+                        p.Id == projectId
+                    )
+            )
+            .FirstOrDefaultAsync();
+    }
+
+    /* =====================================================
+    REQUEST PROJECT COMPLETION
+    ===================================================== */
+
+    public async Task<ProjectDto?> RequestCompletionAsync(
+        Guid projectId,
+        Guid currentUserId)
+    {
+        var project = await _db.Projects
+            .Include(p => p.Tasks)
+            .FirstOrDefaultAsync(p => p.Id == projectId);
+
+        if (project == null)
+        {
+            return null;
+        }
+
+        var isAcceptedAllocat = await _db.ProjectAllocats
+            .AsNoTracking()
+            .AnyAsync(pa =>
+                pa.ProjectId == projectId &&
+                pa.AllocatProfileId == currentUserId &&
+                pa.Status == ProjectAllocatStatus.Accepted &&
+                pa.RemovedAt == null
+            );
+
+        if (!isAcceptedAllocat)
+        {
+            throw new UnauthorizedAccessException(
+                "Only an accepted Allocat can request project completion."
+            );
+        }
+
+        if (project.Status == ProjectStatuses.CompletionRequested)
+        {
+            return await GetProjectDtoAsync(projectId);
+        }
+
+        if (project.Status == ProjectStatuses.Completed)
+        {
+            throw new InvalidOperationException(
+                "This project has already been completed."
+            );
+        }
+
+        if (project.Status != ProjectStatuses.Active)
+        {
+            throw new InvalidOperationException(
+                "Only active projects can be marked ready for completion."
+            );
+        }
+
+        var now = DateTime.UtcNow;
+
+        foreach (var task in project.Tasks.Where(t => t.Status != "complete"))
+        {
+            task.Status = "complete";
+            task.CompletedAt = now;
+            task.UpdatedAt = now;
+        }
+
+        project.Status = ProjectStatuses.CompletionRequested;
+        project.Progress = 100;
+        project.CompletionRequestedAt = now;
+        project.CompletionRequestedByAllocatId = currentUserId;
+        project.UpdatedAt = now;
+
+        await _db.SaveChangesAsync();
+
+        return await GetProjectDtoAsync(projectId);
+    }
+
+    /* =====================================================
+    CONFIRM PROJECT COMPLETION
+    ===================================================== */
+
+    public async Task<ProjectDto?> ConfirmCompletionAsync(
+        Guid projectId,
+        Guid currentUserId)
+    {
+        var project = await _db.Projects
+            .FirstOrDefaultAsync(p =>
+                p.Id == projectId &&
+                p.UserId == currentUserId
+            );
+
+        if (project == null)
+        {
+            return null;
+        }
+
+        if (project.Status == ProjectStatuses.Completed)
+        {
+            return await GetProjectDtoAsync(projectId);
+        }
+
+        if (project.Status != ProjectStatuses.CompletionRequested)
+        {
+            throw new InvalidOperationException(
+                "This project is not awaiting completion confirmation."
+            );
+        }
+
+        var now = DateTime.UtcNow;
+
+        project.Status = ProjectStatuses.Completed;
+        project.Progress = 100;
+        project.CompletedAt = now;
+        project.UpdatedAt = now;
+
+        await _db.SaveChangesAsync();
+
+        return await GetProjectDtoAsync(projectId);
+    }
+
+    /* =====================================================
+    RETURN PROJECT TO ACTIVE
+    ===================================================== */
+
+    public async Task<ProjectDto?> NeedsMoreWorkAsync(
+        Guid projectId,
+        Guid currentUserId)
+    {
+        var project = await _db.Projects
+            .FirstOrDefaultAsync(p =>
+                p.Id == projectId &&
+                p.UserId == currentUserId
+            );
+
+        if (project == null)
+        {
+            return null;
+        }
+
+        if (project.Status != ProjectStatuses.CompletionRequested)
+        {
+            throw new InvalidOperationException(
+                "This project is not awaiting completion confirmation."
+            );
+        }
+
+        project.Status = ProjectStatuses.Active;
+        project.CompletionRequestedAt = null;
+        project.CompletionRequestedByAllocatId = null;
+        project.CompletedAt = null;
+        project.UpdatedAt = DateTime.UtcNow;
+
+        await _db.SaveChangesAsync();
+
+        return await GetProjectDtoAsync(projectId);
+    }
+
+    /* =====================================================
        DTO PROJECTION
     ===================================================== */
 
@@ -252,6 +539,9 @@ public class ProjectService
                 ),
 
                 p.CreatedAt,
+                p.CompletionRequestedAt,
+                p.CompletionRequestedByAllocatId,
+                p.CompletedAt,
                 p.StartDate,
                 p.DueDate,
                 p.AllocatAssignments,
@@ -266,5 +556,15 @@ public class ProjectService
                     .ToList()
             )
         );
+    }
+
+    private async Task<ProjectDto?> GetProjectDtoAsync(Guid projectId)
+    {
+        return await ProjectDtoQuery(
+            _db.Projects
+                .AsNoTracking()
+                .Where(p => p.Id == projectId)
+        )
+        .FirstOrDefaultAsync();
     }
 }

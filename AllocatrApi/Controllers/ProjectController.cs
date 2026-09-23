@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using AllocatrApi.Constants;
 
 namespace AllocatrApi.Controllers;
 
@@ -151,7 +152,7 @@ public class ProjectController : ControllerBase
             StartDate = dto.StartDate,
             DueDate = dto.DueDate,
 
-            Status = "pending",
+            Status = ProjectStatuses.Pending,
             Progress = 0,
             Priority = dto.Priority,
 
@@ -234,6 +235,130 @@ public class ProjectController : ControllerBase
                 message = ex.Message
             });
         }
+    }
+
+    /* =====================================================
+    COMPLETE PROJECT
+    ===================================================== */
+
+    [HttpPatch("{id:guid}/complete")]
+    public async Task<IActionResult> CompleteProject(
+        Guid id)
+    {
+        var user =
+            await _userManager.GetUserAsync(User);
+
+        if (user == null)
+        {
+            return Unauthorized();
+        }
+
+        var project =
+            await _projectService
+                .CompleteOwnedProjectAsync(
+                    id,
+                    user.Id
+                );
+
+        if (project == null)
+        {
+            return NotFound(new
+            {
+                message = "Project not found."
+            });
+        }
+
+        return Ok(project);
+    }
+
+    /* =====================================================
+    REQUEST COMPLETION
+    ===================================================== */
+
+    [HttpPatch("{id:guid}/completion/request")]
+    public async Task<IActionResult> RequestCompletion(Guid id)
+    {
+        var user = await _userManager.GetUserAsync(User);
+
+        if (user == null)
+        {
+            return Unauthorized();
+        }
+
+        var project = await _projectService.RequestCompletionAsync(
+            id,
+            user.Id
+        );
+
+        if (project == null)
+        {
+            return NotFound(new
+            {
+                message = "Project not found."
+            });
+        }
+
+        return Ok(project);
+    }
+
+    /* =====================================================
+    CONFIRM COMPLETION
+    ===================================================== */
+
+    [HttpPatch("{id:guid}/completion/confirm")]
+    public async Task<IActionResult> ConfirmCompletion(Guid id)
+    {
+        var user = await _userManager.GetUserAsync(User);
+
+        if (user == null)
+        {
+            return Unauthorized();
+        }
+
+        var project = await _projectService.ConfirmCompletionAsync(
+            id,
+            user.Id
+        );
+
+        if (project == null)
+        {
+            return NotFound(new
+            {
+                message = "Project not found."
+            });
+        }
+
+        return Ok(project);
+    }
+
+    /* =====================================================
+    NEEDS MORE WORK
+    ===================================================== */
+
+    [HttpPatch("{id:guid}/completion/reject")]
+    public async Task<IActionResult> RejectCompletion(Guid id)
+    {
+        var user = await _userManager.GetUserAsync(User);
+
+        if (user == null)
+        {
+            return Unauthorized();
+        }
+
+        var project = await _projectService.NeedsMoreWorkAsync(
+            id,
+            user.Id
+        );
+
+        if (project == null)
+        {
+            return NotFound(new
+            {
+                message = "Project not found."
+            });
+        }
+
+        return Ok(project);
     }
 
     /* =====================================================

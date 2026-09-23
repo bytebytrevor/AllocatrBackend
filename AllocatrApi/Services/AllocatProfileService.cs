@@ -3,6 +3,7 @@ using AllocatrApi.Dtos;
 using AllocatrApi.Enums;
 using AllocatrApi.Models;
 using Microsoft.EntityFrameworkCore;
+using AllocatrApi.Constants;
 
 namespace AllocatrApi.Services;
 
@@ -297,7 +298,7 @@ public class AllocatProfileService
                 //     .OrderBy(s => s.Skill.Name)
                 //     .Select(s => s.Skill.Name)
                 //     .ToList(),
-                
+
                 Skills = a.Skills
                     .OrderBy(s => s.Skill.Name)
                     .Select(s => new SkillOptionDto(
@@ -313,7 +314,8 @@ public class AllocatProfileService
                         pa.Status ==
                             ProjectAllocatStatus.Accepted &&
                         pa.RemovedAt == null &&
-                        pa.Project.Status == "completed"
+                        pa.Project.Status ==
+                            ProjectStatuses.Completed
                     )
             })
             .ToListAsync();
@@ -438,21 +440,26 @@ public class AllocatProfileService
             .Where(r =>
                 r.AllocatProfileId == allocatUserId
             )
-            .Select(r => r.Rating);
+            .Select(r =>
+                (decimal)r.Rating
+            );
 
-        var ratingCount = await ratings.CountAsync();
+        var ratingCount =
+            await ratings.CountAsync();
 
-        var averageRating = ratingCount == 0
-            ? 0m
-            : await ratings.AverageAsync();
+        var averageRating =
+            ratingCount == 0
+                ? 0m
+                : await ratings.AverageAsync();
 
-        profile.RatingCount = ratingCount;
-        profile.AverageRating = Math.Round(
-            averageRating,
-            2
-        );
+        profile.RatingCount =
+            ratingCount;
 
-        profile.UpdatedAt = DateTime.UtcNow;
+        profile.AverageRating =
+            Math.Round(
+                averageRating,
+                2
+            );
 
         await _db.SaveChangesAsync();
 
@@ -527,7 +534,8 @@ public class AllocatProfileService
                         pa.Status ==
                             ProjectAllocatStatus.Accepted &&
                         pa.RemovedAt == null &&
-                        pa.Project.Status == "completed"
+                        pa.Project.Status ==
+                            ProjectStatuses.Completed
                     ),
 
                 Projects = a.ProjectAssignments
@@ -535,7 +543,8 @@ public class AllocatProfileService
                         pa.Status ==
                             ProjectAllocatStatus.Accepted &&
                         pa.RemovedAt == null &&
-                        pa.Project.Status == "completed" &&
+                        pa.Project.Status ==
+                            ProjectStatuses.Completed &&
                         (
                             !publicView ||
                             pa.Project.IsPublic

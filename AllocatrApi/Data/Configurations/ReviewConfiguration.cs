@@ -4,28 +4,48 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace AllocatrApi.Data.Configurations;
 
-public class ReviewConfiguration : IEntityTypeConfiguration<Review>
+public class ReviewConfiguration :
+    IEntityTypeConfiguration<Review>
 {
-    public void Configure(EntityTypeBuilder<Review> builder)
+    public void Configure(
+        EntityTypeBuilder<Review> builder)
     {
+        builder.ToTable(
+            "Reviews",
+            table =>
+            {
+                table.HasCheckConstraint(
+                    "CK_Reviews_Rating",
+                    "\"Rating\" >= 1 AND \"Rating\" <= 5"
+                );
+            }
+        );
+
         builder.HasKey(r => r.Id);
 
         builder.Property(r => r.Rating)
-            .HasPrecision(2, 1);
+            .IsRequired();
 
         builder.Property(r => r.Comment)
             .HasMaxLength(1000);
 
+        /*
+         * One Allocat can only have one review
+         * for a specific project.
+         */
         builder.HasIndex(r => new
         {
             r.ProjectId,
-            r.ReviewerId,
             r.AllocatProfileId
-        }).IsUnique();
+        })
+        .IsUnique();
+
+        builder.HasIndex(r => r.AllocatProfileId);
 
         builder.HasOne(r => r.Project)
             .WithMany(p => p.Reviews)
-            .HasForeignKey(r => r.ProjectId);
+            .HasForeignKey(r => r.ProjectId)
+            .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasOne(r => r.Reviewer)
             .WithMany(u => u.ReviewsWritten)
@@ -34,8 +54,7 @@ public class ReviewConfiguration : IEntityTypeConfiguration<Review>
 
         builder.HasOne(r => r.AllocatProfile)
             .WithMany(a => a.Reviews)
-            .HasForeignKey(r => r.AllocatProfileId);
-
-
+            .HasForeignKey(r => r.AllocatProfileId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

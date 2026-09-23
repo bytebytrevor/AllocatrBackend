@@ -1,3 +1,5 @@
+using AllocatrApi.Constants;
+
 namespace AllocatrApi.Models;
 
 public class Project
@@ -13,8 +15,8 @@ public class Project
     public string Category { get; set; } = null!;
 
     // Status & progress
-    public string Status { get; set; } = "Draft";
-    public int Progress { get; set; } = 0;
+    public string Status { get; set; } = ProjectStatuses.Pending;
+    public int Progress { get; set; }
     public string? Priority { get; set; }
 
     // Ownership
@@ -24,8 +26,14 @@ public class Project
     // Dates
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }
+    public DateTime? CompletionRequestedAt { get; set; }
+    public DateTime? CompletedAt { get; set; }
     public DateOnly? StartDate { get; set; }
     public DateOnly? DueDate { get; set; }
+
+    // Completion request
+    public Guid? CompletionRequestedByAllocatId { get; set; }
+    public AllocatProfile? CompletionRequestedByAllocat { get; set; }
 
     // Visibility & rules
     public bool IsPublic { get; set; }
@@ -44,4 +52,3 @@ public class Project
     public ICollection<ProjectMessage> Messages { get; set; } = new List<ProjectMessage>();
     public ICollection<Review> Reviews { get; set; } = [];
 }
-

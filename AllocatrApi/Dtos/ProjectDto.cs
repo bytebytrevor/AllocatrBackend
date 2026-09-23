@@ -1,24 +1,6 @@
-using System.ComponentModel.DataAnnotations.Schema;
+using AllocatrApi.Models;
 
 namespace AllocatrApi.Dtos;
-
-// public record class ProjectDto(
-//     Guid Id,
-//     string ProjectCode,
-//     string Title,
-//     string Description,
-//     string Category,
-//     string Status,
-//     int Progress,
-//     string? Priority,
-//     decimal? Budget,
-//     string Currency,
-//     bool HasAcceptedAllocat,
-//     DateTime CreatedAt,
-//     DateOnly? StartDate,
-//     DateOnly? DueDate,
-//     ICollection<ProjectAllocat> AllocatAssignments
-// );
 
 public record ProjectDto(
     Guid Id,
@@ -33,6 +15,9 @@ public record ProjectDto(
     string Currency,
     bool HasAllocat,
     DateTime CreatedAt,
+    DateTime? CompletionRequestedAt,
+    Guid? CompletionRequestedByAllocatId,
+    DateTime? CompletedAt,
     DateOnly? StartDate,
     DateOnly? DueDate,
     ICollection<ProjectAllocat> AllocatAssignments,

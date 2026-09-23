@@ -1,3 +1,4 @@
+using AllocatrApi.Constants;
 using AllocatrApi.Data;
 using AllocatrApi.Dtos;
 using AllocatrApi.Models;
@@ -111,13 +112,17 @@ public class TaskService
             return null;
         }
 
+        await EnsureProjectCanBeModifiedAsync(projectId);
+
         var title = dto.Title?.Trim() ?? string.Empty;
         var description = dto.Description?.Trim() ?? string.Empty;
         var priority = dto.Priority?.Trim().ToLowerInvariant() ?? string.Empty;
 
         if (string.IsNullOrWhiteSpace(title))
         {
-            throw new ArgumentException("Task title is required.");
+            throw new ArgumentException(
+                "Task title is required."
+            );
         }
 
         if (title.Length > 200)
@@ -147,11 +152,10 @@ public class TaskService
 
         if (dto.AssignedToId.HasValue)
         {
-            var validAssignee =
-                await _projectAccess.IsAcceptedAllocatAsync(
-                    projectId,
-                    dto.AssignedToId.Value
-                );
+            var validAssignee = await _projectAccess.IsAcceptedAllocatAsync(
+                projectId,
+                dto.AssignedToId.Value
+            );
 
             if (!validAssignee)
             {
@@ -160,6 +164,8 @@ public class TaskService
                 );
             }
         }
+
+        var now = DateTime.UtcNow;
 
         var task = new TaskItem
         {
@@ -172,11 +178,12 @@ public class TaskService
             DueDate = dto.DueDate,
             AssignedToId = dto.AssignedToId,
             CreatedByUserId = userId,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
+            CreatedAt = now,
+            UpdatedAt = now
         };
 
         _db.TaskItems.Add(task);
+
         await _db.SaveChangesAsync();
 
         await RecalculateProjectProgressAsync(projectId);
@@ -200,7 +207,9 @@ public class TaskService
             normalizedStatus != "overdue"
         )
         {
-            throw new ArgumentException("Invalid task status.");
+            throw new ArgumentException(
+                "Invalid task status."
+            );
         }
 
         var projectId = await GetTaskProjectIdAsync(taskId);
@@ -220,6 +229,8 @@ public class TaskService
             return null;
         }
 
+        await EnsureProjectCanBeModifiedAsync(projectId.Value);
+
         var task = await _db.TaskItems
             .FirstOrDefaultAsync(t =>
                 t.Id == taskId &&
@@ -231,13 +242,16 @@ public class TaskService
             return null;
         }
 
+        var now = DateTime.UtcNow;
+
         task.Status = normalizedStatus;
+
         task.CompletedAt =
             normalizedStatus == "complete"
-                ? DateTime.UtcNow
+                ? now
                 : null;
 
-        task.UpdatedAt = DateTime.UtcNow;
+        task.UpdatedAt = now;
 
         await _db.SaveChangesAsync();
 
@@ -287,6 +301,8 @@ public class TaskService
             return false;
         }
 
+        await EnsureProjectCanBeModifiedAsync(projectId.Value);
+
         var task = await _db.TaskItems
             .FirstOrDefaultAsync(t =>
                 t.Id == taskId &&
@@ -299,6 +315,7 @@ public class TaskService
         }
 
         _db.TaskItems.Remove(task);
+
         await _db.SaveChangesAsync();
 
         await RecalculateProjectProgressAsync(projectId.Value);
@@ -344,13 +361,14 @@ public class TaskService
             return false;
         }
 
+        await EnsureProjectCanBeModifiedAsync(projectId.Value);
+
         if (assignedToId.HasValue)
         {
-            var validAssignee =
-                await _projectAccess.IsAcceptedAllocatAsync(
-                    projectId.Value,
-                    assignedToId.Value
-                );
+            var validAssignee = await _projectAccess.IsAcceptedAllocatAsync(
+                projectId.Value,
+                assignedToId.Value
+            );
 
             if (!validAssignee)
             {
@@ -361,7 +379,10 @@ public class TaskService
         }
 
         var task = await _db.TaskItems
-            .FirstOrDefaultAsync(t => t.Id == taskId);
+            .FirstOrDefaultAsync(t =>
+                t.Id == taskId &&
+                t.ProjectId == projectId.Value
+            );
 
         if (task == null)
         {
@@ -385,13 +406,49 @@ public class TaskService
             .FirstOrDefaultAsync();
     }
 
-    private async Task RecalculateProjectProgressAsync(
-        Guid projectId)
+    private async Task EnsureProjectCanBeModifiedAsync(Guid projectId)
+    {
+        var projectState = await _db.Projects
+            .AsNoTracking()
+            .Where(p => p.Id == projectId)
+            .Select(p => new
+            {
+                p.Status
+            })
+            .FirstOrDefaultAsync();
+
+        if (projectState == null)
+        {
+            throw new KeyNotFoundException(
+                "Project not found."
+            );
+        }
+
+        if (
+            projectState.Status == ProjectStatuses.CompletionRequested ||
+            projectState.Status == ProjectStatuses.Completed
+        )
+        {
+            throw new InvalidOperationException(
+                "Tasks cannot be modified while this project is awaiting completion confirmation or has been completed."
+            );
+        }
+    }
+
+    private async Task RecalculateProjectProgressAsync(Guid projectId)
     {
         var project = await _db.Projects
             .FirstOrDefaultAsync(p => p.Id == projectId);
 
         if (project == null)
+        {
+            return;
+        }
+
+        if (
+            project.Status == ProjectStatuses.CompletionRequested ||
+            project.Status == ProjectStatuses.Completed
+        )
         {
             return;
         }

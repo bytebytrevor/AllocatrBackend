@@ -91,9 +91,9 @@ builder.Services.AddScoped<SkillCategoryService>();
 builder.Services.AddScoped<SkillService>();
 builder.Services.AddScoped<ProjectAllocatService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
-builder.Services.AddScoped<AllocatProfileService>();
 builder.Services.AddScoped<CalendarService>();
 builder.Services.AddScoped<CalendarPlanningService>();
+builder.Services.AddScoped<ReviewService>();
 
 var app = builder.Build();
 

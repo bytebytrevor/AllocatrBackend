@@ -1,3 +1,4 @@
+using AllocatrApi.Constants;
 using AllocatrApi.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -8,6 +9,22 @@ public class ProjectConfiguration : IEntityTypeConfiguration<Project>
 {
     public void Configure(EntityTypeBuilder<Project> entity)
     {
+        entity.ToTable(
+            "Projects",
+            table =>
+            {
+                table.HasCheckConstraint(
+                    "CK_Projects_Status",
+                    "\"Status\" IN ('pending', 'active', 'completion_requested', 'completed')"
+                );
+
+                table.HasCheckConstraint(
+                    "CK_Projects_Progress",
+                    "\"Progress\" >= 0 AND \"Progress\" <= 100"
+                );
+            }
+        );
+
         /* =================================================
            KEY
         ================================================= */
@@ -42,12 +59,15 @@ public class ProjectConfiguration : IEntityTypeConfiguration<Project>
         ================================================= */
 
         entity.Property(p => p.Status)
-            .IsRequired();
+            .HasMaxLength(30)
+            .IsRequired()
+            .HasDefaultValue(ProjectStatuses.Pending);
 
         entity.Property(p => p.Priority);
 
         entity.Property(p => p.Progress)
-            .IsRequired();
+            .IsRequired()
+            .HasDefaultValue(0);
 
         /* =================================================
            DATES
@@ -57,9 +77,9 @@ public class ProjectConfiguration : IEntityTypeConfiguration<Project>
             .IsRequired();
 
         entity.Property(p => p.UpdatedAt);
-
+        entity.Property(p => p.CompletionRequestedAt);
+        entity.Property(p => p.CompletedAt);
         entity.Property(p => p.StartDate);
-
         entity.Property(p => p.DueDate);
 
         /* =================================================
@@ -95,6 +115,15 @@ public class ProjectConfiguration : IEntityTypeConfiguration<Project>
             .WithMany()
             .HasForeignKey(p => p.UserId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        /* =================================================
+           COMPLETION REQUESTER
+        ================================================= */
+
+        entity.HasOne(p => p.CompletionRequestedByAllocat)
+            .WithMany()
+            .HasForeignKey(p => p.CompletionRequestedByAllocatId)
+            .OnDelete(DeleteBehavior.SetNull);
 
         /* =================================================
            INDEXES
