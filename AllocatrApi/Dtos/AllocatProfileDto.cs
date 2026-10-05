@@ -17,6 +17,7 @@ public record AllocatProfileDto(
     string? Location,
     decimal? HourlyRate,
     string Currency,
+    int? YearsExperience,
     int? ResponseTime,
     int Level,
     int ProfessionalScore,
