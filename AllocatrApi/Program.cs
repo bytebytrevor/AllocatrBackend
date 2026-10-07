@@ -7,6 +7,7 @@ using System.Text.Json.Serialization;
 using AllocatrApi.Configuration;
 using AllocatrApi.Infrastructure;
 using AllocatrApi.Data.Seed;
+using AllocatrApi.Services.Storage;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -94,6 +95,9 @@ builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<CalendarService>();
 builder.Services.AddScoped<CalendarPlanningService>();
 builder.Services.AddScoped<ReviewService>();
+builder.Services.AddScoped<IFileStorageService, SupabaseFileStorageService>();
+builder.Services.AddScoped<UserFileService>();
+builder.Services.AddScoped<UserDocumentService>();
 
 var app = builder.Build();
 

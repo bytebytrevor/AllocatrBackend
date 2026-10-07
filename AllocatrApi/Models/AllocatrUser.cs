@@ -16,11 +16,13 @@
 
 using Microsoft.AspNetCore.Identity;
 namespace AllocatrApi.Models;
+
 public class AllocatrUser : IdentityUser<Guid>
 {
     public required string FullName { get; set; } = null!;
     public string? Location { get; set; }
     public string? AvatarUrl { get; set; }
+    public Guid? AvatarFileId { get; set; }
     public DateTime CreatedAt { get; set; }
     public bool IsAllocat { get; set; } = false;
     public AllocatProfile? AllocatProfile { get; set; }

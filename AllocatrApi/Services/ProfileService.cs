@@ -1,6 +1,8 @@
 using System.Text;
+using AllocatrApi.Data;
 using AllocatrApi.Dtos;
 using AllocatrApi.Models;
+using AllocatrApi.Services.Storage;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.WebUtilities;
 
@@ -8,8 +10,7 @@ namespace AllocatrApi.Services;
 
 public class ProfileService
 {
-    private const long MaxProfilePictureSize =
-        5 * 1024 * 1024;
+    private const long MaxProfilePictureSize = 5 * 1024 * 1024;
 
     private static readonly HashSet<string> AllowedImageTypes =
         new(StringComparer.OrdinalIgnoreCase)
@@ -20,19 +21,25 @@ public class ProfileService
         };
 
     private readonly UserManager<AllocatrUser> _userManager;
-    private readonly SupabaseService _supabase;
+    private readonly UserFileService _userFiles;
+    private readonly IFileStorageService _storage;
+    private readonly AllocatrDbContext _dbContext;
     private readonly IEmailService _emailService;
     private readonly IConfiguration _configuration;
 
     public ProfileService(
         UserManager<AllocatrUser> userManager,
-        SupabaseService supabase,
+        UserFileService userFiles,
+        IFileStorageService storage,
+        AllocatrDbContext dbContext,
         IEmailService emailService,
         IConfiguration configuration
     )
     {
         _userManager = userManager;
-        _supabase = supabase;
+        _userFiles = userFiles;
+        _storage = storage;
+        _dbContext = dbContext;
         _emailService = emailService;
         _configuration = configuration;
     }
@@ -120,7 +127,7 @@ public class ProfileService
         return MapToDto(user);
     }
 
-     /* --------------------------------------------------------
+    /* --------------------------------------------------------
      * EMAIL VERIFICATION
      * -------------------------------------------------------- */
 
@@ -204,45 +211,35 @@ public class ProfileService
 
         ValidateProfilePicture(file);
 
-        await using var memoryStream =
-            new MemoryStream();
+        StoredFile? oldAvatar = null;
 
-        await file.CopyToAsync(memoryStream);
+        if (user.AvatarFileId.HasValue)
+        {
+            oldAvatar = await _dbContext.StoredFiles.FindAsync(
+                user.AvatarFileId.Value
+            );
+        }
 
-        var bytes = memoryStream.ToArray();
-
-        // Actual uploaded bytes may be JPEG, PNG or WebP,
-        var extension = GetImageExtension(
-            file.ContentType
-        );
-
-        var path =
-            $"{user.Id}/profile{extension}";
-
-        await _supabase.Client
-            .Storage
-            .From("avatars")
-            .Upload(
-                bytes,
-                path,
-                new Supabase.Storage.FileOptions
-                {
-                    Upsert = true
-                }
+        var newAvatar =
+            await _userFiles.UploadAvatarAsync(
+                userId,
+                file
             );
 
-        var publicUrl = _supabase.Client
-            .Storage
-            .From("avatars")
-            .GetPublicUrl(path);
+        var publicUrl =
+            _storage.GetPublicUrl(
+                newAvatar.Bucket,
+                newAvatar.StoragePath
+            );
 
-        // Cache busting to keep filename same whenever the avatar is replaced.
         var cacheVersion =
-            DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            DateTimeOffset.UtcNow
+                .ToUnixTimeMilliseconds();
 
         var avatarUrl =
             $"{publicUrl}?v={cacheVersion}";
 
+        user.AvatarFileId = newAvatar.Id;
         user.AvatarUrl = avatarUrl;
 
         var updateResult =
@@ -250,9 +247,29 @@ public class ProfileService
 
         if (!updateResult.Succeeded)
         {
+            await _userFiles.DeleteStoredFileAsync(
+                newAvatar
+            );
+
             throw new InvalidOperationException(
                 FormatIdentityErrors(updateResult)
             );
+        }
+
+        if (oldAvatar != null)
+        {
+            try
+            {
+                await _userFiles.DeleteStoredFileAsync(
+                    oldAvatar
+                );
+            }
+            catch (Exception error)
+            {
+                Console.Error.WriteLine(
+                    $"Could not delete old avatar {oldAvatar.Id}: {error}"
+                );
+            }
         }
 
         return avatarUrl;
@@ -286,21 +303,6 @@ public class ProfileService
                 "Profile pictures must be JPEG, PNG or WebP."
             );
         }
-    }
-
-    private static string GetImageExtension(
-        string contentType
-    )
-    {
-        return contentType.ToLowerInvariant() switch
-        {
-            "image/jpeg" => ".jpg",
-            "image/png" => ".png",
-            "image/webp" => ".webp",
-            _ => throw new ArgumentException(
-                "Unsupported image type."
-            ),
-        };
     }
 
     /* --------------------------------------------------------
