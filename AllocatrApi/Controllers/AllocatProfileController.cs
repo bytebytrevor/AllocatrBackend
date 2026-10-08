@@ -1,217 +1,3 @@
-// using AllocatrApi.Dtos;
-// using AllocatrApi.Models;
-// using AllocatrApi.Services;
-// using Microsoft.AspNetCore.Authorization;
-// using Microsoft.AspNetCore.Identity;
-// using Microsoft.AspNetCore.Mvc;
-
-// namespace AllocatrApi.Controllers;
-
-// [ApiController]
-// [Route("api/allocats/profiles")]
-// [Authorize]
-// public class AllocatProfileController : ControllerBase
-// {
-//     private readonly UserManager<AllocatrUser> _userManager;
-//     private readonly AllocatProfileService _allocatProfileService;
-
-//     public AllocatProfileController(
-//         UserManager<AllocatrUser> userManager,
-//         AllocatProfileService allocatProfileService)
-//     {
-//         _userManager = userManager;
-//         _allocatProfileService = allocatProfileService;
-//     }
-
-//     [HttpPost]
-//     public async Task<ActionResult<MyAllocatProfileDto>>
-//         CreateAllocatProfile(
-//             [FromBody] CreateAllocatProfileDto dto)
-//     {
-//         var user = await _userManager.GetUserAsync(User);
-
-//         if (user == null)
-//         {
-//             return Unauthorized();
-//         }
-
-//         if (!user.IsAllocat)
-//         {
-//             return Problem(
-//                 statusCode: StatusCodes.Status403Forbidden,
-//                 title: "Allocat access required",
-//                 detail:
-//                     "This account is not registered as an Allocat."
-//             );
-//         }
-
-//         var profile =
-//             await _allocatProfileService
-//                 .CreateAllocatProfileAsync(
-//                     user.Id,
-//                     dto
-//                 );
-
-//         return CreatedAtAction(
-//             nameof(GetAllocatProfileById),
-//             new
-//             {
-//                 allocatUserId =
-//                     profile.AllocatrUserId
-//             },
-//             profile
-//         );
-//     }
-
-//     [HttpGet("me")]
-//     public async Task<ActionResult<MyAllocatProfileDto>>
-//         GetMyAllocatProfile()
-//     {
-//         var user = await _userManager.GetUserAsync(User);
-
-//         if (user == null)
-//         {
-//             return Unauthorized();
-//         }
-
-//         var profile =
-//             await _allocatProfileService
-//                 .GetMyAllocatProfileAsync(user.Id);
-
-//         if (profile == null)
-//         {
-//             return NotFound();
-//         }
-
-//         return Ok(profile);
-//     }
-
-//     [HttpPut("me")]
-//     public async Task<ActionResult<MyAllocatProfileDto>>
-//         UpdateMyAllocatProfile(
-//             [FromBody] UpdateAllocatProfileDto dto)
-//     {
-//         var user = await _userManager.GetUserAsync(User);
-
-//         if (user == null)
-//         {
-//             return Unauthorized();
-//         }
-
-//         if (!user.IsAllocat)
-//         {
-//             return Problem(
-//                 statusCode: StatusCodes.Status403Forbidden,
-//                 title: "Allocat access required",
-//                 detail:
-//                     "This account is not registered as an Allocat."
-//             );
-//         }
-
-//         var profile =
-//             await _allocatProfileService
-//                 .UpdateAllocatProfileAsync(
-//                     user.Id,
-//                     dto
-//                 );
-
-//         if (profile == null)
-//         {
-//             return NotFound();
-//         }
-
-//         return Ok(profile);
-//     }
-
-//     [HttpPatch("me/visibility")]
-//     public async Task<IActionResult> SetVisibility(
-//         [FromBody] SetAllocatVisibilityDto dto)
-//     {
-//         var user = await _userManager.GetUserAsync(User);
-
-//         if (user == null)
-//         {
-//             return Unauthorized();
-//         }
-
-//         var updated =
-//             await _allocatProfileService
-//                 .SetVisibilityAsync(
-//                     user.Id,
-//                     dto.IsVisible
-//                 );
-
-//         if (!updated)
-//         {
-//             return NotFound();
-//         }
-
-//         return NoContent();
-//     }
-
-//     [HttpPatch("me/availability")]
-//     public async Task<IActionResult> SetAvailability(
-//         [FromBody] SetAllocatAvailabilityDto dto)
-//     {
-//         var user = await _userManager.GetUserAsync(User);
-
-//         if (user == null)
-//         {
-//             return Unauthorized();
-//         }
-
-//         var updated =
-//             await _allocatProfileService
-//                 .SetAvailabilityAsync(
-//                     user.Id,
-//                     dto.Availability
-//                 );
-
-//         if (!updated)
-//         {
-//             return NotFound();
-//         }
-
-//         return NoContent();
-//     }
-
-//     [AllowAnonymous]
-//     [HttpGet("{allocatUserId:guid}")]
-//     public async Task<ActionResult<AllocatProfileDto>>
-//         GetAllocatProfileById(
-//             Guid allocatUserId)
-//     {
-//         var profile =
-//             await _allocatProfileService
-//                 .GetPublicAllocatProfileAsync(
-//                     allocatUserId
-//                 );
-
-//         if (profile == null)
-//         {
-//             return NotFound();
-//         }
-
-//         return Ok(profile);
-//     }
-
-//     [AllowAnonymous]
-//     [HttpGet]
-//     public async Task<
-//         ActionResult<
-//             PagedResultDto<AllocatProfileListItemDto>
-//         >
-//     > GetAllAllocatProfiles(
-//         [FromQuery] AllocatProfileSearchDto query)
-//     {
-//         var profiles =
-//             await _allocatProfileService
-//                 .GetAllAllocatProfilesAsync(query);
-
-//         return Ok(profiles);
-//     }
-// }
-
 using AllocatrApi.Dtos;
 using AllocatrApi.Models;
 using AllocatrApi.Services;
@@ -233,23 +19,16 @@ public class AllocatProfileController : ControllerBase
     public AllocatProfileController(
         UserManager<AllocatrUser> userManager,
         AllocatProfileService allocatProfileService,
-        UserDocumentService userDocumentService
-    )
+        UserDocumentService userDocumentService)
     {
         _userManager = userManager;
         _allocatProfileService = allocatProfileService;
         _userDocumentService = userDocumentService;
     }
 
-    /* --------------------------------------------------------
-     * CREATE PROFILE
-     * -------------------------------------------------------- */
-
     [HttpPost]
-    public async Task<ActionResult<MyAllocatProfileDto>>
-        CreateAllocatProfile(
-            [FromBody] CreateAllocatProfileDto dto
-        )
+    public async Task<ActionResult<MyAllocatProfileDto>> CreateAllocatProfile(
+        [FromBody] CreateAllocatProfileDto dto)
     {
         var user = await _userManager.GetUserAsync(User);
 
@@ -260,39 +39,21 @@ public class AllocatProfileController : ControllerBase
 
         if (!user.IsAllocat)
         {
-            return Problem(
-                statusCode: StatusCodes.Status403Forbidden,
-                title: "Allocat access required",
-                detail:
-                    "This account is not registered as an Allocat."
-            );
+            return AllocatAccessRequired();
         }
 
-        var profile =
-            await _allocatProfileService
-                .CreateAllocatProfileAsync(
-                    user.Id,
-                    dto
-                );
+        var profile = await _allocatProfileService.CreateAllocatProfileAsync(
+            user.Id,
+            dto);
 
         return CreatedAtAction(
             nameof(GetAllocatProfileById),
-            new
-            {
-                allocatUserId =
-                    profile.AllocatrUserId
-            },
-            profile
-        );
+            new { allocatUserId = profile.AllocatrUserId },
+            profile);
     }
 
-    /* --------------------------------------------------------
-     * MY PROFILE
-     * -------------------------------------------------------- */
-
     [HttpGet("me")]
-    public async Task<ActionResult<MyAllocatProfileDto>>
-        GetMyAllocatProfile()
+    public async Task<ActionResult<MyAllocatProfileDto>> GetMyAllocatProfile()
     {
         var user = await _userManager.GetUserAsync(User);
 
@@ -301,11 +62,13 @@ public class AllocatProfileController : ControllerBase
             return Unauthorized();
         }
 
-        var profile =
-            await _allocatProfileService
-                .GetMyAllocatProfileAsync(
-                    user.Id
-                );
+        if (!user.IsAllocat)
+        {
+            return AllocatAccessRequired();
+        }
+
+        var profile = await _allocatProfileService.GetMyAllocatProfileAsync(
+            user.Id);
 
         if (profile == null)
         {
@@ -316,10 +79,8 @@ public class AllocatProfileController : ControllerBase
     }
 
     [HttpPut("me")]
-    public async Task<ActionResult<MyAllocatProfileDto>>
-        UpdateMyAllocatProfile(
-            [FromBody] UpdateAllocatProfileDto dto
-        )
+    public async Task<ActionResult<MyAllocatProfileDto>> UpdateMyAllocatProfile(
+        [FromBody] UpdateAllocatProfileDto dto)
     {
         var user = await _userManager.GetUserAsync(User);
 
@@ -330,20 +91,12 @@ public class AllocatProfileController : ControllerBase
 
         if (!user.IsAllocat)
         {
-            return Problem(
-                statusCode: StatusCodes.Status403Forbidden,
-                title: "Allocat access required",
-                detail:
-                    "This account is not registered as an Allocat."
-            );
+            return AllocatAccessRequired();
         }
 
-        var profile =
-            await _allocatProfileService
-                .UpdateAllocatProfileAsync(
-                    user.Id,
-                    dto
-                );
+        var profile = await _allocatProfileService.UpdateAllocatProfileAsync(
+            user.Id,
+            dto);
 
         if (profile == null)
         {
@@ -353,76 +106,9 @@ public class AllocatProfileController : ControllerBase
         return Ok(profile);
     }
 
-    /* --------------------------------------------------------
-     * VISIBILITY
-     * -------------------------------------------------------- */
-
     [HttpPatch("me/visibility")]
     public async Task<IActionResult> SetVisibility(
-        [FromBody] SetAllocatVisibilityDto dto
-    )
-    {
-        var user = await _userManager.GetUserAsync(User);
-
-        if (user == null)
-        {
-            return Unauthorized();
-        }
-
-        var updated =
-            await _allocatProfileService
-                .SetVisibilityAsync(
-                    user.Id,
-                    dto.IsVisible
-                );
-
-        if (!updated)
-        {
-            return NotFound();
-        }
-
-        return NoContent();
-    }
-
-    /* --------------------------------------------------------
-     * AVAILABILITY
-     * -------------------------------------------------------- */
-
-    [HttpPatch("me/availability")]
-    public async Task<IActionResult> SetAvailability(
-        [FromBody] SetAllocatAvailabilityDto dto
-    )
-    {
-        var user = await _userManager.GetUserAsync(User);
-
-        if (user == null)
-        {
-            return Unauthorized();
-        }
-
-        var updated =
-            await _allocatProfileService
-                .SetAvailabilityAsync(
-                    user.Id,
-                    dto.Availability
-                );
-
-        if (!updated)
-        {
-            return NotFound();
-        }
-
-        return NoContent();
-    }
-
-    /* --------------------------------------------------------
-     * USER DOCUMENTS
-     * -------------------------------------------------------- */
-
-    [HttpGet("me/documents")]
-    public async Task<
-        ActionResult<IReadOnlyList<UserDocumentDto>>
-    > GetMyDocuments()
+        [FromBody] SetAllocatVisibilityDto dto)
     {
         var user = await _userManager.GetUserAsync(User);
 
@@ -433,30 +119,75 @@ public class AllocatProfileController : ControllerBase
 
         if (!user.IsAllocat)
         {
-            return Problem(
-                statusCode: StatusCodes.Status403Forbidden,
-                title: "Allocat access required",
-                detail:
-                    "This account is not registered as an Allocat."
-            );
+            return AllocatAccessRequired();
         }
 
-        var documents =
-            await _userDocumentService
-                .GetMyDocumentsAsync(
-                    user.Id
-                );
+        var updated = await _allocatProfileService.SetVisibilityAsync(
+            user.Id,
+            dto.IsVisible);
+
+        if (!updated)
+        {
+            return NotFound();
+        }
+
+        return NoContent();
+    }
+
+    [HttpPatch("me/availability")]
+    public async Task<IActionResult> SetAvailability(
+        [FromBody] SetAllocatAvailabilityDto dto)
+    {
+        var user = await _userManager.GetUserAsync(User);
+
+        if (user == null)
+        {
+            return Unauthorized();
+        }
+
+        if (!user.IsAllocat)
+        {
+            return AllocatAccessRequired();
+        }
+
+        var updated = await _allocatProfileService.SetAvailabilityAsync(
+            user.Id,
+            dto.Availability);
+
+        if (!updated)
+        {
+            return NotFound();
+        }
+
+        return NoContent();
+    }
+
+    [HttpGet("me/documents")]
+    public async Task<ActionResult<IReadOnlyList<UserDocumentDto>>> GetMyDocuments()
+    {
+        var user = await _userManager.GetUserAsync(User);
+
+        if (user == null)
+        {
+            return Unauthorized();
+        }
+
+        if (!user.IsAllocat)
+        {
+            return AllocatAccessRequired();
+        }
+
+        var documents = await _userDocumentService.GetMyDocumentsAsync(
+            user.Id);
 
         return Ok(documents);
     }
 
     [HttpPost("me/documents")]
     [Consumes("multipart/form-data")]
-    public async Task<ActionResult<UserDocumentDto>>
-        UploadDocument(
-            [FromForm] UserDocumentType documentType,
-            [FromForm] IFormFile file
-        )
+    public async Task<ActionResult<UserDocumentDto>> UploadDocument(
+        [FromForm] UserDocumentType documentType,
+        [FromForm] IFormFile file)
     {
         var user = await _userManager.GetUserAsync(User);
 
@@ -467,37 +198,39 @@ public class AllocatProfileController : ControllerBase
 
         if (!user.IsAllocat)
         {
-            return Problem(
-                statusCode: StatusCodes.Status403Forbidden,
-                title: "Allocat access required",
-                detail:
-                    "This account is not registered as an Allocat."
-            );
+            return AllocatAccessRequired();
         }
 
-        var document =
-            await _userDocumentService
-                .UploadDocumentAsync(
-                    user.Id,
-                    documentType,
-                    file
-                );
+        try
+        {
+            var document = await _userDocumentService.UploadDocumentAsync(
+                user.Id,
+                documentType,
+                file);
 
-        return CreatedAtAction(
-            nameof(GetDocumentDownloadUrl),
-            new
-            {
-                documentId = document.Id
-            },
-            document
-        );
+            return CreatedAtAction(
+                nameof(GetDocumentDownloadUrl),
+                new { documentId = document.Id },
+                document);
+        }
+        catch (ArgumentException exception)
+        {
+            return Problem(
+                statusCode: StatusCodes.Status400BadRequest,
+                title: "Invalid document",
+                detail: exception.Message);
+        }
+        catch (InvalidOperationException exception)
+        {
+            return Problem(
+                statusCode: StatusCodes.Status409Conflict,
+                title: "Document upload conflict",
+                detail: exception.Message);
+        }
     }
 
     [HttpGet("me/documents/{documentId:guid}/download")]
-    public async Task<IActionResult>
-        GetDocumentDownloadUrl(
-            Guid documentId
-        )
+    public async Task<IActionResult> GetDocumentDownloadUrl(Guid documentId)
     {
         var user = await _userManager.GetUserAsync(User);
 
@@ -508,39 +241,23 @@ public class AllocatProfileController : ControllerBase
 
         if (!user.IsAllocat)
         {
-            return Problem(
-                statusCode: StatusCodes.Status403Forbidden,
-                title: "Allocat access required",
-                detail:
-                    "This account is not registered as an Allocat."
-            );
+            return AllocatAccessRequired();
         }
 
-        var url =
-            await _userDocumentService
-                .GetDownloadUrlAsync(
-                    user.Id,
-                    documentId
-                );
+        var url = await _userDocumentService.GetDownloadUrlAsync(
+            user.Id,
+            documentId);
 
         if (url == null)
         {
             return NotFound();
         }
 
-        return Ok(
-            new
-            {
-                url
-            }
-        );
+        return Ok(new { url });
     }
 
     [HttpDelete("me/documents/{documentId:guid}")]
-    public async Task<IActionResult>
-        DeleteDocument(
-            Guid documentId
-        )
+    public async Task<IActionResult> DeleteDocument(Guid documentId)
     {
         var user = await _userManager.GetUserAsync(User);
 
@@ -551,45 +268,38 @@ public class AllocatProfileController : ControllerBase
 
         if (!user.IsAllocat)
         {
-            return Problem(
-                statusCode: StatusCodes.Status403Forbidden,
-                title: "Allocat access required",
-                detail:
-                    "This account is not registered as an Allocat."
-            );
+            return AllocatAccessRequired();
         }
 
-        var deleted =
-            await _userDocumentService
-                .DeleteDocumentAsync(
-                    user.Id,
-                    documentId
-                );
-
-        if (!deleted)
+        try
         {
-            return NotFound();
+            var deleted = await _userDocumentService.DeleteDocumentAsync(
+                user.Id,
+                documentId);
+
+            if (!deleted)
+            {
+                return NotFound();
+            }
+
+            return NoContent();
         }
-
-        return NoContent();
+        catch (InvalidOperationException exception)
+        {
+            return Problem(
+                statusCode: StatusCodes.Status409Conflict,
+                title: "Document cannot be deleted",
+                detail: exception.Message);
+        }
     }
-
-    /* --------------------------------------------------------
-     * PUBLIC PROFILE
-     * -------------------------------------------------------- */
 
     [AllowAnonymous]
     [HttpGet("{allocatUserId:guid}")]
-    public async Task<ActionResult<AllocatProfileDto>>
-        GetAllocatProfileById(
-            Guid allocatUserId
-        )
+    public async Task<ActionResult<AllocatProfileDto>> GetAllocatProfileById(
+        Guid allocatUserId)
     {
-        var profile =
-            await _allocatProfileService
-                .GetPublicAllocatProfileAsync(
-                    allocatUserId
-                );
+        var profile = await _allocatProfileService.GetPublicAllocatProfileAsync(
+            allocatUserId);
 
         if (profile == null)
         {
@@ -599,26 +309,22 @@ public class AllocatProfileController : ControllerBase
         return Ok(profile);
     }
 
-    /* --------------------------------------------------------
-     * DISCOVER ALLOCATS
-     * -------------------------------------------------------- */
-
     [AllowAnonymous]
     [HttpGet]
-    public async Task<
-        ActionResult<
-            PagedResultDto<AllocatProfileListItemDto>
-        >
-    > GetAllAllocatProfiles(
-        [FromQuery] AllocatProfileSearchDto query
-    )
+    public async Task<ActionResult<PagedResultDto<AllocatProfileListItemDto>>>
+        GetAllAllocatProfiles([FromQuery] AllocatProfileSearchDto query)
     {
-        var profiles =
-            await _allocatProfileService
-                .GetAllAllocatProfilesAsync(
-                    query
-                );
+        var profiles = await _allocatProfileService.GetAllAllocatProfilesAsync(
+            query);
 
         return Ok(profiles);
+    }
+
+    private ObjectResult AllocatAccessRequired()
+    {
+        return Problem(
+            statusCode: StatusCodes.Status403Forbidden,
+            title: "Allocat access required",
+            detail: "This account is not registered as an Allocat.");
     }
 }
