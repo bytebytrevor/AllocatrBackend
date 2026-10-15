@@ -1,7 +1,4 @@
-using AllocatrApi.Models;
-
 namespace AllocatrApi.Dtos;
-
 
 public record class TaskDto(
     Guid Id,
@@ -9,15 +6,10 @@ public record class TaskDto(
     string? Description,
     string Status,
     string Priority,
-    // int Order,
-    // Guid? AssignedToId,
-    // DateTime? UpdatedAt,
-    // DateTime CreatedAt,
-    DateTime? DueDate
-// DateTime? CompletedAt,
-// ICollection<TaskComment>? Comments,
-// Guid AssignedToId,
-// AllocatrUser AssignedTo,
-// AllocatrUser CreatedByUser
-// Guid ProjectId
+    DateTime? DueDate,
+    Guid? AssignedToId,
+    string? AssignedToName,
+    Guid CreatedByUserId,
+    string? CreatedByName,
+    string? AssignedToAvatarUrl = null
 );
