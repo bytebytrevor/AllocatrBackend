@@ -3,17 +3,13 @@ namespace AllocatrApi.Models;
 public class TaskComment
 {
     public Guid Id { get; set; }
-
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
-
     public string Comment { get; set; } = null!;
-
-    // Task relationship
     public Guid TaskItemId { get; set; }
     public TaskItem TaskItem { get; set; } = null!;
-
-    // User relationship (Created By)
     public Guid CreatedById { get; set; }
     public AllocatrUser CreatedBy { get; set; } = null!;
+    // Optional for older clients; newer clients reuse this ID when retrying a post.
+    public Guid? ClientRequestId { get; set; }
 }

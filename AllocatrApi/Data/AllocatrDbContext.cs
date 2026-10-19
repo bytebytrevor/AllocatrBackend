@@ -24,13 +24,11 @@ public class AllocatrDbContext(DbContextOptions<AllocatrDbContext> options)
     public DbSet<CalendarFocusTask> CalendarFocusTasks { get; set; } = null!;
     public DbSet<StoredFile> StoredFiles { get; set; } = null!;
     public DbSet<UserDocument> UserDocuments { get; set; } = null!;
+    public DbSet<ProjectFile> ProjectFiles { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-
-        modelBuilder.ApplyConfigurationsFromAssembly(
-            typeof(AllocatrDbContext).Assembly
-        );
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(AllocatrDbContext).Assembly);
     }
 }

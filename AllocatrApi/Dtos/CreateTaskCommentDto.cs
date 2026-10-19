@@ -1,6 +1,6 @@
 namespace AllocatrApi.Dtos;
 
-public record class CreateTaskCommentDto(
-    // Guid Id,
-    string Comment
-);
+public record CreateTaskCommentDto(
+    string? Comment,
+    IReadOnlyList<Guid>? FileIds = null,
+    Guid? ClientRequestId = null);

@@ -8,5 +8,11 @@ public record class TaskCommentDto(
     Guid CreatedById,
     string CreatedByName,
     string? AvatarUrl,
-    Guid TaskItemId
-);
+    Guid TaskItemId,
+    IReadOnlyList<ProjectFileDto>? Attachments = null);
+
+public record TaskDiscussionContextDto(
+    Guid ProjectId,
+    bool CanUploadFiles,
+    int MaxAttachments,
+    long MaxFileSizeBytes);

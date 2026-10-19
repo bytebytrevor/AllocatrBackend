@@ -410,6 +410,60 @@ namespace AllocatrApi.Migrations
                         });
                 });
 
+            modelBuilder.Entity("AllocatrApi.Models.ProjectFile", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("CommentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Context")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("ProjectId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("StorageDeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("StoredFileId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("TaskId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("TaskTitle")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<Guid>("UploadedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CommentId");
+
+                    b.HasIndex("StoredFileId")
+                        .IsUnique();
+
+                    b.HasIndex("TaskId");
+
+                    b.HasIndex("UploadedByUserId");
+
+                    b.HasIndex("ProjectId", "CreatedAt");
+
+                    b.HasIndex("ProjectId", "TaskId");
+
+                    b.ToTable("ProjectFiles");
+                });
+
             modelBuilder.Entity("AllocatrApi.Models.ProjectSkill", b =>
                 {
                     b.Property<Guid>("ProjectId")
@@ -600,6 +654,9 @@ namespace AllocatrApi.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<Guid?>("ClientRequestId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("Comment")
                         .IsRequired()
                         .HasMaxLength(2000)
@@ -622,6 +679,10 @@ namespace AllocatrApi.Migrations
                     b.HasIndex("CreatedById");
 
                     b.HasIndex("TaskItemId");
+
+                    b.HasIndex("CreatedById", "ClientRequestId")
+                        .IsUnique()
+                        .HasFilter("\"ClientRequestId\" IS NOT NULL");
 
                     b.ToTable("TaskComments", (string)null);
                 });
@@ -1051,6 +1112,39 @@ namespace AllocatrApi.Migrations
                     b.Navigation("CompletionRequestedByAllocat");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("AllocatrApi.Models.ProjectFile", b =>
+                {
+                    b.HasOne("AllocatrApi.Models.TaskComment", "Comment")
+                        .WithMany()
+                        .HasForeignKey("CommentId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("AllocatrApi.Models.Project", "Project")
+                        .WithMany()
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("AllocatrApi.Models.StoredFile", "StoredFile")
+                        .WithOne()
+                        .HasForeignKey("AllocatrApi.Models.ProjectFile", "StoredFileId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("TaskItem", "Task")
+                        .WithMany()
+                        .HasForeignKey("TaskId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Comment");
+
+                    b.Navigation("Project");
+
+                    b.Navigation("StoredFile");
+
+                    b.Navigation("Task");
                 });
 
             modelBuilder.Entity("AllocatrApi.Models.ProjectSkill", b =>

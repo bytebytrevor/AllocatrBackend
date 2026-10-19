@@ -256,7 +256,6 @@ builder.Services
         options.Password.RequireNonAlphanumeric = false;
         options.Password.RequiredLength = 8;
 
-        // Preserve the remaining Identity defaults.
     })
     .AddEntityFrameworkStores<AllocatrDbContext>()
     .AddDefaultTokenProviders();
@@ -272,7 +271,6 @@ builder.Services.ConfigureApplicationCookie(options =>
 
     options.Cookie.HttpOnly = true;
 
-    // Different localhost ports are cross-origin, but same-site.
     options.Cookie.SameSite = SameSiteMode.Lax;
 
     options.Cookie.SecurePolicy =
@@ -329,12 +327,6 @@ builder.Services
 
 builder.Services.AddAuthorization();
 
-/*
- * Cookie-authenticated mutations also need antiforgery validation.
- * Wire that together with the auth endpoint and Axios token header
- * before enabling validation globally.
- */
-
 /* =========================================================
    ERROR HANDLING
 ========================================================= */
@@ -368,13 +360,27 @@ builder.Services.AddScoped<CalendarPlanningService>();
 
 builder.Services.AddScoped<ReviewService>();
 
-builder.Services.AddScoped<
-    IFileStorageService,
-    SupabaseFileStorageService
->();
+builder.Services.AddScoped<IFileStorageService, SupabaseFileStorageService>();
 
 builder.Services.AddScoped<UserFileService>();
 builder.Services.AddScoped<UserDocumentService>();
+
+builder.Services.AddScoped<ProjectFileValidationService>();
+builder.Services.AddScoped<ProjectFileService>();
+
+builder.Services.Configure<AllocatrApi.Services.ProjectThumbnailOptions>(
+    builder.Configuration.GetSection("ProjectThumbnails"));
+builder.Services.AddSingleton<AllocatrApi.Services.ProjectThumbnailCache>();
+builder.Services.AddSingleton<AllocatrApi.Services.ProjectThumbnailEncoder>();
+builder.Services.AddScoped<AllocatrApi.Services.ProjectThumbnailService>();
+builder.Services.AddHttpClient("ProjectThumbnailSource", client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(30);
+}).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+{
+    AllowAutoRedirect = false,
+    UseCookies = false,
+});
 
 /* =========================================================
    APPLICATION
