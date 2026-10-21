@@ -1,134 +1,3 @@
-// using AllocatrApi.Data;
-// using AllocatrApi.Models;
-// using AllocatrApi.Services;
-// using Microsoft.AspNetCore.Identity;
-// using Microsoft.EntityFrameworkCore;
-// using System.Text.Json.Serialization;
-// using AllocatrApi.Configuration;
-// using AllocatrApi.Infrastructure;
-// using AllocatrApi.Data.Seed;
-// using AllocatrApi.Services.Storage;
-
-// var builder = WebApplication.CreateBuilder(args);
-
-// // ----------------- CORS -----------------
-// builder.Services.AddCors(options =>
-// {
-//     options.AddPolicy("AllowFrontend", policy =>
-//     {
-//         policy.WithOrigins("http://localhost:5173")
-//               .AllowAnyMethod()
-//               .AllowAnyHeader()
-//               .AllowCredentials();
-//     });
-// });
-
-// // ----------------- DB Context -----------------
-// builder.Services.AddDbContext<AllocatrDbContext>(options =>
-//     options.UseNpgsql(builder.Configuration.GetConnectionString("Migrations"))
-// );
-
-// // ----------------- Identity -----------------
-// builder.Services.AddIdentity<AllocatrUser, IdentityRole<Guid>>(options =>
-// {
-//     options.Password.RequireDigit = true;
-//     options.Password.RequireNonAlphanumeric = false;
-//     options.Password.RequiredLength = 6;
-// })
-// .AddEntityFrameworkStores<AllocatrDbContext>()
-// .AddDefaultTokenProviders();
-
-// // ----------------- Configure Cookie -----------------
-// builder.Services.ConfigureApplicationCookie(options =>
-// {
-//     options.LoginPath = "/api/auth/login"; // redirect if unauthorized
-//     options.LogoutPath = "/api/auth/logout";
-//     options.Cookie.HttpOnly = true;
-//     options.Cookie.SameSite = SameSiteMode.Lax; // or None for cross-origin
-// });
-
-// // ----------------- Email Verification -----------------
-// builder.Services.Configure<EmailSettings>(
-//     builder.Configuration.GetSection(
-//         EmailSettings.SectionName
-//     )
-// );
-
-// builder.Services.Configure<DataProtectionTokenProviderOptions>(
-//     options =>
-//     {
-//         options.TokenLifespan =
-//             TimeSpan.FromHours(24);
-//     }
-// );
-
-
-
-// // ----------------- Controllers -----------------
-// // builder.Services.AddControllers();
-// builder.Services
-//     .AddControllers()
-//     .AddJsonOptions(options =>
-//     {
-//         options.JsonSerializerOptions.Converters.Add(
-//             new JsonStringEnumConverter()
-//         );
-//     });
-
-// builder.Services.AddAuthorization();
-
-// builder.Services.AddSingleton<SupabaseService>();
-
-// builder.Services.AddProblemDetails();
-// builder.Services.AddExceptionHandler<ApiExceptionHandler>();
-
-// builder.Services.AddScoped<ProfileService>();
-// builder.Services.AddScoped<ProjectService>();
-// builder.Services.AddScoped<ProjectAccessService>();
-// builder.Services.AddScoped<AllocatProfileService>();
-// builder.Services.AddScoped<TaskService>();
-// builder.Services.AddScoped<TaskCommentService>();
-// builder.Services.AddScoped<SkillCategoryService>();
-// builder.Services.AddScoped<SkillService>();
-// builder.Services.AddScoped<ProjectAllocatService>();
-// builder.Services.AddScoped<IEmailService, EmailService>();
-// builder.Services.AddScoped<CalendarService>();
-// builder.Services.AddScoped<CalendarPlanningService>();
-// builder.Services.AddScoped<ReviewService>();
-// builder.Services.AddScoped<IFileStorageService, SupabaseFileStorageService>();
-// builder.Services.AddScoped<UserFileService>();
-// builder.Services.AddScoped<UserDocumentService>();
-
-// var app = builder.Build();
-
-// app.UseCors("AllowFrontend");
-// app.UseAuthentication();
-// app.UseAuthorization();
-// app.UseExceptionHandler();
-
-// app.MapControllers();
-
-// app.MapGet("/", () => "Hello World!");
-
-// // ----------------- Database seeder and auto migrations -----------------
-// // using (var scope = app.Services.CreateScope())
-// // {
-// // 	var db = scope.ServiceProvider.GetRequiredService<AllocatrDbContext>();
-// // 	await db.Database.MigrateAsync();
-// // 	await DatabaseSeeder.SeedAsync(db);
-// // }
-
-// using (var scope = app.Services.CreateScope())
-// {
-//     var db = scope.ServiceProvider
-//         .GetRequiredService<AllocatrDbContext>();
-
-//     await SkillCatalogSeeder.SeedAsync(db);
-// }
-
-// app.Run();
-
-
 using AllocatrApi.Configuration;
 using AllocatrApi.Data;
 using AllocatrApi.Data.Seed;
@@ -368,6 +237,8 @@ builder.Services.AddScoped<UserDocumentService>();
 builder.Services.AddScoped<ProjectFileValidationService>();
 builder.Services.AddScoped<ProjectFileService>();
 
+builder.Services.AddScoped<ProjectMessagingService>();
+
 builder.Services.Configure<AllocatrApi.Services.ProjectThumbnailOptions>(
     builder.Configuration.GetSection("ProjectThumbnails"));
 builder.Services.AddSingleton<AllocatrApi.Services.ProjectThumbnailCache>();
@@ -376,6 +247,15 @@ builder.Services.AddScoped<AllocatrApi.Services.ProjectThumbnailService>();
 builder.Services.AddHttpClient("ProjectThumbnailSource", client =>
 {
     client.Timeout = TimeSpan.FromSeconds(30);
+}).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+{
+    AllowAutoRedirect = false,
+    UseCookies = false,
+});
+
+builder.Services.AddHttpClient("MessagingAttachmentSource", client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(60);
 }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
 {
     AllowAutoRedirect = false,

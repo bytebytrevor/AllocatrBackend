@@ -314,6 +314,131 @@ namespace AllocatrApi.Migrations
                     b.ToTable("CalendarPlanningBlocks");
                 });
 
+            modelBuilder.Entity("AllocatrApi.Models.ConversationAttachment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("MessageId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("StoredFileId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MessageId");
+
+                    b.HasIndex("StoredFileId");
+
+                    b.ToTable("ConversationAttachments", (string)null);
+                });
+
+            modelBuilder.Entity("AllocatrApi.Models.ConversationMessage", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Body")
+                        .IsRequired()
+                        .HasMaxLength(10000)
+                        .HasColumnType("character varying(10000)");
+
+                    b.Property<Guid>("ClientRequestId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ConversationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("DeletedById")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("EditedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ForwardNote")
+                        .HasMaxLength(10000)
+                        .HasColumnType("character varying(10000)");
+
+                    b.Property<DateTime?>("ForwardedCreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ForwardedFromName")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<DateTime?>("PinnedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("PinnedById")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("RequestHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<Guid>("SenderId")
+                        .HasColumnType("uuid");
+
+                    b.Property<long>("Sequence")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasDefaultValue(0L);
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PinnedById");
+
+                    b.HasIndex("ConversationId", "PinnedAt");
+
+                    b.HasIndex("ConversationId", "Sequence")
+                        .IsUnique();
+
+                    b.HasIndex("SenderId", "ClientRequestId")
+                        .IsUnique();
+
+                    b.ToTable("ConversationMessages", (string)null);
+                });
+
+            modelBuilder.Entity("AllocatrApi.Models.ConversationParticipant", b =>
+                {
+                    b.Property<Guid>("ConversationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsArchived")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsPinned")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
+                    b.Property<long>("LastReadSequence")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("ConversationId", "UserId");
+
+                    b.HasIndex("UserId", "IsArchived");
+
+                    b.ToTable("ConversationParticipants", (string)null);
+                });
+
             modelBuilder.Entity("AllocatrApi.Models.Project", b =>
                 {
                     b.Property<Guid>("Id")
@@ -408,6 +533,58 @@ namespace AllocatrApi.Migrations
 
                             t.HasCheckConstraint("CK_Projects_Status", "\"Status\" IN ('pending', 'active', 'completion_requested', 'completed')");
                         });
+                });
+
+            modelBuilder.Entity("AllocatrApi.Models.ProjectConversation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CreatedById")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsProjectWide")
+                        .HasColumnType("boolean");
+
+                    b.Property<long>("LastSequence")
+                        .IsConcurrencyToken()
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("PinVersion")
+                        .IsConcurrencyToken()
+                        .HasColumnType("bigint");
+
+                    b.Property<Guid>("ProjectId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Subject")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<Guid?>("TaskId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("TaskTitle")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedById");
+
+                    b.HasIndex("TaskId");
+
+                    b.HasIndex("ProjectId", "UpdatedAt", "Id");
+
+                    b.ToTable("ProjectConversations", (string)null);
                 });
 
             modelBuilder.Entity("AllocatrApi.Models.ProjectFile", b =>
@@ -1096,6 +1273,70 @@ namespace AllocatrApi.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("AllocatrApi.Models.ConversationAttachment", b =>
+                {
+                    b.HasOne("AllocatrApi.Models.ConversationMessage", "Message")
+                        .WithMany("Attachments")
+                        .HasForeignKey("MessageId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("AllocatrApi.Models.StoredFile", "StoredFile")
+                        .WithMany()
+                        .HasForeignKey("StoredFileId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Message");
+
+                    b.Navigation("StoredFile");
+                });
+
+            modelBuilder.Entity("AllocatrApi.Models.ConversationMessage", b =>
+                {
+                    b.HasOne("AllocatrApi.Models.ProjectConversation", "Conversation")
+                        .WithMany("Messages")
+                        .HasForeignKey("ConversationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("AllocatrApi.Models.AllocatrUser", "PinnedBy")
+                        .WithMany()
+                        .HasForeignKey("PinnedById")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("AllocatrApi.Models.AllocatrUser", "Sender")
+                        .WithMany()
+                        .HasForeignKey("SenderId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Conversation");
+
+                    b.Navigation("PinnedBy");
+
+                    b.Navigation("Sender");
+                });
+
+            modelBuilder.Entity("AllocatrApi.Models.ConversationParticipant", b =>
+                {
+                    b.HasOne("AllocatrApi.Models.ProjectConversation", "Conversation")
+                        .WithMany("Participants")
+                        .HasForeignKey("ConversationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("AllocatrApi.Models.AllocatrUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Conversation");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("AllocatrApi.Models.Project", b =>
                 {
                     b.HasOne("AllocatrApi.Models.AllocatProfile", "CompletionRequestedByAllocat")
@@ -1112,6 +1353,32 @@ namespace AllocatrApi.Migrations
                     b.Navigation("CompletionRequestedByAllocat");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("AllocatrApi.Models.ProjectConversation", b =>
+                {
+                    b.HasOne("AllocatrApi.Models.AllocatrUser", "CreatedBy")
+                        .WithMany()
+                        .HasForeignKey("CreatedById")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("AllocatrApi.Models.Project", "Project")
+                        .WithMany()
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("TaskItem", "Task")
+                        .WithMany()
+                        .HasForeignKey("TaskId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("CreatedBy");
+
+                    b.Navigation("Project");
+
+                    b.Navigation("Task");
                 });
 
             modelBuilder.Entity("AllocatrApi.Models.ProjectFile", b =>
@@ -1412,6 +1679,11 @@ namespace AllocatrApi.Migrations
                     b.Navigation("TaskComments");
                 });
 
+            modelBuilder.Entity("AllocatrApi.Models.ConversationMessage", b =>
+                {
+                    b.Navigation("Attachments");
+                });
+
             modelBuilder.Entity("AllocatrApi.Models.Project", b =>
                 {
                     b.Navigation("AllocatAssignments");
@@ -1427,6 +1699,13 @@ namespace AllocatrApi.Migrations
                     b.Navigation("Tags");
 
                     b.Navigation("Tasks");
+                });
+
+            modelBuilder.Entity("AllocatrApi.Models.ProjectConversation", b =>
+                {
+                    b.Navigation("Messages");
+
+                    b.Navigation("Participants");
                 });
 
             modelBuilder.Entity("AllocatrApi.Models.Skill", b =>

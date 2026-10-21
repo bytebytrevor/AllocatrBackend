@@ -26,6 +26,11 @@ public class AllocatrDbContext(DbContextOptions<AllocatrDbContext> options)
     public DbSet<UserDocument> UserDocuments { get; set; } = null!;
     public DbSet<ProjectFile> ProjectFiles { get; set; } = null!;
 
+    public DbSet<ProjectConversation> ProjectConversations { get; set; } = null!;
+    public DbSet<ConversationParticipant> ConversationParticipants { get; set; } = null!;
+    public DbSet<ConversationMessage> ConversationMessages { get; set; } = null!;
+    public DbSet<ConversationAttachment> ConversationAttachments { get; set; } = null!;
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);

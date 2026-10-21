@@ -112,16 +112,25 @@ public class ProjectFileService
         var now = DateTime.UtcNow;
         var stored = new StoredFile
         {
-            Id = Guid.NewGuid(), UploadedByUserId = userId, Bucket = Bucket,
-            OriginalFileName = upload.OriginalFileName, ContentType = upload.ContentType,
-            SizeBytes = upload.Bytes.LongLength, Status = StoredFileStatus.Uploading,
+            Id = Guid.NewGuid(),
+            UploadedByUserId = userId,
+            Bucket = Bucket,
+            OriginalFileName = upload.OriginalFileName,
+            ContentType = upload.ContentType,
+            SizeBytes = upload.Bytes.LongLength,
+            Status = StoredFileStatus.Uploading,
             CreatedAt = now,
         };
         stored.StoragePath = $"projects/{projectId}/files/{stored.Id}{upload.Extension}";
         var attachment = new ProjectFile
         {
-            Id = Guid.NewGuid(), ProjectId = projectId, TaskId = taskId, TaskTitle = taskTitle,
-            StoredFileId = stored.Id, StoredFile = stored, UploadedByUserId = userId,
+            Id = Guid.NewGuid(),
+            ProjectId = projectId,
+            TaskId = taskId,
+            TaskTitle = taskTitle,
+            StoredFileId = stored.Id,
+            StoredFile = stored,
+            UploadedByUserId = userId,
             Context = taskId.HasValue ? ProjectFileContext.Task : ProjectFileContext.Project,
             CreatedAt = now,
         };
