@@ -27,6 +27,9 @@ public record MyAllocatProfileDto(
     DateTime JoinedAt,
     DateTime CreatedAt,
     DateTime UpdatedAt,
-    IReadOnlyList<AllocatProjectSummaryDto> Projects
-
+    IReadOnlyList<AllocatProjectSummaryDto> Projects,
+    string? OperatingCountryCode = null,
+    int? OperatingCityId = null,
+    string? OperatingCountryName = null,
+    string? OperatingCityName = null
 );

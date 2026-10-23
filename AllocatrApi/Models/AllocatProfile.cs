@@ -11,6 +11,14 @@ public class AllocatProfile
     public string? Headline { get; set; }
     public string? Bio { get; set; }
 
+    // Operating base, separate from the account holder's residence.
+    // These reference the supported-country and seeded-city catalogue.
+    // Nullable during rollout; new-profile validation will require both.
+    public string? OperatingCountryCode { get; set; }
+    public Country? OperatingCountry { get; set; }
+    public int? OperatingCityId { get; set; }
+    public City? OperatingCity { get; set; }
+
     public decimal? HourlyRate { get; set; }
     public string Currency { get; set; } = "USD";
 

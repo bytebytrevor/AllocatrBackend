@@ -5,6 +5,7 @@ using AllocatrApi.Models;
 using AllocatrApi.Services.Storage;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.EntityFrameworkCore;
 
 namespace AllocatrApi.Services;
 
@@ -59,7 +60,8 @@ public class ProfileService
             return null;
         }
 
-        return MapToDto(user);
+        var countryName = await GetCountryNameAsync(user.CountryCode);
+        return MapToDto(user, countryName);
     }
 
     /* --------------------------------------------------------
@@ -80,7 +82,7 @@ public class ProfileService
             return null;
         }
 
-        var fullName = request.FullName.Trim();
+        var fullName = request.FullName?.Trim() ?? string.Empty;
 
         if (string.IsNullOrWhiteSpace(fullName))
         {
@@ -96,24 +98,94 @@ public class ProfileService
             );
         }
 
-        var location = CleanOptionalValue(
-            request.Location
-        );
+        var phoneNumber = CleanOptionalValue(request.PhoneNumber);
+        var updateResidence = request.CountryCodeProvided || request.CityNameProvided;
 
-        if (location?.Length > 150)
+        var countryCode = user.CountryCode;
+        var cityName = user.CityName;
+        var legacyLocation = user.Location;
+        string? countryName;
+
+        if (updateResidence)
         {
-            throw new ArgumentException(
-                "Location cannot exceed 150 characters."
+            countryCode = request.CountryCodeProvided
+                ? CleanOptionalValue(request.CountryCode)?.ToUpperInvariant()
+                : user.CountryCode;
+
+            var countryChanged = !string.Equals(
+                countryCode,
+                user.CountryCode,
+                StringComparison.Ordinal
             );
+
+            // Changing country without sending a new city clears the old city.
+            cityName = request.CityNameProvided
+                ? CleanOptionalValue(request.CityName)
+                : countryChanged ? null : user.CityName;
+
+            if (countryCode != null &&
+                (countryCode.Length != 2 ||
+                 countryCode.Any(character => character < 'A' || character > 'Z')))
+            {
+                throw new ArgumentException(
+                    "Country must use a two-letter code such as GB, ZA or ZW."
+                );
+            }
+
+            if (cityName?.Length > 150)
+            {
+                throw new ArgumentException(
+                    "City name cannot exceed 150 characters."
+                );
+            }
+
+            if (countryCode == null && cityName != null)
+            {
+                throw new ArgumentException(
+                    "Select a country before adding a city."
+                );
+            }
+
+            // Residence accepts every seeded country, not just operating countries.
+            countryName = await GetCountryNameAsync(countryCode);
+
+            if (countryCode != null && countryName == null)
+            {
+                throw new ArgumentException(
+                    "Select a country from the country catalogue."
+                );
+            }
+
+            // The user has now explicitly supplied structured residence data.
+            // Remove the old free-text source so clearing residence cannot revive it.
+            // The response still generates Location for older readers (see MapToDto).
+            legacyLocation = null;
+        }
+        else
+        {
+            countryName = await GetCountryNameAsync(countryCode);
+
+            // Old forms can still update a legacy-only account. Once a residence
+            // country exists, a free-text Location must not overwrite it.
+            if (countryCode == null)
+            {
+                legacyLocation = CleanOptionalValue(request.Location);
+
+                if (legacyLocation?.Length > 150)
+                {
+                    throw new ArgumentException(
+                        "Location cannot exceed 150 characters."
+                    );
+                }
+            }
         }
 
-        var phoneNumber = CleanOptionalValue(
-            request.PhoneNumber
-        );
-
+        // Assign only after all validation has passed.
         user.FullName = fullName;
-        user.Location = location;
         user.PhoneNumber = phoneNumber;
+        user.CountryCode = countryCode;
+        user.CityName = cityName;
+        user.Location = legacyLocation;
 
         var result = await _userManager.UpdateAsync(user);
 
@@ -124,7 +196,7 @@ public class ProfileService
             );
         }
 
-        return MapToDto(user);
+        return MapToDto(user, countryName);
     }
 
     /* --------------------------------------------------------
@@ -309,20 +381,46 @@ public class ProfileService
      * HELPERS
      * -------------------------------------------------------- */
 
+    private async Task<string?> GetCountryNameAsync(string? countryCode)
+    {
+        if (string.IsNullOrWhiteSpace(countryCode))
+        {
+            return null;
+        }
+
+        return await _dbContext.Countries
+            .AsNoTracking()
+            .Where(country => country.Code == countryCode)
+            .Select(country => country.Name)
+            .SingleOrDefaultAsync();
+    }
+
     private static ProfileDto MapToDto(
-        AllocatrUser user
+        AllocatrUser user,
+        string? countryName
     )
     {
+        // Location remains a display-only compatibility field for existing readers.
+        // Generate it rather than squeezing the full label into its old DB length.
+        var location = countryName == null
+            ? user.Location
+            : string.IsNullOrWhiteSpace(user.CityName)
+                ? countryName
+                : $"{user.CityName}, {countryName}";
+
         return new ProfileDto(
             user.Id,
             user.FullName,
             user.Email,
             user.PhoneNumber,
-            user.Location,
+            location,
             user.AvatarUrl,
             user.CreatedAt,
             user.EmailConfirmed,
-            user.IsAllocat
+            user.IsAllocat,
+            user.CountryCode,
+            countryName,
+            user.CityName
         );
     }
 

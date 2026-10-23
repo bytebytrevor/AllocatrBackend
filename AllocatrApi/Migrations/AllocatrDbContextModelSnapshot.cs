@@ -84,6 +84,14 @@ namespace AllocatrApi.Migrations
                         .HasColumnType("integer")
                         .HasDefaultValue(1);
 
+                    b.Property<int?>("OperatingCityId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("OperatingCountryCode")
+                        .HasMaxLength(2)
+                        .IsUnicode(false)
+                        .HasColumnType("character varying(2)");
+
                     b.Property<int>("RatingCount")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
@@ -113,6 +121,10 @@ namespace AllocatrApi.Migrations
 
                     b.HasIndex("IsVisible", "Availability");
 
+                    b.HasIndex("OperatingCityId", "OperatingCountryCode");
+
+                    b.HasIndex("OperatingCountryCode", "OperatingCityId");
+
                     b.ToTable("AllocatProfiles", null, t =>
                         {
                             t.HasCheckConstraint("CK_AllocatProfiles_Availability", "\"Availability\" IN ('available', 'busy', 'unavailable')");
@@ -122,6 +134,8 @@ namespace AllocatrApi.Migrations
                             t.HasCheckConstraint("CK_AllocatProfiles_HourlyRate", "\"HourlyRate\" IS NULL OR \"HourlyRate\" >= 0");
 
                             t.HasCheckConstraint("CK_AllocatProfiles_Level", "\"Level\" >= 1 AND \"Level\" <= 5");
+
+                            t.HasCheckConstraint("CK_AllocatProfiles_OperatingLocation", "(\"OperatingCountryCode\" IS NULL AND \"OperatingCityId\" IS NULL) OR (\"OperatingCountryCode\" IS NOT NULL AND \"OperatingCityId\" IS NOT NULL)");
 
                             t.HasCheckConstraint("CK_AllocatProfiles_RatingCount", "\"RatingCount\" >= 0");
 
@@ -162,9 +176,18 @@ namespace AllocatrApi.Migrations
                         .HasMaxLength(1000)
                         .HasColumnType("character varying(1000)");
 
+                    b.Property<string>("CityName")
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
                         .HasColumnType("text");
+
+                    b.Property<string>("CountryCode")
+                        .HasMaxLength(2)
+                        .IsUnicode(false)
+                        .HasColumnType("character varying(2)");
 
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
@@ -235,6 +258,8 @@ namespace AllocatrApi.Migrations
                     b.HasIndex("NormalizedUserName")
                         .IsUnique()
                         .HasDatabaseName("UserNameIndex");
+
+                    b.HasIndex("CountryCode", "CityName");
 
                     b.ToTable("AspNetUsers", (string)null);
                 });
@@ -312,6 +337,154 @@ namespace AllocatrApi.Migrations
                     b.HasIndex("UserId", "StartAt");
 
                     b.ToTable("CalendarPlanningBlocks");
+                });
+
+            modelBuilder.Entity("AllocatrApi.Models.City", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("CountryCode")
+                        .IsRequired()
+                        .HasMaxLength(2)
+                        .IsUnicode(false)
+                        .HasColumnType("character varying(2)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CountryCode", "Name");
+
+                    b.ToTable("Cities", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = -1,
+                            CountryCode = "ZW",
+                            Name = "Harare"
+                        },
+                        new
+                        {
+                            Id = -2,
+                            CountryCode = "ZW",
+                            Name = "Bulawayo"
+                        },
+                        new
+                        {
+                            Id = -3,
+                            CountryCode = "ZW",
+                            Name = "Chitungwiza"
+                        },
+                        new
+                        {
+                            Id = -4,
+                            CountryCode = "ZW",
+                            Name = "Mutare"
+                        },
+                        new
+                        {
+                            Id = -5,
+                            CountryCode = "ZW",
+                            Name = "Gweru"
+                        },
+                        new
+                        {
+                            Id = -6,
+                            CountryCode = "ZW",
+                            Name = "Masvingo"
+                        },
+                        new
+                        {
+                            Id = -7,
+                            CountryCode = "ZW",
+                            Name = "Kwekwe"
+                        },
+                        new
+                        {
+                            Id = -8,
+                            CountryCode = "ZW",
+                            Name = "Kadoma"
+                        },
+                        new
+                        {
+                            Id = -9,
+                            CountryCode = "ZW",
+                            Name = "Victoria Falls"
+                        },
+                        new
+                        {
+                            Id = -10,
+                            CountryCode = "ZW",
+                            Name = "Marondera"
+                        },
+                        new
+                        {
+                            Id = -11,
+                            CountryCode = "ZA",
+                            Name = "Johannesburg"
+                        },
+                        new
+                        {
+                            Id = -12,
+                            CountryCode = "ZA",
+                            Name = "Cape Town"
+                        },
+                        new
+                        {
+                            Id = -13,
+                            CountryCode = "ZA",
+                            Name = "Pretoria"
+                        },
+                        new
+                        {
+                            Id = -14,
+                            CountryCode = "ZA",
+                            Name = "Durban"
+                        },
+                        new
+                        {
+                            Id = -15,
+                            CountryCode = "ZA",
+                            Name = "Gqeberha"
+                        },
+                        new
+                        {
+                            Id = -16,
+                            CountryCode = "ZA",
+                            Name = "Bloemfontein"
+                        },
+                        new
+                        {
+                            Id = -17,
+                            CountryCode = "ZA",
+                            Name = "East London"
+                        },
+                        new
+                        {
+                            Id = -18,
+                            CountryCode = "ZA",
+                            Name = "Polokwane"
+                        },
+                        new
+                        {
+                            Id = -19,
+                            CountryCode = "ZA",
+                            Name = "Mbombela"
+                        },
+                        new
+                        {
+                            Id = -20,
+                            CountryCode = "ZA",
+                            Name = "Kimberley"
+                        });
                 });
 
             modelBuilder.Entity("AllocatrApi.Models.ConversationAttachment", b =>
@@ -437,6 +610,1524 @@ namespace AllocatrApi.Migrations
                     b.HasIndex("UserId", "IsArchived");
 
                     b.ToTable("ConversationParticipants", (string)null);
+                });
+
+            modelBuilder.Entity("AllocatrApi.Models.Country", b =>
+                {
+                    b.Property<string>("Code")
+                        .HasMaxLength(2)
+                        .IsUnicode(false)
+                        .HasColumnType("character varying(2)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<bool>("SupportsAllocatOperations")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
+                    b.HasKey("Code");
+
+                    b.ToTable("Countries", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Code = "AD",
+                            Name = "Andorra",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "AE",
+                            Name = "United Arab Emirates",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "AF",
+                            Name = "Afghanistan",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "AG",
+                            Name = "Antigua & Barbuda",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "AI",
+                            Name = "Anguilla",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "AL",
+                            Name = "Albania",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "AM",
+                            Name = "Armenia",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "AO",
+                            Name = "Angola",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "AQ",
+                            Name = "Antarctica",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "AR",
+                            Name = "Argentina",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "AS",
+                            Name = "American Samoa",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "AT",
+                            Name = "Austria",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "AU",
+                            Name = "Australia",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "AW",
+                            Name = "Aruba",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "AX",
+                            Name = "Åland Islands",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "AZ",
+                            Name = "Azerbaijan",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "BA",
+                            Name = "Bosnia & Herzegovina",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "BB",
+                            Name = "Barbados",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "BD",
+                            Name = "Bangladesh",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "BE",
+                            Name = "Belgium",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "BF",
+                            Name = "Burkina Faso",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "BG",
+                            Name = "Bulgaria",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "BH",
+                            Name = "Bahrain",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "BI",
+                            Name = "Burundi",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "BJ",
+                            Name = "Benin",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "BL",
+                            Name = "St Barthelemy",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "BM",
+                            Name = "Bermuda",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "BN",
+                            Name = "Brunei",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "BO",
+                            Name = "Bolivia",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "BQ",
+                            Name = "Caribbean NL",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "BR",
+                            Name = "Brazil",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "BS",
+                            Name = "Bahamas",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "BT",
+                            Name = "Bhutan",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "BV",
+                            Name = "Bouvet Island",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "BW",
+                            Name = "Botswana",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "BY",
+                            Name = "Belarus",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "BZ",
+                            Name = "Belize",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "CA",
+                            Name = "Canada",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "CC",
+                            Name = "Cocos (Keeling) Islands",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "CD",
+                            Name = "Congo (Dem. Rep.)",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "CF",
+                            Name = "Central African Rep.",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "CG",
+                            Name = "Congo (Rep.)",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "CH",
+                            Name = "Switzerland",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "CI",
+                            Name = "Côte d’Ivoire",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "CK",
+                            Name = "Cook Islands",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "CL",
+                            Name = "Chile",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "CM",
+                            Name = "Cameroon",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "CN",
+                            Name = "China",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "CO",
+                            Name = "Colombia",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "CR",
+                            Name = "Costa Rica",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "CU",
+                            Name = "Cuba",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "CV",
+                            Name = "Cape Verde",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "CW",
+                            Name = "Curaçao",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "CX",
+                            Name = "Christmas Island",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "CY",
+                            Name = "Cyprus",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "CZ",
+                            Name = "Czech Republic",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "DE",
+                            Name = "Germany",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "DJ",
+                            Name = "Djibouti",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "DK",
+                            Name = "Denmark",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "DM",
+                            Name = "Dominica",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "DO",
+                            Name = "Dominican Republic",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "DZ",
+                            Name = "Algeria",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "EC",
+                            Name = "Ecuador",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "EE",
+                            Name = "Estonia",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "EG",
+                            Name = "Egypt",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "EH",
+                            Name = "Western Sahara",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "ER",
+                            Name = "Eritrea",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "ES",
+                            Name = "Spain",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "ET",
+                            Name = "Ethiopia",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "FI",
+                            Name = "Finland",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "FJ",
+                            Name = "Fiji",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "FK",
+                            Name = "Falkland Islands",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "FM",
+                            Name = "Micronesia",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "FO",
+                            Name = "Faroe Islands",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "FR",
+                            Name = "France",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "GA",
+                            Name = "Gabon",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "GB",
+                            Name = "United Kingdom",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "GD",
+                            Name = "Grenada",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "GE",
+                            Name = "Georgia",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "GF",
+                            Name = "French Guiana",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "GG",
+                            Name = "Guernsey",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "GH",
+                            Name = "Ghana",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "GI",
+                            Name = "Gibraltar",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "GL",
+                            Name = "Greenland",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "GM",
+                            Name = "Gambia",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "GN",
+                            Name = "Guinea",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "GP",
+                            Name = "Guadeloupe",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "GQ",
+                            Name = "Equatorial Guinea",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "GR",
+                            Name = "Greece",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "GS",
+                            Name = "South Georgia & the South Sandwich Islands",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "GT",
+                            Name = "Guatemala",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "GU",
+                            Name = "Guam",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "GW",
+                            Name = "Guinea-Bissau",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "GY",
+                            Name = "Guyana",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "HK",
+                            Name = "Hong Kong",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "HM",
+                            Name = "Heard Island & McDonald Islands",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "HN",
+                            Name = "Honduras",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "HR",
+                            Name = "Croatia",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "HT",
+                            Name = "Haiti",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "HU",
+                            Name = "Hungary",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "ID",
+                            Name = "Indonesia",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "IE",
+                            Name = "Ireland",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "IL",
+                            Name = "Israel",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "IM",
+                            Name = "Isle of Man",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "IN",
+                            Name = "India",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "IO",
+                            Name = "British Indian Ocean Territory",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "IQ",
+                            Name = "Iraq",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "IR",
+                            Name = "Iran",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "IS",
+                            Name = "Iceland",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "IT",
+                            Name = "Italy",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "JE",
+                            Name = "Jersey",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "JM",
+                            Name = "Jamaica",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "JO",
+                            Name = "Jordan",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "JP",
+                            Name = "Japan",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "KE",
+                            Name = "Kenya",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "KG",
+                            Name = "Kyrgyzstan",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "KH",
+                            Name = "Cambodia",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "KI",
+                            Name = "Kiribati",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "KM",
+                            Name = "Comoros",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "KN",
+                            Name = "St Kitts & Nevis",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "KP",
+                            Name = "Korea (North)",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "KR",
+                            Name = "Korea (South)",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "KW",
+                            Name = "Kuwait",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "KY",
+                            Name = "Cayman Islands",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "KZ",
+                            Name = "Kazakhstan",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "LA",
+                            Name = "Laos",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "LB",
+                            Name = "Lebanon",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "LC",
+                            Name = "St Lucia",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "LI",
+                            Name = "Liechtenstein",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "LK",
+                            Name = "Sri Lanka",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "LR",
+                            Name = "Liberia",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "LS",
+                            Name = "Lesotho",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "LT",
+                            Name = "Lithuania",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "LU",
+                            Name = "Luxembourg",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "LV",
+                            Name = "Latvia",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "LY",
+                            Name = "Libya",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "MA",
+                            Name = "Morocco",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "MC",
+                            Name = "Monaco",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "MD",
+                            Name = "Moldova",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "ME",
+                            Name = "Montenegro",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "MF",
+                            Name = "St Martin (French)",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "MG",
+                            Name = "Madagascar",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "MH",
+                            Name = "Marshall Islands",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "MK",
+                            Name = "North Macedonia",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "ML",
+                            Name = "Mali",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "MM",
+                            Name = "Myanmar (Burma)",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "MN",
+                            Name = "Mongolia",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "MO",
+                            Name = "Macau",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "MP",
+                            Name = "Northern Mariana Islands",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "MQ",
+                            Name = "Martinique",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "MR",
+                            Name = "Mauritania",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "MS",
+                            Name = "Montserrat",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "MT",
+                            Name = "Malta",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "MU",
+                            Name = "Mauritius",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "MV",
+                            Name = "Maldives",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "MW",
+                            Name = "Malawi",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "MX",
+                            Name = "Mexico",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "MY",
+                            Name = "Malaysia",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "MZ",
+                            Name = "Mozambique",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "NA",
+                            Name = "Namibia",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "NC",
+                            Name = "New Caledonia",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "NE",
+                            Name = "Niger",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "NF",
+                            Name = "Norfolk Island",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "NG",
+                            Name = "Nigeria",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "NI",
+                            Name = "Nicaragua",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "NL",
+                            Name = "Netherlands",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "NO",
+                            Name = "Norway",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "NP",
+                            Name = "Nepal",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "NR",
+                            Name = "Nauru",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "NU",
+                            Name = "Niue",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "NZ",
+                            Name = "New Zealand",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "OM",
+                            Name = "Oman",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "PA",
+                            Name = "Panama",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "PE",
+                            Name = "Peru",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "PF",
+                            Name = "French Polynesia",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "PG",
+                            Name = "Papua New Guinea",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "PH",
+                            Name = "Philippines",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "PK",
+                            Name = "Pakistan",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "PL",
+                            Name = "Poland",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "PM",
+                            Name = "St Pierre & Miquelon",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "PN",
+                            Name = "Pitcairn",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "PR",
+                            Name = "Puerto Rico",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "PS",
+                            Name = "Palestine",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "PT",
+                            Name = "Portugal",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "PW",
+                            Name = "Palau",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "PY",
+                            Name = "Paraguay",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "QA",
+                            Name = "Qatar",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "RE",
+                            Name = "Réunion",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "RO",
+                            Name = "Romania",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "RS",
+                            Name = "Serbia",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "RU",
+                            Name = "Russia",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "RW",
+                            Name = "Rwanda",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "SA",
+                            Name = "Saudi Arabia",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "SB",
+                            Name = "Solomon Islands",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "SC",
+                            Name = "Seychelles",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "SD",
+                            Name = "Sudan",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "SE",
+                            Name = "Sweden",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "SG",
+                            Name = "Singapore",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "SH",
+                            Name = "St Helena",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "SI",
+                            Name = "Slovenia",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "SJ",
+                            Name = "Svalbard & Jan Mayen",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "SK",
+                            Name = "Slovakia",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "SL",
+                            Name = "Sierra Leone",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "SM",
+                            Name = "San Marino",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "SN",
+                            Name = "Senegal",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "SO",
+                            Name = "Somalia",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "SR",
+                            Name = "Suriname",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "SS",
+                            Name = "South Sudan",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "ST",
+                            Name = "Sao Tome & Principe",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "SV",
+                            Name = "El Salvador",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "SX",
+                            Name = "St Maarten (Dutch)",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "SY",
+                            Name = "Syria",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "SZ",
+                            Name = "Eswatini",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "TC",
+                            Name = "Turks & Caicos Is",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "TD",
+                            Name = "Chad",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "TF",
+                            Name = "French S. Terr.",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "TG",
+                            Name = "Togo",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "TH",
+                            Name = "Thailand",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "TJ",
+                            Name = "Tajikistan",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "TK",
+                            Name = "Tokelau",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "TL",
+                            Name = "East Timor",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "TM",
+                            Name = "Turkmenistan",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "TN",
+                            Name = "Tunisia",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "TO",
+                            Name = "Tonga",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "TR",
+                            Name = "Turkey",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "TT",
+                            Name = "Trinidad & Tobago",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "TV",
+                            Name = "Tuvalu",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "TW",
+                            Name = "Taiwan",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "TZ",
+                            Name = "Tanzania",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "UA",
+                            Name = "Ukraine",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "UG",
+                            Name = "Uganda",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "UM",
+                            Name = "US minor outlying islands",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "US",
+                            Name = "United States",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "UY",
+                            Name = "Uruguay",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "UZ",
+                            Name = "Uzbekistan",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "VA",
+                            Name = "Vatican City",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "VC",
+                            Name = "St Vincent",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "VE",
+                            Name = "Venezuela",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "VG",
+                            Name = "Virgin Islands (UK)",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "VI",
+                            Name = "Virgin Islands (US)",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "VN",
+                            Name = "Vietnam",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "VU",
+                            Name = "Vanuatu",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "WF",
+                            Name = "Wallis & Futuna",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "WS",
+                            Name = "Samoa",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "YE",
+                            Name = "Yemen",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "YT",
+                            Name = "Mayotte",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "ZA",
+                            Name = "South Africa",
+                            SupportsAllocatOperations = true
+                        },
+                        new
+                        {
+                            Code = "ZM",
+                            Name = "Zambia",
+                            SupportsAllocatOperations = false
+                        },
+                        new
+                        {
+                            Code = "ZW",
+                            Name = "Zimbabwe",
+                            SupportsAllocatOperations = true
+                        });
                 });
 
             modelBuilder.Entity("AllocatrApi.Models.Project", b =>
@@ -1207,7 +2898,22 @@ namespace AllocatrApi.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("AllocatrApi.Models.Country", "OperatingCountry")
+                        .WithMany()
+                        .HasForeignKey("OperatingCountryCode")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("AllocatrApi.Models.City", "OperatingCity")
+                        .WithMany()
+                        .HasForeignKey("OperatingCityId", "OperatingCountryCode")
+                        .HasPrincipalKey("Id", "CountryCode")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.Navigation("AllocatrUser");
+
+                    b.Navigation("OperatingCity");
+
+                    b.Navigation("OperatingCountry");
                 });
 
             modelBuilder.Entity("AllocatrApi.Models.AllocatProfileSkill", b =>
@@ -1227,6 +2933,16 @@ namespace AllocatrApi.Migrations
                     b.Navigation("AllocatProfile");
 
                     b.Navigation("Skill");
+                });
+
+            modelBuilder.Entity("AllocatrApi.Models.AllocatrUser", b =>
+                {
+                    b.HasOne("AllocatrApi.Models.Country", "Country")
+                        .WithMany()
+                        .HasForeignKey("CountryCode")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Country");
                 });
 
             modelBuilder.Entity("AllocatrApi.Models.CalendarFocusTask", b =>
@@ -1271,6 +2987,17 @@ namespace AllocatrApi.Migrations
                     b.Navigation("Task");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("AllocatrApi.Models.City", b =>
+                {
+                    b.HasOne("AllocatrApi.Models.Country", "Country")
+                        .WithMany("Cities")
+                        .HasForeignKey("CountryCode")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Country");
                 });
 
             modelBuilder.Entity("AllocatrApi.Models.ConversationAttachment", b =>
@@ -1682,6 +3409,11 @@ namespace AllocatrApi.Migrations
             modelBuilder.Entity("AllocatrApi.Models.ConversationMessage", b =>
                 {
                     b.Navigation("Attachments");
+                });
+
+            modelBuilder.Entity("AllocatrApi.Models.Country", b =>
+                {
+                    b.Navigation("Cities");
                 });
 
             modelBuilder.Entity("AllocatrApi.Models.Project", b =>

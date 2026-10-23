@@ -48,6 +48,14 @@ public class AllocatProfileConfiguration : IEntityTypeConfiguration<AllocatProfi
                     "\"AverageResponseTimeMinutes\" IS NULL OR " +
                     "\"AverageResponseTimeMinutes\" >= 0"
                 );
+
+                // Existing profiles may have neither field during rollout.
+                // A partially populated operating location is not valid.
+                table.HasCheckConstraint(
+                    "CK_AllocatProfiles_OperatingLocation",
+                    "(\"OperatingCountryCode\" IS NULL AND \"OperatingCityId\" IS NULL) OR " +
+                    "(\"OperatingCountryCode\" IS NOT NULL AND \"OperatingCityId\" IS NOT NULL)"
+                );
             }
         );
 
@@ -64,6 +72,10 @@ public class AllocatProfileConfiguration : IEntityTypeConfiguration<AllocatProfi
 
         builder.Property(a => a.Bio)
             .HasMaxLength(500);
+
+        builder.Property(a => a.OperatingCountryCode)
+            .HasMaxLength(2)
+            .IsUnicode(false);
 
         builder.Property(a => a.HourlyRate)
             .HasPrecision(12, 2);
@@ -115,6 +127,34 @@ public class AllocatProfileConfiguration : IEntityTypeConfiguration<AllocatProfi
         });
 
         builder.HasIndex(a => a.HourlyRate);
+
+        // Country-wide and country/city discovery queries.
+        builder.HasIndex(a => new
+        {
+            a.OperatingCountryCode,
+            a.OperatingCityId
+        });
+
+        builder.HasOne(a => a.OperatingCountry)
+            .WithMany()
+            .HasForeignKey(a => a.OperatingCountryCode)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // References CityConfiguration's alternate key (Id, CountryCode).
+        // This rejects an existing city paired with a different country.
+        builder.HasOne(a => a.OperatingCity)
+            .WithMany()
+            .HasForeignKey(a => new
+            {
+                a.OperatingCityId,
+                a.OperatingCountryCode
+            })
+            .HasPrincipalKey(city => new
+            {
+                city.Id,
+                city.CountryCode
+            })
+            .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne(a => a.AllocatrUser)
             .WithOne(u => u.AllocatProfile)

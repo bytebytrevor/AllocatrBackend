@@ -8,6 +8,9 @@ namespace AllocatrApi.Data;
 public class AllocatrDbContext(DbContextOptions<AllocatrDbContext> options)
     : IdentityDbContext<AllocatrUser, IdentityRole<Guid>, Guid>(options)
 {
+    public DbSet<Country> Countries { get; set; } = null!;
+    public DbSet<City> Cities { get; set; } = null!;
+
     public DbSet<Project> Projects { get; set; } = null!;
     public DbSet<TaskItem> TaskItems { get; set; } = null!;
     public DbSet<ProjectMessage> ProjectMessages { get; set; } = null!;

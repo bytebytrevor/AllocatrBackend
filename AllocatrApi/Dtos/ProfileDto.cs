@@ -9,5 +9,8 @@ public record class ProfileDto(
     string? AvatarUrl,
     DateTime CreatedAt,
     bool EmailConfirmed,
-    bool IsAllocat
+    bool IsAllocat,
+    string? CountryCode = null,
+    string? CountryName = null,
+    string? CityName = null
 );
