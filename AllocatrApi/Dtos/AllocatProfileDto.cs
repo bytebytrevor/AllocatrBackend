@@ -23,4 +23,9 @@ public record AllocatProfileDto(
     int ProfessionalScore,
     DateTime JoinedAt,
     IReadOnlyList<AllocatProjectSummaryDto> Projects
-);
+)
+{
+    // Additive property preserves existing constructor calls and defaults to [].
+    public IReadOnlyList<PublicQualificationDto> Qualifications { get; init; } =
+        Array.Empty<PublicQualificationDto>();
+}

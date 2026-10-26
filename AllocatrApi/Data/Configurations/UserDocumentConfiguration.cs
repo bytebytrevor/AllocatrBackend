@@ -4,12 +4,9 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace AllocatrApi.Configure;
 
-public class UserDocumentConfiguration
-    : IEntityTypeConfiguration<UserDocument>
+public class UserDocumentConfiguration : IEntityTypeConfiguration<UserDocument>
 {
-    public void Configure(
-        EntityTypeBuilder<UserDocument> builder
-    )
+    public void Configure(EntityTypeBuilder<UserDocument> builder)
     {
         builder.HasKey(document => document.Id);
 
@@ -17,6 +14,12 @@ public class UserDocumentConfiguration
             .HasConversion<string>()
             .HasMaxLength(40)
             .IsRequired();
+
+        builder.Property(document => document.Title)
+            .HasMaxLength(200);
+
+        builder.Property(document => document.IssuingInstitution)
+            .HasMaxLength(200);
 
         builder.Property(document => document.ReviewStatus)
             .HasConversion<string>()
@@ -30,9 +33,7 @@ public class UserDocumentConfiguration
             .IsRequired();
 
         builder.HasIndex(document => document.UserId);
-
-        builder.HasIndex(document => document.StoredFileId)
-            .IsUnique();
+        builder.HasIndex(document => document.StoredFileId).IsUnique();
 
         builder.HasOne(document => document.User)
             .WithMany()
@@ -41,9 +42,7 @@ public class UserDocumentConfiguration
 
         builder.HasOne(document => document.StoredFile)
             .WithOne()
-            .HasForeignKey<UserDocument>(
-                document => document.StoredFileId
-            )
+            .HasForeignKey<UserDocument>(document => document.StoredFileId)
             .OnDelete(DeleteBehavior.Restrict);
     }
 }

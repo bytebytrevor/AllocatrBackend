@@ -120,7 +120,50 @@ public class AllocatProfileService
         Guid allocatUserId)
     {
         var data = await GetProfileDataAsync(allocatUserId, publicView: true);
-        return data == null ? null : ToPublicProfileDto(data);
+        if (data == null)
+            return null;
+
+        // Query only after confirming that the professional profile is public.
+        // Project metadata, identity files and owner-only document DTOs are not
+        // used for qualification claims.
+        var qualifications = await _db.UserDocuments
+            .AsNoTracking()
+            .Where(document =>
+                document.UserId == allocatUserId &&
+                (document.DocumentType == UserDocumentType.Qualification ||
+                 document.DocumentType == UserDocumentType.Certification ||
+                 document.DocumentType == UserDocumentType.ProfessionalLicense ||
+                 document.DocumentType == UserDocumentType.Training ||
+                 document.DocumentType == UserDocumentType.Other) &&
+                document.StoredFile.Status == StoredFileStatus.Ready &&
+                (document.ReviewStatus == UserDocumentReviewStatus.Pending ||
+                 document.ReviewStatus == UserDocumentReviewStatus.Approved) &&
+                document.Title != null && document.Title.Trim() != "" &&
+                (document.DocumentType != UserDocumentType.Qualification ||
+                 (document.IssuingInstitution != null &&
+                  document.IssuingInstitution.Trim() != "")))
+            .OrderByDescending(document => document.CreatedAt)
+            .ThenBy(document => document.Id)
+            .Select(document => new PublicQualificationDto(
+                document.Title!.Trim(),
+                document.IssuingInstitution == null ? "" : document.IssuingInstitution.Trim(),
+                document.ReviewStatus == UserDocumentReviewStatus.Approved
+                    ? "Verified"
+                    : "UnderReview"
+            )
+            {
+                DocumentType = document.DocumentType == UserDocumentType.Qualification ? "Qualification"
+                    : document.DocumentType == UserDocumentType.Certification ? "Certification"
+                    : document.DocumentType == UserDocumentType.ProfessionalLicense ? "ProfessionalLicense"
+                    : document.DocumentType == UserDocumentType.Training ? "Training"
+                    : "Other"
+            })
+            .ToListAsync();
+
+        return ToPublicProfileDto(data) with
+        {
+            Qualifications = qualifications
+        };
     }
 
     public async Task<PagedResultDto<AllocatProfileListItemDto>>

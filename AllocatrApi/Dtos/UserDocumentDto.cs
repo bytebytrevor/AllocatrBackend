@@ -2,6 +2,7 @@ using AllocatrApi.Models;
 
 namespace AllocatrApi.Dtos;
 
+// Owner-only document response. Do not use this DTO for public profiles.
 public record UserDocumentDto(
     Guid Id,
     UserDocumentType DocumentType,
@@ -10,5 +11,7 @@ public record UserDocumentDto(
     string ContentType,
     long SizeBytes,
     DateTime CreatedAt,
-    DateTime? ReviewedAt
+    DateTime? ReviewedAt,
+    string? Title = null,
+    string? IssuingInstitution = null
 );

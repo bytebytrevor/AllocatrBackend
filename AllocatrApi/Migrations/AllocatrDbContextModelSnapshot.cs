@@ -2569,6 +2569,10 @@ namespace AllocatrApi.Migrations
                         .HasMaxLength(40)
                         .HasColumnType("character varying(40)");
 
+                    b.Property<string>("IssuingInstitution")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
                     b.Property<string>("ReviewNotes")
                         .HasMaxLength(1000)
                         .HasColumnType("character varying(1000)");
@@ -2586,6 +2590,10 @@ namespace AllocatrApi.Migrations
 
                     b.Property<Guid>("StoredFileId")
                         .HasColumnType("uuid");
+
+                    b.Property<string>("Title")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
 
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
