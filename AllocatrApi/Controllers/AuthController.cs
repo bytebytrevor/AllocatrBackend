@@ -1,13 +1,15 @@
 using System.Text;
-using Microsoft.AspNetCore.WebUtilities;
-using AllocatrApi.Dtos.Auth;
+using AllocatrApi.Dtos;
+using AllocatrApi.Middleware;
 using AllocatrApi.Models;
+using AllocatrApi.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
-using AllocatrApi.Dtos;
+using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.EntityFrameworkCore;
 
 namespace AllocatrApi.Controllers;
 
@@ -15,180 +17,141 @@ namespace AllocatrApi.Controllers;
 [Route("api/auth")]
 public class AuthController : ControllerBase
 {
-    private readonly UserManager<AllocatrUser> _userManager;
-    private readonly SignInManager<AllocatrUser> _signInManager;
+    private readonly UserManager<AllocatrUser> _users;
+    private readonly SignInManager<AllocatrUser> _signIn;
+    private readonly EmailVerificationSender _verification;
+    private readonly ILogger<AuthController> _logger;
 
-    public AuthController(UserManager<AllocatrUser> userManager, SignInManager<AllocatrUser> signInManager)
+    public AuthController(UserManager<AllocatrUser> users,
+        SignInManager<AllocatrUser> signIn, EmailVerificationSender verification,
+        ILogger<AuthController> logger)
     {
-        _userManager = userManager;
-        _signInManager = signInManager;
+        _users = users;
+        _signIn = signIn;
+        _verification = verification;
+        _logger = logger;
     }
 
-    // ----------------- REGISTER -----------------
+    [AllowAnonymous]
+    [EnableRateLimiting("auth-attempts")]
     [HttpPost("register")]
-    public async Task<IActionResult> Register(Dtos.Auth.RegisterRequest dto)
+    public async Task<IActionResult> Register(AllocatrApi.Dtos.Auth.RegisterRequest dto)
     {
-        var existingUser = await _userManager.FindByEmailAsync(dto.Email);
-        if (existingUser != null)
+        var email = dto.Email.Trim();
+        if (await _users.FindByEmailAsync(email) != null)
             return Conflict(new { message = "User already exists" });
-
         var user = new AllocatrUser
         {
-            FullName = dto.FullName,
-            Email = dto.Email,
-            UserName = dto.Email,
-            IsAllocat = dto.IsAllocat
+            FullName = dto.FullName.Trim(), Email = email,
+            UserName = email, IsAllocat = dto.IsAllocat,
         };
+        var created = await _users.CreateAsync(user, dto.Password);
+        if (!created.Succeeded) return BadRequest(created.Errors);
 
-        var result = await _userManager.CreateAsync(user, dto.Password);
-
-        if (!result.Succeeded)
-            return BadRequest(result.Errors);
-
-        return Ok(new { message = "Registered successfully" });
-    }
-
-    // ----------------- LOGIN -----------------
-    [HttpPost("login")]
-    public async Task<IActionResult> Login(LoginRequest dto)
-    {
-        var user = await _userManager.FindByEmailAsync(dto.Email);
-        if (user == null) return Unauthorized(new { message = "Invalid credentials" });
-
-        var result = await _signInManager.PasswordSignInAsync(user, dto.Password, true, false);
-        if (!result.Succeeded) return Unauthorized(new { message = "Invalid credentials" });
-
-        // Identity sets the cookie automatically
-        return Ok(new { email = user.Email, fullName = user.FullName });
-    }
-
-    // ----------------- LOGOUT -----------------
-    [HttpPost("logout")]
-    [Authorize]
-    public async Task<IActionResult> Logout()
-    {
-        await _signInManager.SignOutAsync();
-        return NoContent();
-    }
-
-    // ----------------- CURRENT USER -----------------
-    [HttpGet("me")]
-    [Authorize]
-    public async Task<IActionResult> Me()
-    {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
-        if (userId == null)
-            return Unauthorized();
-
-        var user = await _userManager.FindByIdAsync(userId);
-
-        if (user == null)
-            return Unauthorized();
-
+        // Account creation and delivery are separate outcomes. Never make the
+        // user register a second time after an SMTP failure.
+        var verificationEmailSent = false;
+        try
+        {
+            await _verification.SendAsync(user);
+            verificationEmailSent = true;
+        }
+        catch (Exception exception)
+        {
+            _logger.LogError(exception, "Initial verification delivery failed for user {UserId}", user.Id);
+        }
         return Ok(new
         {
-            userId = user.Id,
-            email = user.Email,
-            fullName = user.FullName,
-            avatarUrl = user?.AvatarUrl,
-            isAllocat = user?.IsAllocat
+            message = "Registered successfully", verificationEmailSent,
+            emailVerificationRequired = true,
         });
     }
 
-    // ----------------- EMAIL VERIFICATION -----------------
-
-    [HttpPost("confirm-email")]
     [AllowAnonymous]
-    public async Task<IActionResult> ConfirmEmail(
-        [FromBody] ConfirmEmailDto request
-    )
+    [EnableRateLimiting("auth-attempts")]
+    [HttpPost("login")]
+    public async Task<IActionResult> Login(LoginRequest dto)
     {
-        if (request.UserId == Guid.Empty)
+        var user = await _users.FindByEmailAsync(dto.Email.Trim());
+        if (user == null) return Unauthorized(new { message = "Invalid credentials" });
+        // Unverified users may obtain a session for /me, resend and logout.
+        // RequireVerifiedEmailMiddleware protects the rest of the API.
+        var result = await _signIn.PasswordSignInAsync(user, dto.Password, true, true);
+        if (!result.Succeeded)
+            return Unauthorized(new { message = "Invalid credentials" });
+        return Ok(new { email = user.Email, fullName = user.FullName });
+    }
+
+    [Authorize, AllowUnverifiedEmail]
+    [HttpPost("logout")]
+    public async Task<IActionResult> Logout()
+    {
+        await _signIn.SignOutAsync();
+        return NoContent();
+    }
+
+    [Authorize, AllowUnverifiedEmail]
+    [HttpGet("me")]
+    public async Task<IActionResult> Me()
+    {
+        var user = await _users.GetUserAsync(User);
+        if (user == null) return Unauthorized();
+        // Profile existence indicates that the first-time create step was saved.
+        // This is deliberately distinct from the 100% account-completion badge.
+        var hasAllocatProfile = user.IsAllocat && await _users.Users
+            .Where(item => item.Id == user.Id)
+            .Select(item => item.AllocatProfile != null)
+            .SingleAsync();
+        return Ok(new
         {
-            return BadRequest(
-                new { message = "The verification link is invalid." }
-            );
-        }
+            userId = user.Id, email = user.Email, fullName = user.FullName,
+            avatarUrl = user.AvatarUrl, isAllocat = user.IsAllocat,
+            emailConfirmed = user.EmailConfirmed, hasAllocatProfile,
+        });
+    }
 
-        if (string.IsNullOrWhiteSpace(request.Token))
-        {
-            return BadRequest(
-                new { message = "The verification link is invalid." }
-            );
-        }
-
-        var user = await _userManager.FindByIdAsync(
-            request.UserId.ToString()
-        );
-
-        if (user == null)
-        {
-            return BadRequest(
-                new { message = "The verification link is invalid." }
-            );
-        }
-
-        /*
-        * Confirmation is intentionally idempotent.
-        *
-        * Opening an already-used verification link should not
-        * look like an error to the user.
-        */
+    [Authorize, AllowUnverifiedEmail]
+    [EnableRateLimiting("verification-email")]
+    [HttpPost("email-verification")]
+    public async Task<IActionResult> ResendVerification()
+    {
+        var user = await _users.GetUserAsync(User);
+        if (user == null) return Unauthorized();
         if (user.EmailConfirmed)
-        {
-            return Ok(
-                new
-                {
-                    message = "Your email address is already verified.",
-                    alreadyVerified = true,
-                }
-            );
-        }
-
-        string token;
-
+            return Ok(new { alreadyVerified = true, message = "Your email is already verified." });
         try
         {
-            var tokenBytes = WebEncoders.Base64UrlDecode(
-                request.Token
-            );
-
-            token = Encoding.UTF8.GetString(tokenBytes);
+            await _verification.SendAsync(user);
+            return Ok(new { alreadyVerified = false, message = "Verification email sent.", retryAfterSeconds = 60 });
         }
-        catch
+        catch (Exception exception)
         {
-            return BadRequest(
-                new
-                {
-                    message = "The verification link is invalid or malformed."
-                }
-            );
+            _logger.LogError(exception, "Verification delivery failed for user {UserId}", user.Id);
+            return StatusCode(503, new { message = "Your account is saved, but the verification email could not be sent. Please try again shortly." });
         }
+    }
 
-        var result = await _userManager.ConfirmEmailAsync(
-            user,
-            token
-        );
-
+    [AllowAnonymous]
+    [EnableRateLimiting("auth-attempts")]
+    [HttpPost("confirm-email")]
+    public async Task<IActionResult> ConfirmEmail([FromBody] ConfirmEmailDto request)
+    {
+        if (request.UserId == Guid.Empty || string.IsNullOrWhiteSpace(request.Token))
+            return BadRequest(new { message = "The verification link is invalid." });
+        var user = await _users.FindByIdAsync(request.UserId.ToString());
+        if (user == null)
+            return BadRequest(new { message = "The verification link is invalid." });
+        if (user.EmailConfirmed)
+            return Ok(new { message = "Your email address is already verified.", alreadyVerified = true });
+        string token;
+        try { token = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(request.Token)); }
+        catch (FormatException)
+        {
+            return BadRequest(new { message = "The verification link is invalid or malformed." });
+        }
+        var result = await _users.ConfirmEmailAsync(user, token);
         if (!result.Succeeded)
-        {
-            return BadRequest(
-                new
-                {
-                    message = "The verification link is invalid or has expired."
-                }
-            );
-        }
-
-        return Ok(
-            new
-            {
-                message = "Your email address has been verified.",
-                alreadyVerified = false,
-            }
-        );
+            return BadRequest(new { message = "The verification link is invalid or has expired." });
+        return Ok(new { message = "Your email address has been verified.", alreadyVerified = false });
     }
 }
-
-
