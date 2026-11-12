@@ -28,5 +28,11 @@
     <Folder Include="Extensions/" />
     <Folder Include="Services/" />
   </ItemGroup>
+  <ItemGroup>
+    <None Remove="Assets/Email/allocatr-logo.png" />
+    <Content Include="Assets/Email/allocatr-logo.png"
+            CopyToOutputDirectory="PreserveNewest"
+            CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
 
 </Project>
