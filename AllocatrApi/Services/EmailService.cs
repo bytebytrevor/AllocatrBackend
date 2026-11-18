@@ -1,5 +1,6 @@
 using System.Net;
 using AllocatrApi.Configuration;
+using MailKit;
 using MailKit.Net.Smtp;
 using MailKit.Security;
 using Microsoft.Extensions.Options;
