@@ -11,11 +11,13 @@ public class TaskCommentService
     public const int MaxAttachments = 8;
     private readonly AllocatrDbContext _db;
     private readonly ProjectAccessService _projectAccess;
+    private readonly CollaborationNotificationService _notifications;
 
-    public TaskCommentService(AllocatrDbContext db, ProjectAccessService projectAccess)
+    public TaskCommentService(AllocatrDbContext db, ProjectAccessService projectAccess, CollaborationNotificationService notifications)
     {
         _db = db;
         _projectAccess = projectAccess;
+        _notifications = notifications;
     }
 
     public async Task<TaskDiscussionContextDto?> GetContextAsync(Guid taskId, Guid userId, bool isAllocat)
@@ -51,7 +53,7 @@ public class TaskCommentService
         if (request.ClientRequestId.HasValue)
         {
             var replay = await FindReplayAsync(request.ClientRequestId.Value, userId);
-            if (replay != null) return await ReplayAsync(replay, taskId, text, ids, scope, userId);
+            if (replay != null) return await ReplayAsync(replay, taskId, text, ids, scope, userId, request.ReplyToCommentId);
         }
         if (ids.Length > 0 && !IsWritable(scope.Status))
             throw new ProjectFileException(409, "New attachments cannot be added while the project is awaiting completion or completed.");
@@ -60,10 +62,20 @@ public class TaskCommentService
         {
             Id = Guid.NewGuid(), TaskItemId = taskId, CreatedById = userId,
             Comment = text, CreatedAt = DateTime.UtcNow, ClientRequestId = request.ClientRequestId,
+            ReplyToCommentId = request.ReplyToCommentId,
         };
         try
         {
             await using var transaction = await _db.Database.BeginTransactionAsync();
+            Guid? replyAuthorId = null;
+            if (request.ReplyToCommentId.HasValue)
+            {
+                replyAuthorId = await _db.TaskComments.AsNoTracking()
+                    .Where(parent => parent.Id == request.ReplyToCommentId.Value && parent.TaskItemId == taskId)
+                    .Select(parent => (Guid?)parent.CreatedById).SingleOrDefaultAsync();
+                if (!replyAuthorId.HasValue)
+                    throw new ArgumentException("The comment you are replying to is unavailable in this task.");
+            }
             _db.TaskComments.Add(comment);
             await _db.SaveChangesAsync();
             if (ids.Length > 0)
@@ -81,6 +93,14 @@ public class TaskCommentService
                 if (attached != ids.Length)
                     throw new ArgumentException("An attachment is unavailable, belongs to another task/user, or is already attached. No comment was posted.");
             }
+            var notificationScope = await GetScopeAsync(taskId, userId, isAllocat)
+                ?? throw new ProjectFileException(404, "Task not found or not accessible.");
+            var actorName = await _db.Users.AsNoTracking().Where(user => user.Id == userId)
+                .Select(user => user.FullName).SingleAsync() ?? "A project member";
+            await _notifications.QueueCommentAsync(comment, notificationScope.ProjectId,
+                notificationScope.ProjectTitle, notificationScope.TaskTitle, notificationScope.OwnerId,
+                notificationScope.AssigneeId, replyAuthorId == notificationScope.OwnerId, actorName);
+            await _db.SaveChangesAsync();
             await transaction.CommitAsync();
         }
         catch (DbUpdateException) when (request.ClientRequestId.HasValue)
@@ -90,7 +110,7 @@ public class TaskCommentService
             _db.Entry(comment).State = EntityState.Detached;
             var replay = await FindReplayAsync(request.ClientRequestId.Value, userId);
             if (replay == null) throw;
-            return await ReplayAsync(replay, taskId, text, ids, scope, userId);
+            return await ReplayAsync(replay, taskId, text, ids, scope, userId, request.ReplyToCommentId);
         }
         return await ReadAsync(comment.Id, scope, userId);
     }
@@ -131,11 +151,11 @@ public class TaskCommentService
             comment.CreatedById == userId && comment.ClientRequestId == requestId);
 
     private async Task<TaskCommentDto?> ReplayAsync(TaskComment comment, Guid taskId,
-        string text, Guid[] ids, Scope scope, Guid userId)
+        string text, Guid[] ids, Scope scope, Guid userId, Guid? replyToCommentId)
     {
         var existingIds = await _db.ProjectFiles.AsNoTracking()
             .Where(file => file.CommentId == comment.Id).Select(file => file.Id).ToListAsync();
-        if (comment.TaskItemId != taskId || comment.Comment != text
+        if (comment.TaskItemId != taskId || comment.Comment != text || comment.ReplyToCommentId != replyToCommentId
             || !existingIds.Order().SequenceEqual(ids.Order()))
             throw new ProjectFileException(409, "This request ID has already been used for a different comment. Refresh the discussion before posting again.");
         return await ReadAsync(comment.Id, scope, userId);
@@ -167,16 +187,23 @@ public class TaskCommentService
             .ToListAsync();
         var grouped = files.GroupBy(file => file.CommentId!.Value)
             .ToDictionary(group => group.Key, group => (IReadOnlyList<ProjectFileDto>)group.ToList());
+        var parentIds = comments.Where(comment => comment.ReplyToCommentId.HasValue)
+            .Select(comment => comment.ReplyToCommentId!.Value).Distinct().ToArray();
+        var replyNames = await _db.TaskComments.AsNoTracking()
+            .Where(parent => parentIds.Contains(parent.Id) && parent.TaskItem.ProjectId == scope.ProjectId)
+            .Select(parent => new { parent.Id, Name = parent.CreatedBy.FullName })
+            .ToDictionaryAsync(parent => parent.Id, parent => parent.Name);
         return comments.Select(comment => new TaskCommentDto(comment.Id, comment.CreatedAt,
             comment.UpdatedAt, comment.Comment, comment.CreatedById,
             comment.CreatedBy.FullName ?? "Allocatr user", comment.CreatedBy.AvatarUrl,
-            comment.TaskItemId, grouped.GetValueOrDefault(comment.Id) ?? [])).ToList();
+            comment.TaskItemId, grouped.GetValueOrDefault(comment.Id) ?? [], comment.ReplyToCommentId,
+            comment.ReplyToCommentId.HasValue ? replyNames.GetValueOrDefault(comment.ReplyToCommentId.Value) : null)).ToList();
     }
 
     private async Task<Scope?> GetScopeAsync(Guid taskId, Guid userId, bool isAllocat)
     {
         var scope = await _db.TaskItems.AsNoTracking().Where(task => task.Id == taskId)
-            .Select(task => new Scope(task.ProjectId, task.Project.UserId, task.Project.Status))
+            .Select(task => new Scope(task.ProjectId, task.Project.UserId, task.Project.Status, task.AssignedToId, task.Title, task.Project.Title))
             .FirstOrDefaultAsync();
         if (scope == null || userId == Guid.Empty || (scope.OwnerId != userId
             && (!isAllocat || !await _projectAccess.IsAcceptedAllocatAsync(scope.ProjectId, userId)))) return null;
@@ -191,5 +218,5 @@ public class TaskCommentService
         if (text.Length == 0 && !hasAttachments) throw new ArgumentException("Write a comment or attach a file.");
         if (text.Length > 2000) throw new ArgumentException("Comment cannot exceed 2000 characters.");
     }
-    private sealed record Scope(Guid ProjectId, Guid OwnerId, string Status);
+    private sealed record Scope(Guid ProjectId, Guid OwnerId, string Status, Guid? AssigneeId, string TaskTitle, string ProjectTitle);
 }

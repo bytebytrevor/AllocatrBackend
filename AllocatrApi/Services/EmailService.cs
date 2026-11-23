@@ -61,7 +61,7 @@ public class EmailService : IEmailService
                 ? SecureSocketOptions.SslOnConnect : SecureSocketOptions.StartTls;
             await client.ConnectAsync(_settings.Host, _settings.Port, socketOptions);
             await client.AuthenticateAsync(_settings.Username, _settings.Password);
-            await client.SendAsync(message);
+            await client.SendAsync(new SendRequest(message));
             await client.DisconnectAsync(true);
             _logger.LogInformation("Email sent successfully to {Email}.", toEmail);
         }
@@ -80,14 +80,14 @@ public class EmailService : IEmailService
         var subject = "Verify your Allocatr email address";
         var action = EmailLayout.ActionLink("Verify email", verificationUrl);
         var htmlBody = $"""
-            <h1 style="margin:0;font-family:{EmailLayout.FontFamily};font-size:24px;font-weight:600;line-height:32px;letter-spacing:-0.5px;color:#333333;">Verify your email address</h1>
-            <p style="margin:20px 0 0;font-family:{EmailLayout.FontFamily};font-size:14px;line-height:25px;color:#555d52;">Hi {safeName},</p>
-            <p style="margin:10px 0 0;font-family:{EmailLayout.FontFamily};font-size:14px;line-height:25px;color:#555d52;">Confirm that this email address belongs to you to continue to your Allocatr workspace.</p>
+            <h1 class="allocatr-email-heading" style="margin:0;font-family:{EmailLayout.FontFamily};font-size:24px;font-weight:600;line-height:32px;letter-spacing:-0.5px;color:#333333;">Verify your email address</h1>
+            <p class="allocatr-email-text" style="margin:20px 0 0;font-family:{EmailLayout.FontFamily};font-size:14px;line-height:25px;color:#555d52;">Hi {safeName},</p>
+            <p class="allocatr-email-text" style="margin:10px 0 0;font-family:{EmailLayout.FontFamily};font-size:14px;line-height:25px;color:#555d52;">Confirm that this email address belongs to you to continue to your Allocatr workspace.</p>
             {action}
-            <p style="margin:0;font-family:{EmailLayout.FontFamily};font-size:12px;line-height:22px;color:#697066;">If you did not request this email, you can safely ignore it.</p>
-            <div style="margin-top:24px;padding-top:18px;border-top:1px solid #e6e9e1;">
-                <p style="margin:0;font-family:{EmailLayout.FontFamily};font-size:11px;line-height:20px;color:#82877e;">If the button does not work, copy this link into your browser:</p>
-                <p style="margin:6px 0 0;font-family:{EmailLayout.FontFamily};font-size:11px;line-height:20px;word-break:break-all;color:#697066;">{safeVerificationUrl}</p>
+            <p class="allocatr-email-muted" style="margin:0;font-family:{EmailLayout.FontFamily};font-size:12px;line-height:22px;color:#697066;">If you did not request this email, you can safely ignore it.</p>
+            <div class="allocatr-email-rule" style="margin-top:24px;padding-top:18px;border-top:1px solid #e1e4dc;">
+                <p class="allocatr-email-quiet" style="margin:0;font-family:{EmailLayout.FontFamily};font-size:11px;line-height:20px;color:#82877e;">If the button does not work, copy this link into your browser:</p>
+                <p class="allocatr-email-muted" style="margin:6px 0 0;font-family:{EmailLayout.FontFamily};font-size:11px;line-height:20px;word-break:break-all;color:#697066;">{safeVerificationUrl}</p>
             </div>
             """;
         var textBody = $"""

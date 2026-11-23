@@ -29,12 +29,13 @@ public class ProjectMessagingService
     private readonly ProjectFileValidationService _validation;
     private readonly IFileStorageService _storage;
     private readonly ILogger<ProjectMessagingService> _logger;
+    private readonly NotificationService _notifications;
 
     public ProjectMessagingService(AllocatrDbContext db, ProjectAccessService access,
         ProjectFileValidationService validation, IFileStorageService storage,
-        ILogger<ProjectMessagingService> logger)
+        ILogger<ProjectMessagingService> logger, NotificationService notifications)
     {
-        _db = db; _access = access; _validation = validation; _storage = storage; _logger = logger;
+        _db = db; _access = access; _validation = validation; _storage = storage; _logger = logger; _notifications = notifications;
     }
 
     private IQueryable<ProjectConversation> Visible(Guid projectId, Guid userId) =>
@@ -237,6 +238,7 @@ public class ProjectMessagingService
                 message.Attachments.Add(new ConversationAttachment { Id = Guid.NewGuid(), StoredFileId = stored.Id });
             }
             _db.ConversationMessages.Add(message);
+            await QueueMessageNotificationAsync(c, message, userId, isAllocat, ct);
             // One SaveChanges transaction publishes the message, all attachments, and sequence together.
             await _db.SaveChangesAsync(ct);
             return new ConversationSendResultDto(c.Id, message.Id);
@@ -263,6 +265,19 @@ public class ProjectMessagingService
                 throw new MessagingException(409, "Another reply arrived while sending. Please press Send again.");
             throw;
         }
+    }
+
+    private async Task QueueMessageNotificationAsync(ProjectConversation conversation, ConversationMessage message,
+        Guid userId, bool isAllocat, CancellationToken ct)
+    {
+        var currentMembers = await MembersAsync(conversation.ProjectId, userId, isAllocat, ct);
+        var audience = currentMembers.Where(member => conversation.IsProjectWide ||
+            conversation.Participants.Any(participant => participant.UserId == member.UserId));
+        var projectTitle = await _db.Projects.AsNoTracking().Where(p => p.Id == conversation.ProjectId)
+            .Select(p => p.Title).SingleAsync(ct);
+        var actorName = currentMembers.FirstOrDefault(member => member.UserId == userId)?.Name ?? "A project member";
+        await _notifications.QueueAsync(NotificationEvent.MessageReceived, message.Id, userId,
+            audience.Select(member => member.UserId), conversation.ProjectId, projectTitle, actorName, ct);
     }
 
     private async Task ValidateAudience(Guid projectId, Guid? conversationId, Guid userId, bool isAllocat,
@@ -494,6 +509,7 @@ public class ProjectMessagingService
             foreach (var file in m.Attachments.Where(a => a.StoredFile.Status == StoredFileStatus.Ready))
                 copy.Attachments.Add(new ConversationAttachment { Id = Guid.NewGuid(), StoredFileId = file.StoredFileId });
             _db.ConversationMessages.Add(copy);
+            await QueueMessageNotificationAsync(c, copy, userId, isAllocat, ct);
             await _db.SaveChangesAsync(ct);
             await transaction.CommitAsync(ct);
             return new ConversationSendResultDto(c.Id, copy.Id);

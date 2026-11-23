@@ -18,16 +18,18 @@ public class ProjectFileService
     private readonly IFileStorageService _storage;
     private readonly ProjectFileValidationService _validation;
     private readonly ILogger<ProjectFileService> _logger;
+    private readonly CollaborationNotificationService _notifications;
 
     public ProjectFileService(AllocatrDbContext db, ProjectAccessService access,
         IFileStorageService storage, ProjectFileValidationService validation,
-        ILogger<ProjectFileService> logger)
+        ILogger<ProjectFileService> logger, CollaborationNotificationService notifications)
     {
         _db = db;
         _access = access;
         _storage = storage;
         _validation = validation;
         _logger = logger;
+        _notifications = notifications;
     }
 
     public async Task<ProjectFilePageDto> ListAsync(Guid projectId, Guid userId,
@@ -112,25 +114,16 @@ public class ProjectFileService
         var now = DateTime.UtcNow;
         var stored = new StoredFile
         {
-            Id = Guid.NewGuid(),
-            UploadedByUserId = userId,
-            Bucket = Bucket,
-            OriginalFileName = upload.OriginalFileName,
-            ContentType = upload.ContentType,
-            SizeBytes = upload.Bytes.LongLength,
-            Status = StoredFileStatus.Uploading,
+            Id = Guid.NewGuid(), UploadedByUserId = userId, Bucket = Bucket,
+            OriginalFileName = upload.OriginalFileName, ContentType = upload.ContentType,
+            SizeBytes = upload.Bytes.LongLength, Status = StoredFileStatus.Uploading,
             CreatedAt = now,
         };
         stored.StoragePath = $"projects/{projectId}/files/{stored.Id}{upload.Extension}";
         var attachment = new ProjectFile
         {
-            Id = Guid.NewGuid(),
-            ProjectId = projectId,
-            TaskId = taskId,
-            TaskTitle = taskTitle,
-            StoredFileId = stored.Id,
-            StoredFile = stored,
-            UploadedByUserId = userId,
+            Id = Guid.NewGuid(), ProjectId = projectId, TaskId = taskId, TaskTitle = taskTitle,
+            StoredFileId = stored.Id, StoredFile = stored, UploadedByUserId = userId,
             Context = taskId.HasValue ? ProjectFileContext.Task : ProjectFileContext.Project,
             CreatedAt = now,
         };
@@ -147,12 +140,24 @@ public class ProjectFileService
             project = await RequireAccessAsync(projectId, userId, isAllocat, cancellationToken);
             EnsureWritable(project.Status);
             if (taskId.HasValue) await RequireTaskAsync(projectId, taskId.Value, cancellationToken);
+            var projectTitle = await _db.Projects.AsNoTracking().Where(p => p.Id == projectId)
+                .Select(p => p.Title).SingleAsync(cancellationToken);
+            Guid? assigneeId = taskId.HasValue
+                ? await _db.TaskItems.AsNoTracking().Where(t => t.Id == taskId.Value && t.ProjectId == projectId)
+                    .Select(t => t.AssignedToId).SingleAsync(cancellationToken)
+                : null;
             stored.Status = StoredFileStatus.Ready;
             stored.ReadyAt = DateTime.UtcNow;
+            await _notifications.QueueFileAsync(attachment.Id, projectId, projectTitle, project.UserId,
+                userId, uploader, taskId, assigneeId, cancellationToken);
             await _db.SaveChangesAsync(cancellationToken);
         }
         catch
         {
+            // Do not publish a queued notification during compensating metadata saves.
+            foreach (var entry in _db.ChangeTracker.Entries<UserNotification>()
+                .Where(entry => entry.State == EntityState.Added && entry.Entity.EventId == attachment.Id).ToArray())
+                entry.State = EntityState.Detached;
             // A storage timeout can still have created bytes. The unique path makes
             // compensating deletion safe even if the SDK did not return success.
             stored.Status = StoredFileStatus.Failed;

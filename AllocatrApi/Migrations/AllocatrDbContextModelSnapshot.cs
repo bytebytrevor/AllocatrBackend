@@ -17,7 +17,7 @@ namespace AllocatrApi.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.20")
+                .HasAnnotation("ProductVersion", "9.0.23")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -2536,6 +2536,9 @@ namespace AllocatrApi.Migrations
                     b.Property<Guid>("CreatedById")
                         .HasColumnType("uuid");
 
+                    b.Property<Guid?>("ReplyToCommentId")
+                        .HasColumnType("uuid");
+
                     b.Property<Guid>("TaskItemId")
                         .HasColumnType("uuid");
 
@@ -2545,6 +2548,8 @@ namespace AllocatrApi.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("CreatedById");
+
+                    b.HasIndex("ReplyToCommentId");
 
                     b.HasIndex("TaskItemId");
 
@@ -2606,6 +2611,75 @@ namespace AllocatrApi.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("UserDocuments");
+                });
+
+            modelBuilder.Entity("AllocatrApi.Models.UserNotification", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<Guid?>("ActorId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("EventId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Href")
+                        .IsRequired()
+                        .HasMaxLength(400)
+                        .HasColumnType("character varying(400)");
+
+                    b.Property<int>("ItemCount")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(1);
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<DateTime?>("LastActivityAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("ProjectId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ProjectTitle")
+                        .IsRequired()
+                        .HasMaxLength(160)
+                        .HasColumnType("character varying(160)");
+
+                    b.Property<DateTime?>("ReadAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("RecipientId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("TaskId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RecipientId", "EventId")
+                        .IsUnique();
+
+                    b.HasIndex("RecipientId", "Id");
+
+                    b.HasIndex("RecipientId", "ReadAt");
+
+                    b.ToTable("UserNotifications", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole<System.Guid>", b =>
@@ -3236,6 +3310,11 @@ namespace AllocatrApi.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("AllocatrApi.Models.TaskComment", null)
+                        .WithMany()
+                        .HasForeignKey("ReplyToCommentId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("TaskItem", "TaskItem")
                         .WithMany("Comments")
                         .HasForeignKey("TaskItemId")
@@ -3264,6 +3343,15 @@ namespace AllocatrApi.Migrations
                     b.Navigation("StoredFile");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("AllocatrApi.Models.UserNotification", b =>
+                {
+                    b.HasOne("AllocatrApi.Models.AllocatrUser", null)
+                        .WithMany()
+                        .HasForeignKey("RecipientId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>

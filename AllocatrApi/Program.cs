@@ -56,7 +56,12 @@ builder.Services.AddCors(options =>
 var connectionString = builder.Configuration.GetConnectionString("Migrations");
 if (string.IsNullOrWhiteSpace(connectionString))
     throw new InvalidOperationException("The Migrations database connection string is not configured.");
-builder.Services.AddDbContext<AllocatrDbContext>(options => options.UseNpgsql(connectionString));
+// builder.Services.AddDbContext<AllocatrDbContext>(options => options.UseNpgsql(connectionString));
+builder.Services.AddDbContext<AllocatrDbContext>((services, options) =>
+{
+    options.UseNpgsql(connectionString);
+    options.AddInterceptors(services.GetRequiredService<TaskCreationNotificationInterceptor>());
+});
 
 /* =========================================================
    IDENTITY
@@ -142,6 +147,9 @@ builder.Services.AddScoped<UserDocumentService>();
 builder.Services.AddScoped<ProjectFileValidationService>();
 builder.Services.AddScoped<ProjectFileService>();
 builder.Services.AddScoped<ProjectMessagingService>();
+builder.Services.AddScoped<NotificationService>();
+builder.Services.AddScoped<CollaborationNotificationService>();
+builder.Services.AddScoped<TaskCreationNotificationInterceptor>();
 builder.Services.Configure<AllocatrApi.Services.ProjectThumbnailOptions>(
     builder.Configuration.GetSection("ProjectThumbnails"));
 builder.Services.AddSingleton<AllocatrApi.Services.ProjectThumbnailCache>();

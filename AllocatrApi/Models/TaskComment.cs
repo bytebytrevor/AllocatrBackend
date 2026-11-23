@@ -12,4 +12,5 @@ public class TaskComment
     public AllocatrUser CreatedBy { get; set; } = null!;
     // Optional for older clients; newer clients reuse this ID when retrying a post.
     public Guid? ClientRequestId { get; set; }
+    public Guid? ReplyToCommentId { get; set; }
 }

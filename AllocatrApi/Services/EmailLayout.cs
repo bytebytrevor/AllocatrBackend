@@ -29,11 +29,27 @@ public static class EmailLayout
             <head>
                 <meta charset="UTF-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <meta name="color-scheme" content="light dark">
+                <meta name="supported-color-schemes" content="light dark">
                 <title>{{title}}</title>
                 <!--[if !mso]><!-->
                 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&amp;display=swap">
                 <!--<![endif]-->
                 <style>
+                    :root { color-scheme:light dark; supported-color-schemes:light dark; }
+                    .allocatr-email-action, .allocatr-email-action span { color:#ffffff !important; -webkit-text-fill-color:#ffffff !important; }
+                    @media (prefers-color-scheme:dark) {
+                        .allocatr-email-canvas { background-color:#242424 !important; }
+                        .allocatr-email-card, .allocatr-email-content { background-color:#333333 !important; color:#f3f4f1 !important; }
+                        .allocatr-email-card, .allocatr-email-rule { border-color:#484848 !important; }
+                        .allocatr-email-heading { color:#f3f4f1 !important; }
+                        .allocatr-email-text { color:#d2d6ce !important; }
+                        .allocatr-email-muted { color:#b6bbb2 !important; }
+                        .allocatr-email-quiet { color:#a1a69d !important; }
+                        .allocatr-email-panel { background-color:#3b3b3b !important; border-color:#484848 !important; }
+                        .allocatr-email-action { border-color:#242424 !important; background-color:#242424 !important; background-image:linear-gradient(#242424,#242424) !important; }
+                        .allocatr-email-action, .allocatr-email-action span { color:#ffffff !important; -webkit-text-fill-color:#ffffff !important; }
+                    }
                     @media only screen and (max-width:480px) {
                         .allocatr-email-outer { padding:20px 12px !important; }
                         .allocatr-email-header { padding:20px 24px !important; }
@@ -44,21 +60,21 @@ public static class EmailLayout
                 <style>body,table,td,p,h1,h2,a { font-family:Arial,Helvetica,sans-serif !important; }</style>
                 <![endif]-->
             </head>
-            <body style="margin:0;padding:0;background-color:#f3f4f1;font-family:{{FontFamily}};color:#333333;-webkit-text-size-adjust:100%;">
-                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" bgcolor="#f3f4f1" style="background-color:#f3f4f1;">
+            <body class="allocatr-email-canvas" style="margin:0;padding:0;background-color:#f3f4f1;font-family:{{FontFamily}};color:#333333;-webkit-text-size-adjust:100%;">
+                <table role="presentation" class="allocatr-email-canvas" width="100%" cellspacing="0" cellpadding="0" border="0" bgcolor="#f3f4f1" style="background-color:#f3f4f1;">
                     <tr><td align="center" class="allocatr-email-outer" style="padding:40px 20px;">
-                        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" bgcolor="#ffffff" style="max-width:560px;background-color:#ffffff;border:1px solid #e1e4dc;border-radius:14px;">
+                        <table role="presentation" class="allocatr-email-card" width="100%" cellspacing="0" cellpadding="0" border="0" bgcolor="#ffffff" style="max-width:560px;background-color:#ffffff;border:1px solid #e1e4dc;border-radius:0;">
                             <tr>
-                                <td bgcolor="#333333" class="allocatr-email-header" style="padding:22px 32px;background-color:#333333;background-image:linear-gradient(#333333,#333333);border-radius:13px 13px 0 0;">
+                                <td bgcolor="#333333" class="allocatr-email-header" style="padding:22px 32px;background-color:#333333;background-image:linear-gradient(#333333,#333333);border-radius:0;">
                                     <img src="cid:{{LogoContentId}}" alt="Allocatr" width="{{LogoWidth}}" height="{{LogoHeight}}" style="display:block;width:{{LogoWidth}}px;height:{{LogoHeight}}px;max-width:100%;border:0;outline:none;text-decoration:none;">
                                 </td>
                             </tr>
-                            <tr><td class="allocatr-email-content" style="padding:32px;font-family:{{FontFamily}};font-size:14px;font-weight:400;line-height:25px;color:#333333;">
+                            <tr><td bgcolor="#ffffff" class="allocatr-email-content" style="padding:32px;background-color:#ffffff;font-family:{{FontFamily}};font-size:14px;font-weight:400;line-height:25px;color:#333333;">
                                 {{content}}
                             </td></tr>
                         </table>
-                        <p style="margin:22px 0 0;font-family:{{FontFamily}};font-size:11px;font-weight:500;line-height:20px;color:#697066;">Work, better allocated.</p>
-                        <p style="margin:4px 0 0;font-family:{{FontFamily}};font-size:10px;line-height:18px;color:#82877e;">&copy; {{year}} Allocatr</p>
+                        <p class="allocatr-email-muted" style="margin:22px 0 0;font-family:{{FontFamily}};font-size:11px;font-weight:500;line-height:20px;color:#697066;">Work, better allocated.</p>
+                        <p class="allocatr-email-quiet" style="margin:4px 0 0;font-family:{{FontFamily}};font-size:10px;line-height:18px;color:#82877e;">&copy; {{year}} Allocatr</p>
                     </td></tr>
                 </table>
             </body>
@@ -66,7 +82,7 @@ public static class EmailLayout
             """;
     }
 
-    /// <summary>A compact charcoal action button with lime text for current and future templates.</summary>
+    /// <summary>A compact rounded charcoal action button with white text.</summary>
     public static string ActionLink(string label, string url)
     {
         if (!Uri.TryCreate(url, UriKind.Absolute, out var target)
@@ -76,8 +92,8 @@ public static class EmailLayout
         var safeUrl = WebUtility.HtmlEncode(url);
         return $"""
             <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:24px 0;">
-                <tr><td bgcolor="#333333" style="border-radius:7px;background-color:#333333;">
-                    <a href="{safeUrl}" style="display:inline-block;padding:10px 16px;border:1px solid #333333;border-radius:7px;background-color:#333333;background-image:linear-gradient(#333333,#333333);font-family:{FontFamily};font-size:12px;font-weight:600;line-height:18px;color:#DDDB00;text-decoration:none;mso-padding-alt:0;text-align:center;">{safeLabel}</a>
+                <tr><td bgcolor="#333333" style="border-radius:8px;background-color:#333333;">
+                    <a class="allocatr-email-action" href="{safeUrl}" style="display:inline-block;padding:10px 16px;border:1px solid #333333;border-radius:8px;background-color:#333333;background-image:linear-gradient(#333333,#333333);font-family:{FontFamily};font-size:12px;font-weight:600;line-height:18px;color:#ffffff;-webkit-text-fill-color:#ffffff;text-decoration:none;mso-padding-alt:0;text-align:center;"><span style="color:#ffffff;-webkit-text-fill-color:#ffffff;">{safeLabel}</span></a>
                 </td></tr>
             </table>
             """;

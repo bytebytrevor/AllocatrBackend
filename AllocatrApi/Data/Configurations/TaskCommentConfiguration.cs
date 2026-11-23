@@ -19,6 +19,8 @@ public class TaskCommentConfiguration : IEntityTypeConfiguration<TaskComment>
             .HasForeignKey(comment => comment.CreatedById).HasPrincipalKey(user => user.Id)
             .OnDelete(DeleteBehavior.Restrict);
         builder.HasIndex(comment => comment.TaskItemId);
+        builder.HasOne<TaskComment>().WithMany().HasForeignKey(comment => comment.ReplyToCommentId)
+            .OnDelete(DeleteBehavior.SetNull);
         builder.HasIndex(comment => comment.CreatedById);
         builder.HasIndex(comment => new { comment.CreatedById, comment.ClientRequestId })
             .IsUnique().HasFilter("\"ClientRequestId\" IS NOT NULL");

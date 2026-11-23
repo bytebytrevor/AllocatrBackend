@@ -29,15 +29,15 @@ public sealed class PasswordResetSender(UserManager<AllocatrUser> users,
         var safeUrl = WebUtility.HtmlEncode(url);
         var action = EmailLayout.ActionLink("Reset password", url);
         var html = $"""
-            <h1 style="margin:0;font-family:{EmailLayout.FontFamily};font-size:24px;font-weight:600;line-height:32px;letter-spacing:-0.5px;color:#333333;">Reset your password</h1>
-            <p style="margin:20px 0 0;font-family:{EmailLayout.FontFamily};font-size:14px;line-height:25px;color:#555d52;">Hi {safeName},</p>
-            <p style="margin:10px 0 0;font-family:{EmailLayout.FontFamily};font-size:14px;line-height:25px;color:#555d52;">Choose a new password to get back to your Allocatr workspace.</p>
+            <h1 class="allocatr-email-heading" style="margin:0;font-family:{EmailLayout.FontFamily};font-size:24px;font-weight:600;line-height:32px;letter-spacing:-0.5px;color:#333333;">Reset your password</h1>
+            <p class="allocatr-email-text" style="margin:20px 0 0;font-family:{EmailLayout.FontFamily};font-size:14px;line-height:25px;color:#555d52;">Hi {safeName},</p>
+            <p class="allocatr-email-text" style="margin:10px 0 0;font-family:{EmailLayout.FontFamily};font-size:14px;line-height:25px;color:#555d52;">Choose a new password to get back to your Allocatr workspace.</p>
             {action}
-            <p style="margin:0;font-family:{EmailLayout.FontFamily};font-size:12px;line-height:22px;color:#697066;">This reset link expires in one hour.</p>
-            <p style="margin:10px 0 0;font-family:{EmailLayout.FontFamily};font-size:12px;line-height:22px;color:#697066;">If you didn’t request this, you can ignore this email. Your password stays unchanged.</p>
-            <div style="margin-top:24px;padding-top:18px;border-top:1px solid #e6e9e1;">
-                <p style="margin:0;font-family:{EmailLayout.FontFamily};font-size:11px;line-height:20px;color:#82877e;">If the button does not work, copy this link into your browser:</p>
-                <p style="margin:6px 0 0;font-family:{EmailLayout.FontFamily};font-size:11px;line-height:20px;word-break:break-all;color:#697066;">{safeUrl}</p>
+            <p class="allocatr-email-muted" style="margin:0;font-family:{EmailLayout.FontFamily};font-size:12px;line-height:22px;color:#697066;">This reset link expires in one hour.</p>
+            <p class="allocatr-email-muted" style="margin:10px 0 0;font-family:{EmailLayout.FontFamily};font-size:12px;line-height:22px;color:#697066;">If you didn’t request this, you can ignore this email. Your password stays unchanged.</p>
+            <div class="allocatr-email-rule" style="margin-top:24px;padding-top:18px;border-top:1px solid #e1e4dc;">
+                <p class="allocatr-email-quiet" style="margin:0;font-family:{EmailLayout.FontFamily};font-size:11px;line-height:20px;color:#82877e;">If the button does not work, copy this link into your browser:</p>
+                <p class="allocatr-email-muted" style="margin:6px 0 0;font-family:{EmailLayout.FontFamily};font-size:11px;line-height:20px;word-break:break-all;color:#697066;">{safeUrl}</p>
             </div>
             """;
         var text = $"Hi {user.FullName},\n\nReset your Allocatr password using this link:\n{url}\n\nThis link expires in one hour. If you did not request this, ignore this email. Your password stays unchanged.\n\nAllocatr";

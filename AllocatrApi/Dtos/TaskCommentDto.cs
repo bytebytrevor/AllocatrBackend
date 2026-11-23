@@ -9,7 +9,9 @@ public record class TaskCommentDto(
     string CreatedByName,
     string? AvatarUrl,
     Guid TaskItemId,
-    IReadOnlyList<ProjectFileDto>? Attachments = null);
+    IReadOnlyList<ProjectFileDto>? Attachments = null,
+    Guid? ReplyToCommentId = null,
+    string? ReplyToName = null);
 
 public record TaskDiscussionContextDto(
     Guid ProjectId,
