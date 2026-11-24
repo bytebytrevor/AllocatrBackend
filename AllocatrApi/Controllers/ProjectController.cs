@@ -1,3 +1,4 @@
+using System.Globalization;
 using AllocatrApi.Data;
 using AllocatrApi.Dtos;
 using AllocatrApi.Models;
@@ -135,7 +136,7 @@ public class ProjectController : ControllerBase
 
         var project = new Project
         {
-            ProjectCode = GenerateProjectCode(),
+            ProjectCode = await GenerateProjectCodeAsync(),
             Title = dto.Title.Trim(),
             Description = dto.Description.Trim(),
             Category = dto.Category.Trim(),
@@ -411,8 +412,12 @@ public class ProjectController : ControllerBase
        HELPERS
     ===================================================== */
 
-    private static string GenerateProjectCode()
+    private async Task<string> GenerateProjectCodeAsync()
     {
-        return $"PRJ-{Guid.NewGuid():N}".ToUpper();
+        var number = await _db.Database
+            .SqlQueryRaw<long>("SELECT nextval('public.\"ProjectCodeSequence\"') AS \"Value\"")
+            .SingleAsync();
+
+        return "ALC-" + number.ToString("D6", CultureInfo.InvariantCulture);
     }
 }
