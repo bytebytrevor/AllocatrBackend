@@ -11,8 +11,7 @@ public class UserDocument
     public string? Title { get; set; }
     public string? IssuingInstitution { get; set; }
 
-    public UserDocumentReviewStatus ReviewStatus { get; set; } =
-        UserDocumentReviewStatus.Pending;
+    public UserDocumentReviewStatus ReviewStatus { get; set; } = UserDocumentReviewStatus.Pending;
     public string? ReviewNotes { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? ReviewedAt { get; set; }

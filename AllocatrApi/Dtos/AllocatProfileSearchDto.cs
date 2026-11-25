@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace AllocatrApi.Dtos;
 
 public class AllocatProfileSearchDto
@@ -10,6 +12,13 @@ public class AllocatProfileSearchDto
     // Exact filters for location selectors. City IDs may be negative seeded IDs.
     public string? CountryCode { get; set; }
     public int? CityId { get; set; }
+
+    public string? Category { get; set; }
+    [MaxLength(50)]
+    public List<Guid>? SkillIds { get; set; }
+    public bool? VerifiedOnly { get; set; }
+    public bool? IncludeUnpriced { get; set; }
+    public string? SortBy { get; set; }
 
     public Guid? SkillId { get; set; }
     public decimal? MaxHourlyRate { get; set; }

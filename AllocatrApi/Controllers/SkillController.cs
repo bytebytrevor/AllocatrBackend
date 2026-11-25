@@ -25,11 +25,7 @@ public class SkillController : ControllerBase
         if (result == null)
             return BadRequest("The selected skill category does not exist.");
 
-        return CreatedAtAction(
-            nameof(GetSkillById),
-            new { id = result.Id },
-            result
-        );
+        return CreatedAtAction(nameof(GetSkillById), new { id = result.Id }, result);
     }
 
     [AllowAnonymous]

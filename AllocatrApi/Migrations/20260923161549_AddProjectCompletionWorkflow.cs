@@ -21,9 +21,7 @@ namespace AllocatrApi.Migrations
                 WHERE "Status" = 'draft';
                 """
             );
-            migrationBuilder.DropCheckConstraint(
-                name: "CK_Projects_Status",
-                table: "Projects");
+            migrationBuilder.DropCheckConstraint(name: "CK_Projects_Status", table: "Projects");
 
             migrationBuilder.AlterColumn<string>(
                 name: "Status",
@@ -35,29 +33,34 @@ namespace AllocatrApi.Migrations
                 oldClrType: typeof(string),
                 oldType: "character varying(20)",
                 oldMaxLength: 20,
-                oldDefaultValue: "pending");
+                oldDefaultValue: "pending"
+            );
 
             migrationBuilder.AddColumn<DateTime>(
                 name: "CompletionRequestedAt",
                 table: "Projects",
                 type: "timestamp with time zone",
-                nullable: true);
+                nullable: true
+            );
 
             migrationBuilder.AddColumn<Guid>(
                 name: "CompletionRequestedByAllocatId",
                 table: "Projects",
                 type: "uuid",
-                nullable: true);
+                nullable: true
+            );
 
             migrationBuilder.CreateIndex(
                 name: "IX_Projects_CompletionRequestedByAllocatId",
                 table: "Projects",
-                column: "CompletionRequestedByAllocatId");
+                column: "CompletionRequestedByAllocatId"
+            );
 
             migrationBuilder.AddCheckConstraint(
                 name: "CK_Projects_Status",
                 table: "Projects",
-                sql: "\"Status\" IN ('pending', 'active', 'completion_requested', 'completed')");
+                sql: "\"Status\" IN ('pending', 'active', 'completion_requested', 'completed')"
+            );
 
             migrationBuilder.AddForeignKey(
                 name: "FK_Projects_AllocatProfiles_CompletionRequestedByAllocatId",
@@ -65,7 +68,8 @@ namespace AllocatrApi.Migrations
                 column: "CompletionRequestedByAllocatId",
                 principalTable: "AllocatProfiles",
                 principalColumn: "AllocatrUserId",
-                onDelete: ReferentialAction.SetNull);
+                onDelete: ReferentialAction.SetNull
+            );
         }
 
         /// <inheritdoc />
@@ -73,23 +77,19 @@ namespace AllocatrApi.Migrations
         {
             migrationBuilder.DropForeignKey(
                 name: "FK_Projects_AllocatProfiles_CompletionRequestedByAllocatId",
-                table: "Projects");
+                table: "Projects"
+            );
 
             migrationBuilder.DropIndex(
                 name: "IX_Projects_CompletionRequestedByAllocatId",
-                table: "Projects");
+                table: "Projects"
+            );
 
-            migrationBuilder.DropCheckConstraint(
-                name: "CK_Projects_Status",
-                table: "Projects");
+            migrationBuilder.DropCheckConstraint(name: "CK_Projects_Status", table: "Projects");
 
-            migrationBuilder.DropColumn(
-                name: "CompletionRequestedAt",
-                table: "Projects");
+            migrationBuilder.DropColumn(name: "CompletionRequestedAt", table: "Projects");
 
-            migrationBuilder.DropColumn(
-                name: "CompletionRequestedByAllocatId",
-                table: "Projects");
+            migrationBuilder.DropColumn(name: "CompletionRequestedByAllocatId", table: "Projects");
 
             migrationBuilder.AlterColumn<string>(
                 name: "Status",
@@ -101,12 +101,14 @@ namespace AllocatrApi.Migrations
                 oldClrType: typeof(string),
                 oldType: "character varying(30)",
                 oldMaxLength: 30,
-                oldDefaultValue: "pending");
+                oldDefaultValue: "pending"
+            );
 
             migrationBuilder.AddCheckConstraint(
                 name: "CK_Projects_Status",
                 table: "Projects",
-                sql: "\"Status\" IN ('pending', 'active', 'completed')");
+                sql: "\"Status\" IN ('pending', 'active', 'completed')"
+            );
         }
     }
 }

@@ -2143,6 +2143,16 @@ namespace AllocatrApi.Migrations
                     b.Property<decimal?>("Budget")
                         .HasColumnType("numeric");
 
+                    b.Property<string>("CancellationReason")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<DateTime?>("CancelledAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CancelledByUserId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("Category")
                         .IsRequired()
                         .HasColumnType("text");
@@ -2222,7 +2232,7 @@ namespace AllocatrApi.Migrations
                         {
                             t.HasCheckConstraint("CK_Projects_Progress", "\"Progress\" >= 0 AND \"Progress\" <= 100");
 
-                            t.HasCheckConstraint("CK_Projects_Status", "\"Status\" IN ('pending', 'active', 'completion_requested', 'completed')");
+                            t.HasCheckConstraint("CK_Projects_Status", "\"Status\" IN ('pending', 'active', 'completion_requested', 'completed', 'cancelled')");
                         });
                 });
 
@@ -2330,6 +2340,56 @@ namespace AllocatrApi.Migrations
                     b.HasIndex("ProjectId", "TaskId");
 
                     b.ToTable("ProjectFiles");
+                });
+
+            modelBuilder.Entity("AllocatrApi.Models.ProjectLifecycleEvent", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ActorId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ActorName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<string>("ProjectCode")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<Guid>("ProjectId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ProjectTitle")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.PrimitiveCollection<Guid[]>("RecipientIds")
+                        .IsRequired()
+                        .HasColumnType("uuid[]");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProjectId", "CreatedAt");
+
+                    b.ToTable("ProjectLifecycleEvents", (string)null);
                 });
 
             modelBuilder.Entity("AllocatrApi.Models.ProjectSkill", b =>
@@ -2823,6 +2883,13 @@ namespace AllocatrApi.Migrations
                     b.Property<DateTime>("InvitedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("LeaveReason")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<DateTime?>("LeftAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<DateTime?>("RemovedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -3221,6 +3288,15 @@ namespace AllocatrApi.Migrations
                     b.Navigation("StoredFile");
 
                     b.Navigation("Task");
+                });
+
+            modelBuilder.Entity("AllocatrApi.Models.ProjectLifecycleEvent", b =>
+                {
+                    b.HasOne("AllocatrApi.Models.Project", null)
+                        .WithMany()
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("AllocatrApi.Models.ProjectSkill", b =>

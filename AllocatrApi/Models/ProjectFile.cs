@@ -16,10 +16,12 @@ public class ProjectFile
     public Guid? CommentId { get; set; }
     public TaskComment? Comment { get; set; }
     public Guid? TaskId { get; set; }
+
     // Preserve the source label when a task is later deleted.
     public string? TaskTitle { get; set; }
     public ProjectFileContext Context { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
     // StoredFile.DeletedAt records logical deletion. This records byte removal.
     public DateTime? StorageDeletedAt { get; set; }
     public Project Project { get; set; } = null!;

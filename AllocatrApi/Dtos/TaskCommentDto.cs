@@ -11,10 +11,12 @@ public record class TaskCommentDto(
     Guid TaskItemId,
     IReadOnlyList<ProjectFileDto>? Attachments = null,
     Guid? ReplyToCommentId = null,
-    string? ReplyToName = null);
+    string? ReplyToName = null
+);
 
 public record TaskDiscussionContextDto(
     Guid ProjectId,
     bool CanUploadFiles,
     int MaxAttachments,
-    long MaxFileSizeBytes);
+    long MaxFileSizeBytes
+);

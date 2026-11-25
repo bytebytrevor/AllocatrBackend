@@ -19,37 +19,22 @@ namespace AllocatrApi.Migrations
                 name: "CalendarFocusTasks",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(
-                        type: "uuid",
-                        nullable: false
-                    ),
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
 
-                    UserId = table.Column<Guid>(
-                        type: "uuid",
-                        nullable: false
-                    ),
+                    UserId = table.Column<Guid>(type: "uuid", nullable: false),
 
-                    TaskId = table.Column<Guid>(
-                        type: "uuid",
-                        nullable: false
-                    ),
+                    TaskId = table.Column<Guid>(type: "uuid", nullable: false),
 
-                    WeekStart = table.Column<DateOnly>(
-                        type: "date",
-                        nullable: false
-                    ),
+                    WeekStart = table.Column<DateOnly>(type: "date", nullable: false),
 
                     CreatedAt = table.Column<DateTime>(
                         type: "timestamp with time zone",
                         nullable: false
-                    )
+                    ),
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey(
-                        "PK_CalendarFocusTasks",
-                        x => x.Id
-                    );
+                    table.PrimaryKey("PK_CalendarFocusTasks", x => x.Id);
 
                     table.ForeignKey(
                         name: "FK_CalendarFocusTasks_AspNetUsers_UserId",
@@ -77,25 +62,13 @@ namespace AllocatrApi.Migrations
                 name: "CalendarPlanningBlocks",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(
-                        type: "uuid",
-                        nullable: false
-                    ),
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
 
-                    UserId = table.Column<Guid>(
-                        type: "uuid",
-                        nullable: false
-                    ),
+                    UserId = table.Column<Guid>(type: "uuid", nullable: false),
 
-                    ProjectId = table.Column<Guid>(
-                        type: "uuid",
-                        nullable: true
-                    ),
+                    ProjectId = table.Column<Guid>(type: "uuid", nullable: true),
 
-                    TaskId = table.Column<Guid>(
-                        type: "uuid",
-                        nullable: true
-                    ),
+                    TaskId = table.Column<Guid>(type: "uuid", nullable: true),
 
                     Title = table.Column<string>(
                         type: "character varying(180)",
@@ -127,14 +100,11 @@ namespace AllocatrApi.Migrations
                     UpdatedAt = table.Column<DateTime>(
                         type: "timestamp with time zone",
                         nullable: false
-                    )
+                    ),
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey(
-                        "PK_CalendarPlanningBlocks",
-                        x => x.Id
-                    );
+                    table.PrimaryKey("PK_CalendarPlanningBlocks", x => x.Id);
 
                     table.ForeignKey(
                         name: "FK_CalendarPlanningBlocks_AspNetUsers_UserId",
@@ -175,12 +145,7 @@ namespace AllocatrApi.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_CalendarFocusTasks_UserId_TaskId_WeekStart",
                 table: "CalendarFocusTasks",
-                columns: new[]
-                {
-                    "UserId",
-                    "TaskId",
-                    "WeekStart"
-                },
+                columns: new[] { "UserId", "TaskId", "WeekStart" },
                 unique: true
             );
 
@@ -199,24 +164,16 @@ namespace AllocatrApi.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_CalendarPlanningBlocks_UserId_StartAt",
                 table: "CalendarPlanningBlocks",
-                columns: new[]
-                {
-                    "UserId",
-                    "StartAt"
-                }
+                columns: new[] { "UserId", "StartAt" }
             );
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropTable(
-                name: "CalendarFocusTasks"
-            );
+            migrationBuilder.DropTable(name: "CalendarFocusTasks");
 
-            migrationBuilder.DropTable(
-                name: "CalendarPlanningBlocks"
-            );
+            migrationBuilder.DropTable(name: "CalendarPlanningBlocks");
         }
     }
 }

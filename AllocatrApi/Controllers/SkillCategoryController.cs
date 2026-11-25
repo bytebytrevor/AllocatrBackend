@@ -1,8 +1,8 @@
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using AllocatrApi.Services;
 using AllocatrApi.Models;
+using AllocatrApi.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 
 namespace AllocatrApi.Controllers;
 
@@ -25,11 +25,7 @@ public class SkillCategoryController : ControllerBase
     {
         var result = await _skillCategoryService.CreateSkillCategoryAsync(dto);
 
-        return CreatedAtAction(
-            nameof(GetSkillCategoryById),
-            new { id = result.Id },
-            result
-        );
+        return CreatedAtAction(nameof(GetSkillCategoryById), new { id = result.Id }, result);
     }
 
     // Get: api/skill-categories/{id}

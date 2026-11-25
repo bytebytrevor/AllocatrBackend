@@ -11,43 +11,55 @@ namespace AllocatrApi.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropIndex(
-                name: "IX_Skills_Name",
-                table: "Skills");
+            migrationBuilder.DropIndex(name: "IX_Skills_Name", table: "Skills");
 
             migrationBuilder.AddColumn<Guid>(
                 name: "SkillCategoryId",
                 table: "Skills",
                 type: "uuid",
                 nullable: false,
-                defaultValue: new Guid("00000000-0000-0000-0000-000000000000"));
+                defaultValue: new Guid("00000000-0000-0000-0000-000000000000")
+            );
 
             migrationBuilder.CreateTable(
                 name: "SkillCategories",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    Name = table.Column<string>(type: "character varying(80)", maxLength: 80, nullable: false),
+                    Name = table.Column<string>(
+                        type: "character varying(80)",
+                        maxLength: 80,
+                        nullable: false
+                    ),
                     DisplayOrder = table.Column<int>(type: "integer", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    CreatedAt = table.Column<DateTime>(
+                        type: "timestamp with time zone",
+                        nullable: false
+                    ),
+                    UpdatedAt = table.Column<DateTime>(
+                        type: "timestamp with time zone",
+                        nullable: false
+                    ),
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_SkillCategories", x => x.Id);
-                });
+                }
+            );
 
             migrationBuilder.CreateIndex(
                 name: "IX_Skills_SkillCategoryId_Name",
                 table: "Skills",
                 columns: new[] { "SkillCategoryId", "Name" },
-                unique: true);
+                unique: true
+            );
 
             migrationBuilder.CreateIndex(
                 name: "IX_SkillCategories_Name",
                 table: "SkillCategories",
                 column: "Name",
-                unique: true);
+                unique: true
+            );
 
             migrationBuilder.AddForeignKey(
                 name: "FK_Skills_SkillCategories_SkillCategoryId",
@@ -55,7 +67,8 @@ namespace AllocatrApi.Migrations
                 column: "SkillCategoryId",
                 principalTable: "SkillCategories",
                 principalColumn: "Id",
-                onDelete: ReferentialAction.Cascade);
+                onDelete: ReferentialAction.Cascade
+            );
         }
 
         /// <inheritdoc />
@@ -63,24 +76,21 @@ namespace AllocatrApi.Migrations
         {
             migrationBuilder.DropForeignKey(
                 name: "FK_Skills_SkillCategories_SkillCategoryId",
-                table: "Skills");
+                table: "Skills"
+            );
 
-            migrationBuilder.DropTable(
-                name: "SkillCategories");
+            migrationBuilder.DropTable(name: "SkillCategories");
 
-            migrationBuilder.DropIndex(
-                name: "IX_Skills_SkillCategoryId_Name",
-                table: "Skills");
+            migrationBuilder.DropIndex(name: "IX_Skills_SkillCategoryId_Name", table: "Skills");
 
-            migrationBuilder.DropColumn(
-                name: "SkillCategoryId",
-                table: "Skills");
+            migrationBuilder.DropColumn(name: "SkillCategoryId", table: "Skills");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Skills_Name",
                 table: "Skills",
                 column: "Name",
-                unique: true);
+                unique: true
+            );
         }
     }
 }

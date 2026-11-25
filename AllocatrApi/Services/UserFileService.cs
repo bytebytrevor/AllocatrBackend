@@ -12,10 +12,7 @@ public class UserFileService
     private readonly AllocatrDbContext _dbContext;
     private readonly IFileStorageService _storage;
 
-    public UserFileService(
-        AllocatrDbContext dbContext,
-        IFileStorageService storage
-    )
+    public UserFileService(AllocatrDbContext dbContext, IFileStorageService storage)
     {
         _dbContext = dbContext;
         _storage = storage;
@@ -25,27 +22,15 @@ public class UserFileService
      * AVATAR
      * -------------------------------------------------------- */
 
-    public async Task<StoredFile> UploadAvatarAsync(
-        Guid userId,
-        IFormFile file
-    )
+    public async Task<StoredFile> UploadAvatarAsync(Guid userId, IFormFile file)
     {
-        var extension = GetFileExtension(
-            file.ContentType
-        );
+        var extension = GetFileExtension(file.ContentType);
 
         var fileId = Guid.NewGuid();
 
-        var storagePath =
-            $"users/{userId}/avatar/{fileId}{extension}";
+        var storagePath = $"users/{userId}/avatar/{fileId}{extension}";
 
-        return await UploadStoredFileAsync(
-            fileId,
-            userId,
-            AvatarBucket,
-            storagePath,
-            file
-        );
+        return await UploadStoredFileAsync(fileId, userId, AvatarBucket, storagePath, file);
     }
 
     /* --------------------------------------------------------
@@ -58,52 +43,33 @@ public class UserFileService
         IFormFile file
     )
     {
-        var extension = GetFileExtension(
-            file.ContentType
-        );
+        var extension = GetFileExtension(file.ContentType);
 
         var fileId = Guid.NewGuid();
 
-        var folder =
-            documentType == UserDocumentType.Identity
-                ? "identity"
-                : "credentials";
+        var folder = documentType == UserDocumentType.Identity ? "identity" : "credentials";
 
-        var storagePath =
-            $"users/{userId}/{folder}/{fileId}{extension}";
+        var storagePath = $"users/{userId}/{folder}/{fileId}{extension}";
 
-        return await UploadStoredFileAsync(
-            fileId,
-            userId,
-            UserDocumentBucket,
-            storagePath,
-            file
-        );
+        return await UploadStoredFileAsync(fileId, userId, UserDocumentBucket, storagePath, file);
     }
 
     /* --------------------------------------------------------
      * DELETE
      * -------------------------------------------------------- */
 
-    public async Task DeleteStoredFileAsync(
-        StoredFile storedFile
-    )
+    public async Task DeleteStoredFileAsync(StoredFile storedFile)
     {
         if (storedFile.Status == StoredFileStatus.Deleted)
         {
             return;
         }
 
-        await _storage.DeleteAsync(
-            storedFile.Bucket,
-            storedFile.StoragePath
-        );
+        await _storage.DeleteAsync(storedFile.Bucket, storedFile.StoragePath);
 
-        storedFile.Status =
-            StoredFileStatus.Deleted;
+        storedFile.Status = StoredFileStatus.Deleted;
 
-        storedFile.DeletedAt =
-            DateTime.UtcNow;
+        storedFile.DeletedAt = DateTime.UtcNow;
 
         await _dbContext.SaveChangesAsync();
     }
@@ -126,37 +92,26 @@ public class UserFileService
             UploadedByUserId = userId,
             Bucket = bucket,
             StoragePath = storagePath,
-            OriginalFileName = CleanFileName(
-                file.FileName
-            ),
+            OriginalFileName = CleanFileName(file.FileName),
             ContentType = file.ContentType,
             SizeBytes = file.Length,
             Status = StoredFileStatus.Uploading,
             CreatedAt = DateTime.UtcNow,
         };
 
-        _dbContext.StoredFiles.Add(
-            storedFile
-        );
+        _dbContext.StoredFiles.Add(storedFile);
 
         await _dbContext.SaveChangesAsync();
 
         try
         {
-            var bytes =
-                await ReadBytesAsync(file);
+            var bytes = await ReadBytesAsync(file);
 
-            await _storage.UploadAsync(
-                bucket,
-                storagePath,
-                bytes
-            );
+            await _storage.UploadAsync(bucket, storagePath, bytes);
 
-            storedFile.Status =
-                StoredFileStatus.Ready;
+            storedFile.Status = StoredFileStatus.Ready;
 
-            storedFile.ReadyAt =
-                DateTime.UtcNow;
+            storedFile.ReadyAt = DateTime.UtcNow;
 
             await _dbContext.SaveChangesAsync();
 
@@ -164,8 +119,7 @@ public class UserFileService
         }
         catch
         {
-            storedFile.Status =
-                StoredFileStatus.Failed;
+            storedFile.Status = StoredFileStatus.Failed;
 
             await _dbContext.SaveChangesAsync();
 
@@ -177,39 +131,28 @@ public class UserFileService
      * HELPERS
      * -------------------------------------------------------- */
 
-    private static async Task<byte[]> ReadBytesAsync(
-        IFormFile file
-    )
+    private static async Task<byte[]> ReadBytesAsync(IFormFile file)
     {
-        await using var stream =
-            new MemoryStream();
+        await using var stream = new MemoryStream();
 
         await file.CopyToAsync(stream);
 
         return stream.ToArray();
     }
 
-    private static string CleanFileName(
-        string fileName
-    )
+    private static string CleanFileName(string fileName)
     {
-        var name = Path.GetFileName(
-            fileName
-        );
+        var name = Path.GetFileName(fileName);
 
         if (string.IsNullOrWhiteSpace(name))
         {
             return "file";
         }
 
-        return name.Length <= 255
-            ? name
-            : name[..255];
+        return name.Length <= 255 ? name : name[..255];
     }
 
-    private static string GetFileExtension(
-        string contentType
-    )
+    private static string GetFileExtension(string contentType)
     {
         return contentType.ToLowerInvariant() switch
         {
@@ -218,9 +161,7 @@ public class UserFileService
             "image/webp" => ".webp",
             "application/pdf" => ".pdf",
 
-            _ => throw new ArgumentException(
-                "Unsupported file type."
-            ),
+            _ => throw new ArgumentException("Unsupported file type."),
         };
     }
 }

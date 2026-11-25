@@ -4,18 +4,11 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace AllocatrApi.Data.Configurations;
 
-public class ProjectSkillConfiguration
-    : IEntityTypeConfiguration<ProjectSkill>
+public class ProjectSkillConfiguration : IEntityTypeConfiguration<ProjectSkill>
 {
-    public void Configure(
-        EntityTypeBuilder<ProjectSkill> builder
-    )
+    public void Configure(EntityTypeBuilder<ProjectSkill> builder)
     {
-        builder.HasKey(ps => new
-        {
-            ps.ProjectId,
-            ps.SkillId
-        });
+        builder.HasKey(ps => new { ps.ProjectId, ps.SkillId });
 
         builder
             .HasOne(ps => ps.Project)

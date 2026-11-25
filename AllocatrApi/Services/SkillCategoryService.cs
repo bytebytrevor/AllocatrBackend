@@ -21,36 +21,28 @@ public class SkillCategoryService
             Id = Guid.NewGuid(),
             Name = dto.Name.Trim(),
             CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
+            UpdatedAt = DateTime.UtcNow,
         };
 
         _db.SkillCategories.Add(skillCategory);
         await _db.SaveChangesAsync();
 
-        return new SkillCategoryDto(
-            skillCategory.Id,
-            skillCategory.Name
-        );
+        return new SkillCategoryDto(skillCategory.Id, skillCategory.Name);
     }
 
     public async Task<SkillCategoryDto?> GetSkillCategoryByIdAsync(Guid id)
     {
-        return await _db.SkillCategories
-            .Where(sc => sc.Id == id)
-            .Select(sc => new SkillCategoryDto(
-                sc.Id,
-                sc.Name
-            ))
+        return await _db
+            .SkillCategories.Where(sc => sc.Id == id)
+            .Select(sc => new SkillCategoryDto(sc.Id, sc.Name))
             .FirstOrDefaultAsync();
     }
 
     public async Task<List<SkillCategoryDto>> GetAllSkillCategoriesAsync()
     {
-        return await _db.SkillCategories
-            .OrderBy(sc => sc.Name)
-            .Select(sc => new SkillCategoryDto(
-                sc.Id,
-                sc.Name
-            )).ToListAsync();
+        return await _db
+            .SkillCategories.OrderBy(sc => sc.Name)
+            .Select(sc => new SkillCategoryDto(sc.Id, sc.Name))
+            .ToListAsync();
     }
 }

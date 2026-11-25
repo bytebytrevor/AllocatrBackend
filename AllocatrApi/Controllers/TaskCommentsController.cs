@@ -14,8 +14,15 @@ public class TaskCommentsController : ControllerBase
 {
     private readonly TaskCommentService _comments;
     private readonly UserManager<AllocatrUser> _users;
-    public TaskCommentsController(TaskCommentService commentService, UserManager<AllocatrUser> userManager)
-    { _comments = commentService; _users = userManager; }
+
+    public TaskCommentsController(
+        TaskCommentService commentService,
+        UserManager<AllocatrUser> userManager
+    )
+    {
+        _comments = commentService;
+        _users = userManager;
+    }
 
     [HttpGet]
     public Task<ActionResult<List<TaskCommentDto>>> GetComments(Guid taskId) =>
@@ -34,34 +41,69 @@ public class TaskCommentsController : ControllerBase
         });
 
     [HttpPost]
-    public Task<ActionResult<TaskCommentDto>> CreateComment(Guid taskId, [FromBody] CreateTaskCommentDto request) =>
+    public Task<ActionResult<TaskCommentDto>> CreateComment(
+        Guid taskId,
+        [FromBody] CreateTaskCommentDto request
+    ) =>
         RunAsync<TaskCommentDto>(async user =>
         {
-            var comment = await _comments.CreateCommentAsync(taskId, user.Id, user.IsAllocat, request);
-            return comment == null ? NotFound(new { message = "Task not found." })
+            var comment = await _comments.CreateCommentAsync(
+                taskId,
+                user.Id,
+                user.IsAllocat,
+                request
+            );
+            return comment == null
+                ? NotFound(new { message = "Task not found." })
                 : CreatedAtAction(nameof(GetComments), new { taskId }, comment);
         });
 
     [HttpPatch("{commentId:guid}")]
-    public Task<ActionResult<TaskCommentDto>> UpdateComment(Guid taskId, Guid commentId,
-        [FromBody] UpdateTaskCommentDto request) => RunAsync<TaskCommentDto>(async user =>
+    public Task<ActionResult<TaskCommentDto>> UpdateComment(
+        Guid taskId,
+        Guid commentId,
+        [FromBody] UpdateTaskCommentDto request
+    ) =>
+        RunAsync<TaskCommentDto>(async user =>
         {
-            var comment = await _comments.UpdateCommentAsync(taskId, commentId, user.Id, user.IsAllocat, request.Comment);
+            var comment = await _comments.UpdateCommentAsync(
+                taskId,
+                commentId,
+                user.Id,
+                user.IsAllocat,
+                request.Comment
+            );
             return comment == null ? NotFound(new { message = "Comment not found." }) : Ok(comment);
         });
 
     [HttpDelete("{commentId:guid}")]
     public Task<ActionResult<object>> DeleteComment(Guid taskId, Guid commentId) =>
-        RunAsync<object>(async user => await _comments.DeleteCommentAsync(taskId, commentId, user.Id, user.IsAllocat)
-            ? NoContent() : NotFound(new { message = "Comment not found." }));
+        RunAsync<object>(async user =>
+            await _comments.DeleteCommentAsync(taskId, commentId, user.Id, user.IsAllocat)
+                ? NoContent()
+                : NotFound(new { message = "Comment not found." })
+        );
 
     private async Task<ActionResult<T>> RunAsync<T>(Func<AllocatrUser, Task<ActionResult>> action)
     {
         var user = await _users.GetUserAsync(User);
-        if (user == null) return Unauthorized();
-        try { return await action(user); }
-        catch (ArgumentException exception) { return BadRequest(new { message = exception.Message }); }
+        if (user == null)
+            return Unauthorized();
+        try
+        {
+            return await action(user);
+        }
+        catch (ArgumentException exception)
+        {
+            return BadRequest(new { message = exception.Message });
+        }
         catch (ProjectFileException exception)
-        { return Problem(statusCode: exception.StatusCode, title: "Comment request failed", detail: exception.Message); }
+        {
+            return Problem(
+                statusCode: exception.StatusCode,
+                title: "Comment request failed",
+                detail: exception.Message
+            );
+        }
     }
 }

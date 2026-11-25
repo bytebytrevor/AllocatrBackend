@@ -19,4 +19,7 @@ public record AllocatProfileListItemDto(
     int Level,
     int ProfessionalScore,
     DateTime JoinedAt
-);
+)
+{
+    public string? Bio { get; init; }
+}

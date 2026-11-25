@@ -28,7 +28,8 @@ namespace AllocatrApi.Migrations
                 nullable: false,
                 defaultValue: "pending",
                 oldClrType: typeof(string),
-                oldType: "text");
+                oldType: "text"
+            );
 
             migrationBuilder.AlterColumn<int>(
                 name: "Progress",
@@ -37,29 +38,28 @@ namespace AllocatrApi.Migrations
                 nullable: false,
                 defaultValue: 0,
                 oldClrType: typeof(int),
-                oldType: "integer");
+                oldType: "integer"
+            );
 
             migrationBuilder.AddCheckConstraint(
                 name: "CK_Projects_Progress",
                 table: "Projects",
-                sql: "\"Progress\" >= 0 AND \"Progress\" <= 100");
+                sql: "\"Progress\" >= 0 AND \"Progress\" <= 100"
+            );
 
             migrationBuilder.AddCheckConstraint(
                 name: "CK_Projects_Status",
                 table: "Projects",
-                sql: "\"Status\" IN ('pending', 'active', 'completed')");
+                sql: "\"Status\" IN ('pending', 'active', 'completed')"
+            );
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropCheckConstraint(
-                name: "CK_Projects_Progress",
-                table: "Projects");
+            migrationBuilder.DropCheckConstraint(name: "CK_Projects_Progress", table: "Projects");
 
-            migrationBuilder.DropCheckConstraint(
-                name: "CK_Projects_Status",
-                table: "Projects");
+            migrationBuilder.DropCheckConstraint(name: "CK_Projects_Status", table: "Projects");
 
             migrationBuilder.AlterColumn<string>(
                 name: "Status",
@@ -69,7 +69,8 @@ namespace AllocatrApi.Migrations
                 oldClrType: typeof(string),
                 oldType: "character varying(20)",
                 oldMaxLength: 20,
-                oldDefaultValue: "pending");
+                oldDefaultValue: "pending"
+            );
 
             migrationBuilder.AlterColumn<int>(
                 name: "Progress",
@@ -78,7 +79,8 @@ namespace AllocatrApi.Migrations
                 nullable: false,
                 oldClrType: typeof(int),
                 oldType: "integer",
-                oldDefaultValue: 0);
+                oldDefaultValue: 0
+            );
         }
     }
 }

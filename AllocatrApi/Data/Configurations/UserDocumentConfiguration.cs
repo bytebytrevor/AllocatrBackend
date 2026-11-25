@@ -10,37 +10,37 @@ public class UserDocumentConfiguration : IEntityTypeConfiguration<UserDocument>
     {
         builder.HasKey(document => document.Id);
 
-        builder.Property(document => document.DocumentType)
+        builder
+            .Property(document => document.DocumentType)
             .HasConversion<string>()
             .HasMaxLength(40)
             .IsRequired();
 
-        builder.Property(document => document.Title)
-            .HasMaxLength(200);
+        builder.Property(document => document.Title).HasMaxLength(200);
 
-        builder.Property(document => document.IssuingInstitution)
-            .HasMaxLength(200);
+        builder.Property(document => document.IssuingInstitution).HasMaxLength(200);
 
-        builder.Property(document => document.ReviewStatus)
+        builder
+            .Property(document => document.ReviewStatus)
             .HasConversion<string>()
             .HasMaxLength(30)
             .IsRequired();
 
-        builder.Property(document => document.ReviewNotes)
-            .HasMaxLength(1000);
+        builder.Property(document => document.ReviewNotes).HasMaxLength(1000);
 
-        builder.Property(document => document.CreatedAt)
-            .IsRequired();
+        builder.Property(document => document.CreatedAt).IsRequired();
 
         builder.HasIndex(document => document.UserId);
         builder.HasIndex(document => document.StoredFileId).IsUnique();
 
-        builder.HasOne(document => document.User)
+        builder
+            .HasOne(document => document.User)
             .WithMany()
             .HasForeignKey(document => document.UserId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        builder.HasOne(document => document.StoredFile)
+        builder
+            .HasOne(document => document.StoredFile)
             .WithOne()
             .HasForeignKey<UserDocument>(document => document.StoredFileId)
             .OnDelete(DeleteBehavior.Restrict);

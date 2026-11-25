@@ -13,16 +13,27 @@ public class TaskCommentConfiguration : IEntityTypeConfiguration<TaskComment>
         builder.Property(comment => comment.Comment).IsRequired().HasMaxLength(2000);
         builder.Property(comment => comment.CreatedAt).IsRequired();
         builder.Property(comment => comment.UpdatedAt).IsRequired(false);
-        builder.HasOne(comment => comment.TaskItem).WithMany(task => task.Comments)
-            .HasForeignKey(comment => comment.TaskItemId).OnDelete(DeleteBehavior.Cascade);
-        builder.HasOne(comment => comment.CreatedBy).WithMany(user => user.TaskComments)
-            .HasForeignKey(comment => comment.CreatedById).HasPrincipalKey(user => user.Id)
+        builder
+            .HasOne(comment => comment.TaskItem)
+            .WithMany(task => task.Comments)
+            .HasForeignKey(comment => comment.TaskItemId)
+            .OnDelete(DeleteBehavior.Cascade);
+        builder
+            .HasOne(comment => comment.CreatedBy)
+            .WithMany(user => user.TaskComments)
+            .HasForeignKey(comment => comment.CreatedById)
+            .HasPrincipalKey(user => user.Id)
             .OnDelete(DeleteBehavior.Restrict);
         builder.HasIndex(comment => comment.TaskItemId);
-        builder.HasOne<TaskComment>().WithMany().HasForeignKey(comment => comment.ReplyToCommentId)
+        builder
+            .HasOne<TaskComment>()
+            .WithMany()
+            .HasForeignKey(comment => comment.ReplyToCommentId)
             .OnDelete(DeleteBehavior.SetNull);
         builder.HasIndex(comment => comment.CreatedById);
-        builder.HasIndex(comment => new { comment.CreatedById, comment.ClientRequestId })
-            .IsUnique().HasFilter("\"ClientRequestId\" IS NOT NULL");
+        builder
+            .HasIndex(comment => new { comment.CreatedById, comment.ClientRequestId })
+            .IsUnique()
+            .HasFilter("\"ClientRequestId\" IS NOT NULL");
     }
 }

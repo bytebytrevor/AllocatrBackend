@@ -1,7 +1,3 @@
 namespace AllocatrApi.Dtos;
 
-public record ProjectPermissionsDto(
-    bool IsOwner,
-    bool IsAcceptedAllocat,
-    bool CanManageTasks
-);
+public record ProjectPermissionsDto(bool IsOwner, bool IsAcceptedAllocat, bool CanManageTasks);

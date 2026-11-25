@@ -16,29 +16,34 @@ namespace AllocatrApi.Migrations
                 table: "ProjectConversations",
                 type: "bigint",
                 nullable: false,
-                defaultValue: 0L);
+                defaultValue: 0L
+            );
 
             migrationBuilder.AddColumn<DateTime>(
                 name: "PinnedAt",
                 table: "ConversationMessages",
                 type: "timestamp with time zone",
-                nullable: true);
+                nullable: true
+            );
 
             migrationBuilder.AddColumn<Guid>(
                 name: "PinnedById",
                 table: "ConversationMessages",
                 type: "uuid",
-                nullable: true);
+                nullable: true
+            );
 
             migrationBuilder.CreateIndex(
                 name: "IX_ConversationMessages_ConversationId_PinnedAt",
                 table: "ConversationMessages",
-                columns: new[] { "ConversationId", "PinnedAt" });
+                columns: new[] { "ConversationId", "PinnedAt" }
+            );
 
             migrationBuilder.CreateIndex(
                 name: "IX_ConversationMessages_PinnedById",
                 table: "ConversationMessages",
-                column: "PinnedById");
+                column: "PinnedById"
+            );
 
             migrationBuilder.AddForeignKey(
                 name: "FK_ConversationMessages_AspNetUsers_PinnedById",
@@ -46,7 +51,8 @@ namespace AllocatrApi.Migrations
                 column: "PinnedById",
                 principalTable: "AspNetUsers",
                 principalColumn: "Id",
-                onDelete: ReferentialAction.Restrict);
+                onDelete: ReferentialAction.Restrict
+            );
         }
 
         /// <inheritdoc />
@@ -54,27 +60,24 @@ namespace AllocatrApi.Migrations
         {
             migrationBuilder.DropForeignKey(
                 name: "FK_ConversationMessages_AspNetUsers_PinnedById",
-                table: "ConversationMessages");
+                table: "ConversationMessages"
+            );
 
             migrationBuilder.DropIndex(
                 name: "IX_ConversationMessages_ConversationId_PinnedAt",
-                table: "ConversationMessages");
+                table: "ConversationMessages"
+            );
 
             migrationBuilder.DropIndex(
                 name: "IX_ConversationMessages_PinnedById",
-                table: "ConversationMessages");
+                table: "ConversationMessages"
+            );
 
-            migrationBuilder.DropColumn(
-                name: "PinVersion",
-                table: "ProjectConversations");
+            migrationBuilder.DropColumn(name: "PinVersion", table: "ProjectConversations");
 
-            migrationBuilder.DropColumn(
-                name: "PinnedAt",
-                table: "ConversationMessages");
+            migrationBuilder.DropColumn(name: "PinnedAt", table: "ConversationMessages");
 
-            migrationBuilder.DropColumn(
-                name: "PinnedById",
-                table: "ConversationMessages");
+            migrationBuilder.DropColumn(name: "PinnedById", table: "ConversationMessages");
         }
     }
 }

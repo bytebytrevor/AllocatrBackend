@@ -32,15 +32,11 @@ public class ProfileController : ControllerBase
             return Unauthorized();
         }
 
-        var profile = await _profileService.GetProfileAsync(
-            userId.Value
-        );
+        var profile = await _profileService.GetProfileAsync(userId.Value);
 
         if (profile == null)
         {
-            return NotFound(
-                new { message = "Profile not found." }
-            );
+            return NotFound(new { message = "Profile not found." });
         }
 
         return Ok(profile);
@@ -51,9 +47,7 @@ public class ProfileController : ControllerBase
      * -------------------------------------------------------- */
 
     [HttpPatch("me")]
-    public async Task<ActionResult<ProfileDto>> UpdateProfile(
-        [FromBody] UpdateProfileDto request
-    )
+    public async Task<ActionResult<ProfileDto>> UpdateProfile([FromBody] UpdateProfileDto request)
     {
         var userId = GetCurrentUserId();
 
@@ -64,10 +58,7 @@ public class ProfileController : ControllerBase
 
         try
         {
-            var profile = await _profileService.UpdateProfileAsync(
-                userId.Value,
-                request
-            );
+            var profile = await _profileService.UpdateProfileAsync(userId.Value, request);
 
             if (profile == null)
             {
@@ -78,15 +69,11 @@ public class ProfileController : ControllerBase
         }
         catch (ArgumentException ex)
         {
-            return BadRequest(
-                new { message = ex.Message }
-            );
+            return BadRequest(new { message = ex.Message });
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(
-                new { message = ex.Message }
-            );
+            return BadRequest(new { message = ex.Message });
         }
     }
 
@@ -106,30 +93,18 @@ public class ProfileController : ControllerBase
 
         try
         {
-            var sent =
-                await _profileService.SendEmailVerificationAsync(
-                    userId.Value
-                );
+            var sent = await _profileService.SendEmailVerificationAsync(userId.Value);
 
             if (!sent)
             {
-                return NotFound(
-                    new { message = "Profile not found." }
-                );
+                return NotFound(new { message = "Profile not found." });
             }
 
-            return Ok(
-                new
-                {
-                    message = "Verification email sent."
-                }
-            );
+            return Ok(new { message = "Verification email sent." });
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(
-                new { message = ex.Message }
-            );
+            return BadRequest(new { message = ex.Message });
         }
     }
 
@@ -139,9 +114,7 @@ public class ProfileController : ControllerBase
 
     [HttpPost("profile-picture")]
     [RequestSizeLimit(5 * 1024 * 1024)]
-    public async Task<IActionResult> UploadProfilePicture(
-        [FromForm] IFormFile file
-    )
+    public async Task<IActionResult> UploadProfilePicture([FromForm] IFormFile file)
     {
         var userId = GetCurrentUserId();
 
@@ -152,16 +125,11 @@ public class ProfileController : ControllerBase
 
         try
         {
-            var avatarUrl = await _profileService.UploadProfilePictureAsync(
-                userId.Value,
-                file
-            );
+            var avatarUrl = await _profileService.UploadProfilePictureAsync(userId.Value, file);
 
             if (avatarUrl == null)
             {
-                return NotFound(
-                    new { message = "Profile not found." }
-                );
+                return NotFound(new { message = "Profile not found." });
             }
 
             return Ok(new { avatarUrl });

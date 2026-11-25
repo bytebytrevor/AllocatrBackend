@@ -13,14 +13,15 @@ public class UserDocumentService
     private const int DownloadUrlLifetimeSeconds = 300;
     private const int MaxMetadataLength = 200;
 
-    private static readonly HashSet<string> AllowedDocumentTypes =
-        new(StringComparer.OrdinalIgnoreCase)
-        {
-            "application/pdf",
-            "image/jpeg",
-            "image/png",
-            "image/webp",
-        };
+    private static readonly HashSet<string> AllowedDocumentTypes = new(
+        StringComparer.OrdinalIgnoreCase
+    )
+    {
+        "application/pdf",
+        "image/jpeg",
+        "image/png",
+        "image/webp",
+    };
 
     private readonly AllocatrDbContext _dbContext;
     private readonly UserFileService _userFiles;
@@ -29,7 +30,8 @@ public class UserDocumentService
     public UserDocumentService(
         AllocatrDbContext dbContext,
         UserFileService userFiles,
-        IFileStorageService storage)
+        IFileStorageService storage
+    )
     {
         _dbContext = dbContext;
         _userFiles = userFiles;
@@ -38,12 +40,12 @@ public class UserDocumentService
 
     public async Task<IReadOnlyList<UserDocumentDto>> GetMyDocumentsAsync(Guid userId)
     {
-        var documents = await _dbContext.UserDocuments
-            .AsNoTracking()
+        var documents = await _dbContext
+            .UserDocuments.AsNoTracking()
             .Include(document => document.StoredFile)
             .Where(document =>
-                document.UserId == userId &&
-                document.StoredFile.Status == StoredFileStatus.Ready)
+                document.UserId == userId && document.StoredFile.Status == StoredFileStatus.Ready
+            )
             .OrderByDescending(document => document.CreatedAt)
             .ToListAsync();
 
@@ -55,7 +57,8 @@ public class UserDocumentService
         UserDocumentType documentType,
         IFormFile file,
         string? title = null,
-        string? issuingInstitution = null)
+        string? issuingInstitution = null
+    )
     {
         ValidateDocumentType(documentType);
         ValidateDocument(file);
@@ -67,8 +70,7 @@ public class UserDocumentService
         StoredFile? storedFile = null;
         try
         {
-            storedFile = await _userFiles.UploadUserDocumentAsync(
-                userId, documentType, file);
+            storedFile = await _userFiles.UploadUserDocumentAsync(userId, documentType, file);
 
             var document = new UserDocument
             {
@@ -105,46 +107,60 @@ public class UserDocumentService
     }
 
     public async Task<UserDocumentDto?> UpdateProfessionalDocumentMetadataAsync(
-        Guid userId, Guid documentId, UpdateUserDocumentMetadataDto dto)
+        Guid userId,
+        Guid documentId,
+        UpdateUserDocumentMetadataDto dto
+    )
     {
-        var document = await _dbContext.UserDocuments
-            .AsNoTracking()
+        var document = await _dbContext
+            .UserDocuments.AsNoTracking()
             .Include(item => item.StoredFile)
             .FirstOrDefaultAsync(item =>
-                item.Id == documentId && item.UserId == userId &&
-                item.StoredFile.Status == StoredFileStatus.Ready);
+                item.Id == documentId
+                && item.UserId == userId
+                && item.StoredFile.Status == StoredFileStatus.Ready
+            );
 
-        if (document == null) return null;
+        if (document == null)
+            return null;
         if (document.DocumentType == UserDocumentType.Identity)
             throw new ArgumentException("Identity document details cannot be edited here.");
 
         var metadata = ValidateMetadata(document.DocumentType, dto.Title, dto.IssuingInstitution);
-        if (document.Title == metadata.Title &&
-            document.IssuingInstitution == metadata.IssuingInstitution)
+        if (
+            document.Title == metadata.Title
+            && document.IssuingInstitution == metadata.IssuingInstitution
+        )
             return MapToDto(document);
 
         // Compare the snapshot in the UPDATE so a concurrent review or edit
         // cannot silently be overwritten. File evidence remains unchanged.
-        var updated = await _dbContext.UserDocuments
-            .Where(item => item.Id == documentId && item.UserId == userId &&
-                item.DocumentType == document.DocumentType &&
-                item.StoredFile.Status == StoredFileStatus.Ready &&
-                item.Title == document.Title &&
-                item.IssuingInstitution == document.IssuingInstitution &&
-                item.ReviewStatus == document.ReviewStatus &&
-                item.ReviewedAt == document.ReviewedAt &&
-                item.ReviewedByUserId == document.ReviewedByUserId)
-            .ExecuteUpdateAsync(setters => setters
-                .SetProperty(item => item.Title, metadata.Title)
-                .SetProperty(item => item.IssuingInstitution, metadata.IssuingInstitution)
-                .SetProperty(item => item.ReviewStatus, UserDocumentReviewStatus.Pending)
-                .SetProperty(item => item.ReviewNotes, (string?)null)
-                .SetProperty(item => item.ReviewedAt, (DateTime?)null)
-                .SetProperty(item => item.ReviewedByUserId, (Guid?)null));
+        var updated = await _dbContext
+            .UserDocuments.Where(item =>
+                item.Id == documentId
+                && item.UserId == userId
+                && item.DocumentType == document.DocumentType
+                && item.StoredFile.Status == StoredFileStatus.Ready
+                && item.Title == document.Title
+                && item.IssuingInstitution == document.IssuingInstitution
+                && item.ReviewStatus == document.ReviewStatus
+                && item.ReviewedAt == document.ReviewedAt
+                && item.ReviewedByUserId == document.ReviewedByUserId
+            )
+            .ExecuteUpdateAsync(setters =>
+                setters
+                    .SetProperty(item => item.Title, metadata.Title)
+                    .SetProperty(item => item.IssuingInstitution, metadata.IssuingInstitution)
+                    .SetProperty(item => item.ReviewStatus, UserDocumentReviewStatus.Pending)
+                    .SetProperty(item => item.ReviewNotes, (string?)null)
+                    .SetProperty(item => item.ReviewedAt, (DateTime?)null)
+                    .SetProperty(item => item.ReviewedByUserId, (Guid?)null)
+            );
 
         if (updated == 0)
             throw new InvalidOperationException(
-                "This credential changed while you were editing. Refresh your documents and try again.");
+                "This credential changed while you were editing. Refresh your documents and try again."
+            );
 
         document.Title = metadata.Title;
         document.IssuingInstitution = metadata.IssuingInstitution;
@@ -157,11 +173,12 @@ public class UserDocumentService
 
     public async Task<string?> GetDownloadUrlAsync(Guid userId, Guid documentId)
     {
-        var document = await _dbContext.UserDocuments
-            .AsNoTracking()
+        var document = await _dbContext
+            .UserDocuments.AsNoTracking()
             .Include(document => document.StoredFile)
             .FirstOrDefaultAsync(document =>
-                document.Id == documentId && document.UserId == userId);
+                document.Id == documentId && document.UserId == userId
+            );
 
         if (document == null || document.StoredFile.Status != StoredFileStatus.Ready)
             return null;
@@ -169,17 +186,20 @@ public class UserDocumentService
         return await _storage.CreateSignedUrlAsync(
             document.StoredFile.Bucket,
             document.StoredFile.StoragePath,
-            DownloadUrlLifetimeSeconds);
+            DownloadUrlLifetimeSeconds
+        );
     }
 
     public async Task<bool> DeleteDocumentAsync(Guid userId, Guid documentId)
     {
-        var document = await _dbContext.UserDocuments
-            .Include(document => document.StoredFile)
+        var document = await _dbContext
+            .UserDocuments.Include(document => document.StoredFile)
             .FirstOrDefaultAsync(document =>
-                document.Id == documentId && document.UserId == userId);
+                document.Id == documentId && document.UserId == userId
+            );
 
-        if (document == null) return false;
+        if (document == null)
+            return false;
 
         if (document.ReviewStatus == UserDocumentReviewStatus.Approved)
             throw new InvalidOperationException("Approved documents cannot be deleted.");
@@ -194,39 +214,47 @@ public class UserDocumentService
     {
         if (documentType == UserDocumentType.Identity)
         {
-            var alreadyHasIdentity = await _dbContext.UserDocuments
-                .AnyAsync(document =>
-                    document.UserId == userId &&
-                    document.DocumentType == UserDocumentType.Identity &&
-                    document.StoredFile.Status != StoredFileStatus.Deleted &&
-                    document.StoredFile.Status != StoredFileStatus.Failed);
+            var alreadyHasIdentity = await _dbContext.UserDocuments.AnyAsync(document =>
+                document.UserId == userId
+                && document.DocumentType == UserDocumentType.Identity
+                && document.StoredFile.Status != StoredFileStatus.Deleted
+                && document.StoredFile.Status != StoredFileStatus.Failed
+            );
 
             if (alreadyHasIdentity)
-                throw new InvalidOperationException("An identity document has already been uploaded.");
+                throw new InvalidOperationException(
+                    "An identity document has already been uploaded."
+                );
             return;
         }
 
-        var professionalDocumentCount = await _dbContext.UserDocuments
-            .CountAsync(document =>
-                document.UserId == userId &&
-                document.DocumentType != UserDocumentType.Identity &&
-                document.StoredFile.Status != StoredFileStatus.Deleted &&
-                document.StoredFile.Status != StoredFileStatus.Failed);
+        var professionalDocumentCount = await _dbContext.UserDocuments.CountAsync(document =>
+            document.UserId == userId
+            && document.DocumentType != UserDocumentType.Identity
+            && document.StoredFile.Status != StoredFileStatus.Deleted
+            && document.StoredFile.Status != StoredFileStatus.Failed
+        );
 
         if (professionalDocumentCount >= MaxProfessionalDocuments)
             throw new InvalidOperationException(
-                $"You can upload a maximum of {MaxProfessionalDocuments} professional documents.");
+                $"You can upload a maximum of {MaxProfessionalDocuments} professional documents."
+            );
     }
 
     private static (string? Title, string? IssuingInstitution) ValidateMetadata(
-        UserDocumentType documentType, string? title, string? issuingInstitution)
+        UserDocumentType documentType,
+        string? title,
+        string? issuingInstitution
+    )
     {
         // Identity evidence never contributes public qualification metadata.
-        if (documentType == UserDocumentType.Identity) return (null, null);
+        if (documentType == UserDocumentType.Identity)
+            return (null, null);
 
         title = string.IsNullOrWhiteSpace(title) ? null : title.Trim();
         issuingInstitution = string.IsNullOrWhiteSpace(issuingInstitution)
-            ? null : issuingInstitution.Trim();
+            ? null
+            : issuingInstitution.Trim();
 
         if (documentType == UserDocumentType.Qualification)
         {
@@ -234,15 +262,21 @@ public class UserDocumentService
                 throw new ArgumentException("Enter the qualification title.", nameof(title));
             if (issuingInstitution == null)
                 throw new ArgumentException(
-                    "Enter the institution that awarded the qualification.", nameof(issuingInstitution));
+                    "Enter the institution that awarded the qualification.",
+                    nameof(issuingInstitution)
+                );
         }
 
         if (title is { Length: > MaxMetadataLength })
             throw new ArgumentException(
-                $"The document title cannot exceed {MaxMetadataLength} characters.", nameof(title));
+                $"The document title cannot exceed {MaxMetadataLength} characters.",
+                nameof(title)
+            );
         if (issuingInstitution is { Length: > MaxMetadataLength })
             throw new ArgumentException(
-                $"The issuing institution cannot exceed {MaxMetadataLength} characters.", nameof(issuingInstitution));
+                $"The issuing institution cannot exceed {MaxMetadataLength} characters.",
+                nameof(issuingInstitution)
+            );
 
         return (title, issuingInstitution);
     }
@@ -250,7 +284,10 @@ public class UserDocumentService
     private static void ValidateDocumentType(UserDocumentType documentType)
     {
         if (!Enum.IsDefined(documentType))
-            throw new ArgumentException("The selected document type is invalid.", nameof(documentType));
+            throw new ArgumentException(
+                "The selected document type is invalid.",
+                nameof(documentType)
+            );
     }
 
     private static void ValidateDocument(IFormFile file)
@@ -259,8 +296,10 @@ public class UserDocumentService
             throw new ArgumentException("No document was uploaded.", nameof(file));
         if (file.Length > MaxDocumentSize)
             throw new ArgumentException("Documents cannot exceed 10 MB.", nameof(file));
-        if (string.IsNullOrWhiteSpace(file.ContentType) ||
-            !AllowedDocumentTypes.Contains(file.ContentType))
+        if (
+            string.IsNullOrWhiteSpace(file.ContentType)
+            || !AllowedDocumentTypes.Contains(file.ContentType)
+        )
             throw new ArgumentException("Documents must be PDF, JPEG, PNG or WebP.", nameof(file));
     }
 
@@ -276,6 +315,7 @@ public class UserDocumentService
             document.CreatedAt,
             document.ReviewedAt,
             document.Title,
-            document.IssuingInstitution);
+            document.IssuingInstitution
+        );
     }
 }

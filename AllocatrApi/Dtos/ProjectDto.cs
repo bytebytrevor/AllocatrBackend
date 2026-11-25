@@ -22,4 +22,9 @@ public record ProjectDto(
     DateOnly? DueDate,
     ICollection<ProjectAllocat> AllocatAssignments,
     List<ProjectSkillDto> Skills
-);
+)
+{
+    public DateTime? CancelledAt { get; init; }
+    public Guid? CancelledByUserId { get; init; }
+    public string? CancellationReason { get; init; }
+}

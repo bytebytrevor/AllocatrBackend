@@ -1,3 +1,1 @@
-public record class CreateSkillCategoryDto(
-    string Name
-);
+public record class CreateSkillCategoryDto(string Name);

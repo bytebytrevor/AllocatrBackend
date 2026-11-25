@@ -20,4 +20,9 @@ public record class AllocatWorkProjectDto(
     ProjectAllocatStatus ProjectAllocatStatus,
     DateTime InvitedAt,
     DateTime? RespondedAt
-);
+)
+{
+    public DateTime? CancelledAt { get; init; }
+    public Guid? CancelledByUserId { get; init; }
+    public string? CancellationReason { get; init; }
+}

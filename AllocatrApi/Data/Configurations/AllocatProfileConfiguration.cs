@@ -19,8 +19,8 @@ public class AllocatProfileConfiguration : IEntityTypeConfiguration<AllocatProfi
 
                 table.HasCheckConstraint(
                     "CK_AllocatProfiles_YearsExperience",
-                    "\"YearsExperience\" IS NULL OR " +
-                    "(\"YearsExperience\" >= 0 AND \"YearsExperience\" <= 80)"
+                    "\"YearsExperience\" IS NULL OR "
+                        + "(\"YearsExperience\" >= 0 AND \"YearsExperience\" <= 80)"
                 );
 
                 table.HasCheckConstraint(
@@ -28,10 +28,7 @@ public class AllocatProfileConfiguration : IEntityTypeConfiguration<AllocatProfi
                     "\"AverageRating\" >= 0 AND \"AverageRating\" <= 5"
                 );
 
-                table.HasCheckConstraint(
-                    "CK_AllocatProfiles_RatingCount",
-                    "\"RatingCount\" >= 0"
-                );
+                table.HasCheckConstraint("CK_AllocatProfiles_RatingCount", "\"RatingCount\" >= 0");
 
                 table.HasCheckConstraint(
                     "CK_AllocatProfiles_Availability",
@@ -45,133 +42,104 @@ public class AllocatProfileConfiguration : IEntityTypeConfiguration<AllocatProfi
 
                 table.HasCheckConstraint(
                     "CK_AllocatProfiles_ResponseTime",
-                    "\"AverageResponseTimeMinutes\" IS NULL OR " +
-                    "\"AverageResponseTimeMinutes\" >= 0"
+                    "\"AverageResponseTimeMinutes\" IS NULL OR "
+                        + "\"AverageResponseTimeMinutes\" >= 0"
                 );
 
                 // Existing profiles may have neither field during rollout.
                 // A partially populated operating location is not valid.
                 table.HasCheckConstraint(
                     "CK_AllocatProfiles_OperatingLocation",
-                    "(\"OperatingCountryCode\" IS NULL AND \"OperatingCityId\" IS NULL) OR " +
-                    "(\"OperatingCountryCode\" IS NOT NULL AND \"OperatingCityId\" IS NOT NULL)"
+                    "(\"OperatingCountryCode\" IS NULL AND \"OperatingCityId\" IS NULL) OR "
+                        + "(\"OperatingCountryCode\" IS NOT NULL AND \"OperatingCityId\" IS NOT NULL)"
                 );
             }
         );
 
         builder.HasKey(a => a.AllocatrUserId);
 
-        builder.Property(a => a.IdNumber)
-            .HasMaxLength(50);
+        builder.Property(a => a.IdNumber).HasMaxLength(50);
 
-        builder.Property(a => a.Title)
-            .HasMaxLength(120);
+        builder.Property(a => a.Title).HasMaxLength(120);
 
-        builder.Property(a => a.Headline)
-            .HasMaxLength(180);
+        builder.Property(a => a.Headline).HasMaxLength(180);
 
-        builder.Property(a => a.Bio)
-            .HasMaxLength(500);
+        builder.Property(a => a.Bio).HasMaxLength(500);
 
-        builder.Property(a => a.OperatingCountryCode)
-            .HasMaxLength(2)
-            .IsUnicode(false);
+        builder.Property(a => a.OperatingCountryCode).HasMaxLength(2).IsUnicode(false);
 
-        builder.Property(a => a.HourlyRate)
-            .HasPrecision(12, 2);
+        builder.Property(a => a.HourlyRate).HasPrecision(12, 2);
 
-        builder.Property(a => a.Currency)
-            .HasMaxLength(3)
-            .IsRequired()
-            .HasDefaultValue("USD");
+        builder.Property(a => a.Currency).HasMaxLength(3).IsRequired().HasDefaultValue("USD");
 
-        builder.Property(a => a.Availability)
+        builder
+            .Property(a => a.Availability)
             .HasMaxLength(20)
             .IsRequired()
             .HasDefaultValue("available");
 
-        builder.Property(a => a.AverageRating)
-            .HasPrecision(3, 2)
-            .HasDefaultValue(0m);
+        builder.Property(a => a.AverageRating).HasPrecision(3, 2).HasDefaultValue(0m);
 
-        builder.Property(a => a.RatingCount)
-            .HasDefaultValue(0);
+        builder.Property(a => a.RatingCount).HasDefaultValue(0);
 
-        builder.Property(a => a.IsVerified)
-            .HasDefaultValue(false);
+        builder.Property(a => a.IsVerified).HasDefaultValue(false);
 
-        builder.Property(a => a.Level)
-            .HasDefaultValue(1);
+        builder.Property(a => a.Level).HasDefaultValue(1);
 
-        builder.Property(a => a.IsVisible)
-            .HasDefaultValue(true);
+        builder.Property(a => a.IsVisible).HasDefaultValue(true);
 
-        builder.Property(a => a.CreatedAt)
-            .IsRequired();
+        builder.Property(a => a.CreatedAt).IsRequired();
 
-        builder.Property(a => a.UpdatedAt)
-            .IsRequired();
+        builder.Property(a => a.UpdatedAt).IsRequired();
 
-        builder.HasIndex(a => a.IdNumber)
-            .IsUnique()
-            .HasFilter("\"IdNumber\" IS NOT NULL");
+        builder.HasIndex(a => a.IdNumber).IsUnique().HasFilter("\"IdNumber\" IS NOT NULL");
 
         builder.HasIndex(a => a.IsVisible);
 
         builder.HasIndex(a => a.Availability);
 
-        builder.HasIndex(a => new
-        {
-            a.IsVisible,
-            a.Availability
-        });
+        builder.HasIndex(a => new { a.IsVisible, a.Availability });
 
         builder.HasIndex(a => a.HourlyRate);
 
         // Country-wide and country/city discovery queries.
-        builder.HasIndex(a => new
-        {
-            a.OperatingCountryCode,
-            a.OperatingCityId
-        });
+        builder.HasIndex(a => new { a.OperatingCountryCode, a.OperatingCityId });
 
-        builder.HasOne(a => a.OperatingCountry)
+        builder
+            .HasOne(a => a.OperatingCountry)
             .WithMany()
             .HasForeignKey(a => a.OperatingCountryCode)
             .OnDelete(DeleteBehavior.Restrict);
 
         // References CityConfiguration's alternate key (Id, CountryCode).
         // This rejects an existing city paired with a different country.
-        builder.HasOne(a => a.OperatingCity)
+        builder
+            .HasOne(a => a.OperatingCity)
             .WithMany()
-            .HasForeignKey(a => new
-            {
-                a.OperatingCityId,
-                a.OperatingCountryCode
-            })
-            .HasPrincipalKey(city => new
-            {
-                city.Id,
-                city.CountryCode
-            })
+            .HasForeignKey(a => new { a.OperatingCityId, a.OperatingCountryCode })
+            .HasPrincipalKey(city => new { city.Id, city.CountryCode })
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasOne(a => a.AllocatrUser)
+        builder
+            .HasOne(a => a.AllocatrUser)
             .WithOne(u => u.AllocatProfile)
             .HasForeignKey<AllocatProfile>(a => a.AllocatrUserId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        builder.HasMany(a => a.Skills)
+        builder
+            .HasMany(a => a.Skills)
             .WithOne(s => s.AllocatProfile)
             .HasForeignKey(s => s.AllocatProfileId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        builder.HasMany(a => a.Reviews)
+        builder
+            .HasMany(a => a.Reviews)
             .WithOne(r => r.AllocatProfile)
             .HasForeignKey(r => r.AllocatProfileId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        builder.HasMany(a => a.ProjectAssignments)
+        builder
+            .HasMany(a => a.ProjectAssignments)
             .WithOne(pa => pa.AllocatProfile)
             .HasForeignKey(pa => pa.AllocatProfileId)
             .OnDelete(DeleteBehavior.Cascade);

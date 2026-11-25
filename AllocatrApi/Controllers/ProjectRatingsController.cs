@@ -56,7 +56,6 @@
 //     }
 // }
 
-
 using AllocatrApi.Dtos;
 using AllocatrApi.Models;
 using AllocatrApi.Services;
@@ -76,7 +75,8 @@ public class ProjectRatingsController : ControllerBase
 
     public ProjectRatingsController(
         UserManager<AllocatrUser> userManager,
-        ReviewService reviewService)
+        ReviewService reviewService
+    )
     {
         _userManager = userManager;
         _reviewService = reviewService;
@@ -84,7 +84,8 @@ public class ProjectRatingsController : ControllerBase
 
     [HttpGet]
     public async Task<ActionResult<IReadOnlyList<ProjectAllocatRatingDto>>> GetProjectRatings(
-        Guid projectId)
+        Guid projectId
+    )
     {
         var user = await _userManager.GetUserAsync(User);
 
@@ -93,10 +94,7 @@ public class ProjectRatingsController : ControllerBase
             return Unauthorized();
         }
 
-        var ratings = await _reviewService.GetProjectRatingsAsync(
-            projectId,
-            user.Id
-        );
+        var ratings = await _reviewService.GetProjectRatingsAsync(projectId, user.Id);
 
         return Ok(ratings);
     }
@@ -104,7 +102,8 @@ public class ProjectRatingsController : ControllerBase
     [HttpPut]
     public async Task<ActionResult<IReadOnlyList<ProjectAllocatRatingDto>>> SubmitProjectRatings(
         Guid projectId,
-        [FromBody] SubmitProjectRatingsDto dto)
+        [FromBody] SubmitProjectRatingsDto dto
+    )
     {
         var user = await _userManager.GetUserAsync(User);
 
@@ -113,11 +112,7 @@ public class ProjectRatingsController : ControllerBase
             return Unauthorized();
         }
 
-        var ratings = await _reviewService.SubmitProjectRatingsAsync(
-            projectId,
-            user.Id,
-            dto
-        );
+        var ratings = await _reviewService.SubmitProjectRatingsAsync(projectId, user.Id, dto);
 
         return Ok(ratings);
     }

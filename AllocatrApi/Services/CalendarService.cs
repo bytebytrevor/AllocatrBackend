@@ -22,13 +22,12 @@ public class CalendarService
         Guid userId,
         bool isAllocat,
         DateOnly start,
-        DateOnly end)
+        DateOnly end
+    )
     {
         if (end <= start)
         {
-            throw new ArgumentException(
-                "Calendar end date must be after the start date."
-            );
+            throw new ArgumentException("Calendar end date must be after the start date.");
         }
 
         /* =================================================
@@ -42,16 +41,16 @@ public class CalendarService
            - accepted client projects
         ================================================= */
 
-        var accessibleProjects = _db.Projects
-            .AsNoTracking()
+        var accessibleProjects = _db
+            .Projects.AsNoTracking()
             .Where(p =>
-                p.UserId == userId ||
-                (
-                    isAllocat &&
-                    p.AllocatAssignments.Any(pa =>
-                        pa.AllocatProfile.AllocatrUserId == userId &&
-                        pa.Status == ProjectAllocatStatus.Accepted &&
-                        pa.RemovedAt == null
+                p.UserId == userId
+                || (
+                    isAllocat
+                    && p.AllocatAssignments.Any(pa =>
+                        pa.AllocatProfile.AllocatrUserId == userId
+                        && pa.Status == ProjectAllocatStatus.Accepted
+                        && pa.RemovedAt == null
                     )
                 )
             );
@@ -65,13 +64,11 @@ public class CalendarService
                 p.ProjectCode,
                 p.Status,
                 p.StartDate,
-                p.DueDate
+                p.DueDate,
             })
             .ToListAsync();
 
-        var projectIds = projects
-            .Select(project => project.Id)
-            .ToList();
+        var projectIds = projects.Select(project => project.Id).ToList();
 
         var events = new List<CalendarEventDto>();
 
@@ -84,54 +81,56 @@ public class CalendarService
 
         foreach (var project in projects)
         {
-            var relationship = project.UserId == userId
-                ? "owner"
-                : "allocat";
+            var relationship = project.UserId == userId ? "owner" : "allocat";
 
             if (
-                project.StartDate is DateOnly projectStartDate &&
-                projectStartDate >= start &&
-                projectStartDate < end
+                project.StartDate is DateOnly projectStartDate
+                && projectStartDate >= start
+                && projectStartDate < end
             )
             {
-                events.Add(new CalendarEventDto(
-                    $"project-start-{project.Id}",
-                    "project-start",
-                    project.Id,
-                    null,
-                    project.Title,
-                    project.ProjectCode,
-                    $"{project.Title} starts",
-                    null,
-                    projectStartDate.ToDateTime(TimeOnly.MinValue),
-                    null,
-                    true,
-                    project.Status,
-                    relationship
-                ));
+                events.Add(
+                    new CalendarEventDto(
+                        $"project-start-{project.Id}",
+                        "project-start",
+                        project.Id,
+                        null,
+                        project.Title,
+                        project.ProjectCode,
+                        $"{project.Title} starts",
+                        null,
+                        projectStartDate.ToDateTime(TimeOnly.MinValue),
+                        null,
+                        true,
+                        project.Status,
+                        relationship
+                    )
+                );
             }
 
             if (
-                project.DueDate is DateOnly projectDueDate &&
-                projectDueDate >= start &&
-                projectDueDate < end
+                project.DueDate is DateOnly projectDueDate
+                && projectDueDate >= start
+                && projectDueDate < end
             )
             {
-                events.Add(new CalendarEventDto(
-                    $"project-due-{project.Id}",
-                    "project-due",
-                    project.Id,
-                    null,
-                    project.Title,
-                    project.ProjectCode,
-                    $"{project.Title} due",
-                    null,
-                    projectDueDate.ToDateTime(TimeOnly.MinValue),
-                    null,
-                    true,
-                    project.Status,
-                    relationship
-                ));
+                events.Add(
+                    new CalendarEventDto(
+                        $"project-due-{project.Id}",
+                        "project-due",
+                        project.Id,
+                        null,
+                        project.Title,
+                        project.ProjectCode,
+                        $"{project.Title} due",
+                        null,
+                        projectDueDate.ToDateTime(TimeOnly.MinValue),
+                        null,
+                        true,
+                        project.Status,
+                        relationship
+                    )
+                );
             }
         }
 
@@ -147,27 +146,21 @@ public class CalendarService
            Unspecified, so explicitly create UTC boundaries.
         ================================================= */
 
-        var startDateTime = start.ToDateTime(
-            TimeOnly.MinValue,
-            DateTimeKind.Utc
-        );
+        var startDateTime = start.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
 
-        var endDateTime = end.ToDateTime(
-            TimeOnly.MinValue,
-            DateTimeKind.Utc
-        );
+        var endDateTime = end.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
 
         /* =================================================
            TASK EVENTS
         ================================================= */
 
-        var tasks = await _db.TaskItems
-            .AsNoTracking()
+        var tasks = await _db
+            .TaskItems.AsNoTracking()
             .Where(task =>
-                projectIds.Contains(task.ProjectId) &&
-                task.DueDate.HasValue &&
-                task.DueDate.Value >= startDateTime &&
-                task.DueDate.Value < endDateTime
+                projectIds.Contains(task.ProjectId)
+                && task.DueDate.HasValue
+                && task.DueDate.Value >= startDateTime
+                && task.DueDate.Value < endDateTime
             )
             .Select(task => new
             {
@@ -176,13 +169,11 @@ public class CalendarService
                 task.Title,
                 task.Description,
                 task.Status,
-                task.DueDate
+                task.DueDate,
             })
             .ToListAsync();
 
-        var projectMap = projects.ToDictionary(
-            project => project.Id
-        );
+        var projectMap = projects.ToDictionary(project => project.Id);
 
         foreach (var task in tasks)
         {
@@ -204,40 +195,34 @@ public class CalendarService
              */
             if (dueDate.Kind != DateTimeKind.Utc)
             {
-                dueDate = DateTime.SpecifyKind(
-                    dueDate,
-                    DateTimeKind.Utc
-                );
+                dueDate = DateTime.SpecifyKind(dueDate, DateTimeKind.Utc);
             }
 
-            var relationship = project.UserId == userId
-                ? "owner"
-                : "allocat";
+            var relationship = project.UserId == userId ? "owner" : "allocat";
 
             /*
              * A task at exact midnight can be represented as an
              * all-day item. Timed tasks remain in the week timeline.
              */
-            var allDay =
-                dueDate.Hour == 0 &&
-                dueDate.Minute == 0 &&
-                dueDate.Second == 0;
+            var allDay = dueDate.Hour == 0 && dueDate.Minute == 0 && dueDate.Second == 0;
 
-            events.Add(new CalendarEventDto(
-                $"task-{task.Id}",
-                "task",
-                project.Id,
-                task.Id,
-                project.Title,
-                project.ProjectCode,
-                task.Title,
-                task.Description,
-                dueDate,
-                null,
-                allDay,
-                task.Status,
-                relationship
-            ));
+            events.Add(
+                new CalendarEventDto(
+                    $"task-{task.Id}",
+                    "task",
+                    project.Id,
+                    task.Id,
+                    project.Title,
+                    project.ProjectCode,
+                    task.Title,
+                    task.Description,
+                    dueDate,
+                    null,
+                    allDay,
+                    task.Status,
+                    relationship
+                )
+            );
         }
 
         /* =================================================

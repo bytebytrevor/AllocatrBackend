@@ -18,7 +18,8 @@ namespace AllocatrApi.Migrations
                 table: "AspNetUsers",
                 type: "character varying(150)",
                 maxLength: 150,
-                nullable: true);
+                nullable: true
+            );
 
             migrationBuilder.AddColumn<string>(
                 name: "CountryCode",
@@ -26,13 +27,15 @@ namespace AllocatrApi.Migrations
                 type: "character varying(2)",
                 unicode: false,
                 maxLength: 2,
-                nullable: true);
+                nullable: true
+            );
 
             migrationBuilder.AddColumn<int>(
                 name: "OperatingCityId",
                 table: "AllocatProfiles",
                 type: "integer",
-                nullable: true);
+                nullable: true
+            );
 
             migrationBuilder.AddColumn<string>(
                 name: "OperatingCountryCode",
@@ -40,41 +43,74 @@ namespace AllocatrApi.Migrations
                 type: "character varying(2)",
                 unicode: false,
                 maxLength: 2,
-                nullable: true);
+                nullable: true
+            );
 
             migrationBuilder.CreateTable(
                 name: "Countries",
                 columns: table => new
                 {
-                    Code = table.Column<string>(type: "character varying(2)", unicode: false, maxLength: 2, nullable: false),
-                    Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
-                    SupportsAllocatOperations = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false)
+                    Code = table.Column<string>(
+                        type: "character varying(2)",
+                        unicode: false,
+                        maxLength: 2,
+                        nullable: false
+                    ),
+                    Name = table.Column<string>(
+                        type: "character varying(100)",
+                        maxLength: 100,
+                        nullable: false
+                    ),
+                    SupportsAllocatOperations = table.Column<bool>(
+                        type: "boolean",
+                        nullable: false,
+                        defaultValue: false
+                    ),
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Countries", x => x.Code);
-                });
+                }
+            );
 
             migrationBuilder.CreateTable(
                 name: "Cities",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Name = table.Column<string>(type: "character varying(150)", maxLength: 150, nullable: false),
-                    CountryCode = table.Column<string>(type: "character varying(2)", unicode: false, maxLength: 2, nullable: false)
+                    Id = table
+                        .Column<int>(type: "integer", nullable: false)
+                        .Annotation(
+                            "Npgsql:ValueGenerationStrategy",
+                            NpgsqlValueGenerationStrategy.IdentityByDefaultColumn
+                        ),
+                    Name = table.Column<string>(
+                        type: "character varying(150)",
+                        maxLength: 150,
+                        nullable: false
+                    ),
+                    CountryCode = table.Column<string>(
+                        type: "character varying(2)",
+                        unicode: false,
+                        maxLength: 2,
+                        nullable: false
+                    ),
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Cities", x => x.Id);
-                    table.UniqueConstraint("AK_Cities_Id_CountryCode", x => new { x.Id, x.CountryCode });
+                    table.UniqueConstraint(
+                        "AK_Cities_Id_CountryCode",
+                        x => new { x.Id, x.CountryCode }
+                    );
                     table.ForeignKey(
                         name: "FK_Cities_Countries_CountryCode",
                         column: x => x.CountryCode,
                         principalTable: "Countries",
                         principalColumn: "Code",
-                        onDelete: ReferentialAction.Restrict);
-                });
+                        onDelete: ReferentialAction.Restrict
+                    );
+                }
+            );
 
             migrationBuilder.InsertData(
                 table: "Countries",
@@ -326,23 +362,27 @@ namespace AllocatrApi.Migrations
                     { "WF", "Wallis & Futuna" },
                     { "WS", "Samoa" },
                     { "YE", "Yemen" },
-                    { "YT", "Mayotte" }
-                });
+                    { "YT", "Mayotte" },
+                }
+            );
 
             migrationBuilder.InsertData(
                 table: "Countries",
                 columns: new[] { "Code", "Name", "SupportsAllocatOperations" },
-                values: new object[] { "ZA", "South Africa", true });
+                values: new object[] { "ZA", "South Africa", true }
+            );
 
             migrationBuilder.InsertData(
                 table: "Countries",
                 columns: new[] { "Code", "Name" },
-                values: new object[] { "ZM", "Zambia" });
+                values: new object[] { "ZM", "Zambia" }
+            );
 
             migrationBuilder.InsertData(
                 table: "Countries",
                 columns: new[] { "Code", "Name", "SupportsAllocatOperations" },
-                values: new object[] { "ZW", "Zimbabwe", true });
+                values: new object[] { "ZW", "Zimbabwe", true }
+            );
 
             migrationBuilder.InsertData(
                 table: "Cities",
@@ -368,33 +408,39 @@ namespace AllocatrApi.Migrations
                     { -4, "ZW", "Mutare" },
                     { -3, "ZW", "Chitungwiza" },
                     { -2, "ZW", "Bulawayo" },
-                    { -1, "ZW", "Harare" }
-                });
+                    { -1, "ZW", "Harare" },
+                }
+            );
 
             migrationBuilder.CreateIndex(
                 name: "IX_AspNetUsers_CountryCode_CityName",
                 table: "AspNetUsers",
-                columns: new[] { "CountryCode", "CityName" });
+                columns: new[] { "CountryCode", "CityName" }
+            );
 
             migrationBuilder.CreateIndex(
                 name: "IX_AllocatProfiles_OperatingCityId_OperatingCountryCode",
                 table: "AllocatProfiles",
-                columns: new[] { "OperatingCityId", "OperatingCountryCode" });
+                columns: new[] { "OperatingCityId", "OperatingCountryCode" }
+            );
 
             migrationBuilder.CreateIndex(
                 name: "IX_AllocatProfiles_OperatingCountryCode_OperatingCityId",
                 table: "AllocatProfiles",
-                columns: new[] { "OperatingCountryCode", "OperatingCityId" });
+                columns: new[] { "OperatingCountryCode", "OperatingCityId" }
+            );
 
             migrationBuilder.AddCheckConstraint(
                 name: "CK_AllocatProfiles_OperatingLocation",
                 table: "AllocatProfiles",
-                sql: "(\"OperatingCountryCode\" IS NULL AND \"OperatingCityId\" IS NULL) OR (\"OperatingCountryCode\" IS NOT NULL AND \"OperatingCityId\" IS NOT NULL)");
+                sql: "(\"OperatingCountryCode\" IS NULL AND \"OperatingCityId\" IS NULL) OR (\"OperatingCountryCode\" IS NOT NULL AND \"OperatingCityId\" IS NOT NULL)"
+            );
 
             migrationBuilder.CreateIndex(
                 name: "IX_Cities_CountryCode_Name",
                 table: "Cities",
-                columns: new[] { "CountryCode", "Name" });
+                columns: new[] { "CountryCode", "Name" }
+            );
 
             migrationBuilder.AddForeignKey(
                 name: "FK_AllocatProfiles_Cities_OperatingCityId_OperatingCountryCode",
@@ -402,7 +448,8 @@ namespace AllocatrApi.Migrations
                 columns: new[] { "OperatingCityId", "OperatingCountryCode" },
                 principalTable: "Cities",
                 principalColumns: new[] { "Id", "CountryCode" },
-                onDelete: ReferentialAction.Restrict);
+                onDelete: ReferentialAction.Restrict
+            );
 
             migrationBuilder.AddForeignKey(
                 name: "FK_AllocatProfiles_Countries_OperatingCountryCode",
@@ -410,7 +457,8 @@ namespace AllocatrApi.Migrations
                 column: "OperatingCountryCode",
                 principalTable: "Countries",
                 principalColumn: "Code",
-                onDelete: ReferentialAction.Restrict);
+                onDelete: ReferentialAction.Restrict
+            );
 
             migrationBuilder.AddForeignKey(
                 name: "FK_AspNetUsers_Countries_CountryCode",
@@ -418,7 +466,8 @@ namespace AllocatrApi.Migrations
                 column: "CountryCode",
                 principalTable: "Countries",
                 principalColumn: "Code",
-                onDelete: ReferentialAction.Restrict);
+                onDelete: ReferentialAction.Restrict
+            );
         }
 
         /// <inheritdoc />
@@ -426,53 +475,50 @@ namespace AllocatrApi.Migrations
         {
             migrationBuilder.DropForeignKey(
                 name: "FK_AllocatProfiles_Cities_OperatingCityId_OperatingCountryCode",
-                table: "AllocatProfiles");
+                table: "AllocatProfiles"
+            );
 
             migrationBuilder.DropForeignKey(
                 name: "FK_AllocatProfiles_Countries_OperatingCountryCode",
-                table: "AllocatProfiles");
+                table: "AllocatProfiles"
+            );
 
             migrationBuilder.DropForeignKey(
                 name: "FK_AspNetUsers_Countries_CountryCode",
-                table: "AspNetUsers");
+                table: "AspNetUsers"
+            );
 
-            migrationBuilder.DropTable(
-                name: "Cities");
+            migrationBuilder.DropTable(name: "Cities");
 
-            migrationBuilder.DropTable(
-                name: "Countries");
+            migrationBuilder.DropTable(name: "Countries");
 
             migrationBuilder.DropIndex(
                 name: "IX_AspNetUsers_CountryCode_CityName",
-                table: "AspNetUsers");
+                table: "AspNetUsers"
+            );
 
             migrationBuilder.DropIndex(
                 name: "IX_AllocatProfiles_OperatingCityId_OperatingCountryCode",
-                table: "AllocatProfiles");
+                table: "AllocatProfiles"
+            );
 
             migrationBuilder.DropIndex(
                 name: "IX_AllocatProfiles_OperatingCountryCode_OperatingCityId",
-                table: "AllocatProfiles");
+                table: "AllocatProfiles"
+            );
 
             migrationBuilder.DropCheckConstraint(
                 name: "CK_AllocatProfiles_OperatingLocation",
-                table: "AllocatProfiles");
+                table: "AllocatProfiles"
+            );
 
-            migrationBuilder.DropColumn(
-                name: "CityName",
-                table: "AspNetUsers");
+            migrationBuilder.DropColumn(name: "CityName", table: "AspNetUsers");
 
-            migrationBuilder.DropColumn(
-                name: "CountryCode",
-                table: "AspNetUsers");
+            migrationBuilder.DropColumn(name: "CountryCode", table: "AspNetUsers");
 
-            migrationBuilder.DropColumn(
-                name: "OperatingCityId",
-                table: "AllocatProfiles");
+            migrationBuilder.DropColumn(name: "OperatingCityId", table: "AllocatProfiles");
 
-            migrationBuilder.DropColumn(
-                name: "OperatingCountryCode",
-                table: "AllocatProfiles");
+            migrationBuilder.DropColumn(name: "OperatingCountryCode", table: "AllocatProfiles");
         }
     }
 }

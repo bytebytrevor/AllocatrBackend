@@ -167,10 +167,21 @@ public class AllocatProfileService
     }
 
     public async Task<PagedResultDto<AllocatProfileListItemDto>>
-        GetAllAllocatProfilesAsync(AllocatProfileSearchDto request)
+        GetAllAllocatProfilesAsync(AllocatProfileSearchDto request,
+        CancellationToken cancellationToken = default)
     {
         var page = Math.Max(request.Page, 1);
         var pageSize = Math.Clamp(request.PageSize, 1, 50);
+        if ((long)(page - 1) * pageSize > int.MaxValue)
+            throw new ArgumentException("Page is outside the supported range.");
+
+        var sort = CleanOptional(request.SortBy, 20)?.ToLowerInvariant();
+        if (sort != null && sort is not ("relevance" or "rating" or "experience" or "rate-low" or "recent"))
+            throw new ArgumentException("Invalid directory sort order.");
+
+        var skillIds = (request.SkillIds ?? []).Distinct().ToArray();
+        if ((request.SkillIds?.Count ?? 0) > 50 || skillIds.Contains(Guid.Empty))
+            throw new ArgumentException("Select up to 50 valid skill IDs.");
 
         if (request.MaxHourlyRate.HasValue && request.MaxHourlyRate.Value < 0)
             throw new ArgumentException("Maximum hourly rate cannot be negative.");
@@ -180,26 +191,19 @@ public class AllocatProfileService
 
         var countryCode = await ValidateSearchLocationAsync(
             request.CountryCode,
-            request.CityId
+            request.CityId,
+            cancellationToken
         );
 
         var query = _db.AllocatProfiles
+            .TagWith("Allocatr: public Allocat directory")
             .AsNoTracking()
             .Where(a => a.IsVisible && a.AllocatrUser.IsAllocat);
 
         var search = CleanOptional(request.Search, 150);
-
-        if (search != null)
-        {
-            // Preserve the existing general keyword-search behavior.
-            var pattern = $"%{search}%";
-            query = query.Where(a =>
-                EF.Functions.ILike(a.AllocatrUser.FullName, pattern) ||
-                (a.Title != null && EF.Functions.ILike(a.Title, pattern)) ||
-                (a.Headline != null && EF.Functions.ILike(a.Headline, pattern)) ||
-                a.Skills.Any(s => EF.Functions.ILike(s.Skill.Name, pattern))
-            );
-        }
+        var searchPlan = AllocatSearch.Create(search);
+        if (searchPlan != null)
+            query = query.Where(searchPlan.Matches);
 
         if (countryCode != null)
             query = query.Where(a => a.OperatingCountryCode == countryCode);
@@ -233,11 +237,26 @@ public class AllocatProfileService
         if (request.SkillId.HasValue)
             query = query.Where(a => a.Skills.Any(s => s.SkillId == request.SkillId.Value));
 
+        var category = CleanOptional(request.Category, 150);
+        if (category != null)
+        {
+            var categoryPattern = EscapeLikePattern(category);
+            query = query.Where(a => a.Skills.Any(link =>
+                EF.Functions.ILike(link.Skill.SkillCategory.Name, categoryPattern, "\\")));
+        }
+
+        // Every selected canonical skill must match. Aliases never replace skill IDs.
+        if (skillIds.Length > 0)
+            query = query.Where(a => a.Skills.Count(link => skillIds.Contains(link.SkillId)) == skillIds.Length);
+
+        if (request.VerifiedOnly == true)
+            query = query.Where(a => a.IsVerified);
+
         if (request.MaxHourlyRate.HasValue)
         {
             query = query.Where(a =>
-                a.HourlyRate.HasValue &&
-                a.HourlyRate.Value <= request.MaxHourlyRate.Value
+                (request.IncludeUnpriced == true && !a.HourlyRate.HasValue) ||
+                (a.HourlyRate.HasValue && a.HourlyRate.Value <= request.MaxHourlyRate.Value)
             );
         }
 
@@ -252,13 +271,33 @@ public class AllocatProfileService
         if (request.AvailableOnly == true)
             query = query.Where(a => a.Availability == "available");
 
-        var totalCount = await query.CountAsync();
+        var totalCount = await query.CountAsync(cancellationToken);
 
-        var profiles = await query
-            .OrderByDescending(a => a.IsVerified)
-            .ThenByDescending(a => a.AverageRating)
-            .ThenByDescending(a => a.RatingCount)
-            .ThenByDescending(a => a.UpdatedAt)
+        // All matching, filtering and ordering happens before paging in PostgreSQL.
+        // Omitted SortBy retains the existing endpoint's ordering for other callers.
+        IOrderedQueryable<AllocatProfile> orderedQuery = sort switch
+        {
+            "rating" => query.OrderByDescending(a => a.AverageRating)
+                .ThenByDescending(a => a.RatingCount).ThenByDescending(a => a.IsVerified)
+                .ThenByDescending(a => a.UpdatedAt),
+            "experience" => query.OrderByDescending(a => a.YearsExperience ?? 0)
+                .ThenByDescending(a => a.AverageRating).ThenByDescending(a => a.RatingCount)
+                .ThenByDescending(a => a.UpdatedAt),
+            "rate-low" => query.OrderBy(a => !a.HourlyRate.HasValue)
+                .ThenBy(a => a.HourlyRate).ThenByDescending(a => a.AverageRating)
+                .ThenByDescending(a => a.RatingCount).ThenByDescending(a => a.UpdatedAt),
+            "recent" => query.OrderByDescending(a => a.UpdatedAt)
+                .ThenByDescending(a => a.AverageRating).ThenByDescending(a => a.RatingCount),
+            _ => searchPlan == null
+                ? query.OrderByDescending(a => a.IsVerified).ThenByDescending(a => a.AverageRating)
+                    .ThenByDescending(a => a.RatingCount).ThenByDescending(a => a.UpdatedAt)
+                : query.OrderByDescending(searchPlan.Rank).ThenByDescending(a => a.IsVerified)
+                    .ThenByDescending(a => a.AverageRating).ThenByDescending(a => a.RatingCount)
+                    .ThenByDescending(a => a.UpdatedAt)
+        };
+
+        var profiles = await orderedQuery
+            .ThenBy(a => a.AllocatrUserId)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .Select(a => new ProfileListData
@@ -297,12 +336,30 @@ public class AllocatProfileService
                     pa.Project.Status == ProjectStatuses.Completed
                 )
             })
-            .ToListAsync();
+            .ToListAsync(cancellationToken);
 
         var items = profiles.Select(ToListItemDto).ToList();
         return new PagedResultDto<AllocatProfileListItemDto>(
             items, page, pageSize, totalCount
         );
+    }
+
+    public async Task<AllocatDirectoryFiltersDto> GetDirectoryFiltersAsync(
+        CancellationToken cancellationToken = default)
+    {
+        var visible = _db.AllocatProfiles.AsNoTracking()
+            .Where(a => a.IsVisible && a.AllocatrUser.IsAllocat);
+
+        var skills = await _db.Skills.AsNoTracking()
+            .Where(skill => visible.Any(profile => profile.Skills.Any(link => link.SkillId == skill.Id)))
+            .OrderBy(skill => skill.Name).ThenBy(skill => skill.Id)
+            .Select(skill => new SkillOptionDto(skill.Id, skill.Name,
+                skill.SkillCategoryId, skill.SkillCategory.Name))
+            .ToListAsync(cancellationToken);
+
+        // This scalar aggregate does not download the public directory.
+        var highestRate = await visible.Select(a => a.HourlyRate).MaxAsync(cancellationToken);
+        return new AllocatDirectoryFiltersDto(skills, Math.Max(100m, highestRate ?? 0m));
     }
 
     public async Task<MyAllocatProfileDto?> UpdateAllocatProfileAsync(
@@ -544,7 +601,8 @@ public class AllocatProfileService
 
     private async Task<string?> ValidateSearchLocationAsync(
         string? countryCode,
-        int? cityId)
+        int? cityId,
+        CancellationToken cancellationToken = default)
     {
         var normalizedCode = NormalizeCountryCode(countryCode);
 
@@ -552,7 +610,7 @@ public class AllocatProfileService
         {
             var countryExists = await _db.Countries
                 .AsNoTracking()
-                .AnyAsync(country => country.Code == normalizedCode);
+                .AnyAsync(country => country.Code == normalizedCode, cancellationToken);
 
             if (!countryExists)
                 throw new ArgumentException("Select a country from the country catalogue.");
@@ -564,7 +622,7 @@ public class AllocatProfileService
                 .AsNoTracking()
                 .Where(city => city.Id == cityId.Value)
                 .Select(city => city.CountryCode)
-                .SingleOrDefaultAsync();
+                .SingleOrDefaultAsync(cancellationToken);
 
             if (cityCountryCode == null)
                 throw new ArgumentException("The selected city does not exist.");
@@ -905,7 +963,10 @@ public class AllocatProfileService
             data.Level,
             professionalScore,
             data.JoinedAt
-        );
+        )
+        {
+            Bio = data.Bio
+        };
     }
 
     private sealed class ProfileData

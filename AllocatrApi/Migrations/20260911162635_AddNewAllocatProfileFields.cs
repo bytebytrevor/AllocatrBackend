@@ -17,7 +17,8 @@ namespace AllocatrApi.Migrations
                 maxLength: 2000,
                 nullable: false,
                 oldClrType: typeof(string),
-                oldType: "text");
+                oldType: "text"
+            );
 
             migrationBuilder.AlterColumn<int>(
                 name: "RatingCount",
@@ -26,7 +27,8 @@ namespace AllocatrApi.Migrations
                 nullable: false,
                 defaultValue: 0,
                 oldClrType: typeof(int),
-                oldType: "integer");
+                oldType: "integer"
+            );
 
             migrationBuilder.AlterColumn<bool>(
                 name: "IsVisible",
@@ -35,7 +37,8 @@ namespace AllocatrApi.Migrations
                 nullable: false,
                 defaultValue: true,
                 oldClrType: typeof(bool),
-                oldType: "boolean");
+                oldType: "boolean"
+            );
 
             migrationBuilder.AlterColumn<string>(
                 name: "IdNumber",
@@ -45,7 +48,8 @@ namespace AllocatrApi.Migrations
                 nullable: true,
                 oldClrType: typeof(string),
                 oldType: "text",
-                oldNullable: true);
+                oldNullable: true
+            );
 
             migrationBuilder.AlterColumn<decimal>(
                 name: "HourlyRate",
@@ -56,7 +60,8 @@ namespace AllocatrApi.Migrations
                 nullable: true,
                 oldClrType: typeof(decimal),
                 oldType: "numeric",
-                oldNullable: true);
+                oldNullable: true
+            );
 
             migrationBuilder.AlterColumn<string>(
                 name: "Bio",
@@ -66,7 +71,8 @@ namespace AllocatrApi.Migrations
                 nullable: true,
                 oldClrType: typeof(string),
                 oldType: "text",
-                oldNullable: true);
+                oldNullable: true
+            );
 
             migrationBuilder.AlterColumn<decimal>(
                 name: "AverageRating",
@@ -77,7 +83,8 @@ namespace AllocatrApi.Migrations
                 nullable: false,
                 defaultValue: 0m,
                 oldClrType: typeof(decimal),
-                oldType: "numeric");
+                oldType: "numeric"
+            );
 
             migrationBuilder.AlterColumn<string>(
                 name: "Availability",
@@ -88,13 +95,15 @@ namespace AllocatrApi.Migrations
                 defaultValue: "available",
                 oldClrType: typeof(string),
                 oldType: "text",
-                oldNullable: true);
+                oldNullable: true
+            );
 
             migrationBuilder.AddColumn<int>(
                 name: "AverageResponseTimeMinutes",
                 table: "AllocatProfiles",
                 type: "integer",
-                nullable: true);
+                nullable: true
+            );
 
             migrationBuilder.AddColumn<string>(
                 name: "Currency",
@@ -102,97 +111,114 @@ namespace AllocatrApi.Migrations
                 type: "character varying(3)",
                 maxLength: 3,
                 nullable: false,
-                defaultValue: "USD");
+                defaultValue: "USD"
+            );
 
             migrationBuilder.AddColumn<string>(
                 name: "Headline",
                 table: "AllocatProfiles",
                 type: "character varying(180)",
                 maxLength: 180,
-                nullable: true);
+                nullable: true
+            );
 
             migrationBuilder.AddColumn<bool>(
                 name: "IsVerified",
                 table: "AllocatProfiles",
                 type: "boolean",
                 nullable: false,
-                defaultValue: false);
+                defaultValue: false
+            );
 
             migrationBuilder.AddColumn<int>(
                 name: "Level",
                 table: "AllocatProfiles",
                 type: "integer",
                 nullable: false,
-                defaultValue: 1);
+                defaultValue: 1
+            );
 
             migrationBuilder.AddColumn<string>(
                 name: "Title",
                 table: "AllocatProfiles",
                 type: "character varying(120)",
                 maxLength: 120,
-                nullable: true);
+                nullable: true
+            );
 
             migrationBuilder.CreateIndex(
                 name: "IX_AllocatProfiles_Availability",
                 table: "AllocatProfiles",
-                column: "Availability");
+                column: "Availability"
+            );
 
             migrationBuilder.CreateIndex(
                 name: "IX_AllocatProfiles_HourlyRate",
                 table: "AllocatProfiles",
-                column: "HourlyRate");
+                column: "HourlyRate"
+            );
 
             migrationBuilder.CreateIndex(
                 name: "IX_AllocatProfiles_IdNumber",
                 table: "AllocatProfiles",
                 column: "IdNumber",
                 unique: true,
-                filter: "\"IdNumber\" IS NOT NULL");
+                filter: "\"IdNumber\" IS NOT NULL"
+            );
 
             migrationBuilder.CreateIndex(
                 name: "IX_AllocatProfiles_IsVisible",
                 table: "AllocatProfiles",
-                column: "IsVisible");
+                column: "IsVisible"
+            );
 
             migrationBuilder.CreateIndex(
                 name: "IX_AllocatProfiles_IsVisible_Availability",
                 table: "AllocatProfiles",
-                columns: new[] { "IsVisible", "Availability" });
+                columns: new[] { "IsVisible", "Availability" }
+            );
 
             migrationBuilder.AddCheckConstraint(
                 name: "CK_AllocatProfiles_Availability",
                 table: "AllocatProfiles",
-                sql: "\"Availability\" IN ('available', 'busy', 'unavailable')");
+                sql: "\"Availability\" IN ('available', 'busy', 'unavailable')"
+            );
 
             migrationBuilder.AddCheckConstraint(
                 name: "CK_AllocatProfiles_AverageRating",
                 table: "AllocatProfiles",
-                sql: "\"AverageRating\" >= 0 AND \"AverageRating\" <= 5");
+                sql: "\"AverageRating\" >= 0 AND \"AverageRating\" <= 5"
+            );
 
             migrationBuilder.AddCheckConstraint(
                 name: "CK_AllocatProfiles_HourlyRate",
                 table: "AllocatProfiles",
-                sql: "\"HourlyRate\" IS NULL OR \"HourlyRate\" >= 0");
+                sql: "\"HourlyRate\" IS NULL OR \"HourlyRate\" >= 0"
+            );
 
             migrationBuilder.AddCheckConstraint(
                 name: "CK_AllocatProfiles_Level",
                 table: "AllocatProfiles",
-                sql: "\"Level\" >= 1 AND \"Level\" <= 5");
+                sql: "\"Level\" >= 1 AND \"Level\" <= 5"
+            );
 
             migrationBuilder.AddCheckConstraint(
                 name: "CK_AllocatProfiles_RatingCount",
                 table: "AllocatProfiles",
-                sql: "\"RatingCount\" >= 0");
+                sql: "\"RatingCount\" >= 0"
+            );
 
             migrationBuilder.AddCheckConstraint(
                 name: "CK_AllocatProfiles_ResponseTime",
                 table: "AllocatProfiles",
-                sql: "\"AverageResponseTimeMinutes\" IS NULL OR \"AverageResponseTimeMinutes\" >= 0");
+                sql: "\"AverageResponseTimeMinutes\" IS NULL OR \"AverageResponseTimeMinutes\" >= 0"
+            );
 
             migrationBuilder.AddCheckConstraint(
                 name: "CK_AllocatProfiles_YearsExperience",
                 table: "AllocatProfiles",
-                sql: "\"YearsExperience\" IS NULL OR (\"YearsExperience\" >= 0 AND \"YearsExperience\" <= 80)");
+                sql: "\"YearsExperience\" IS NULL OR (\"YearsExperience\" >= 0 AND \"YearsExperience\" <= 80)"
+            );
         }
 
         /// <inheritdoc />
@@ -200,75 +226,78 @@ namespace AllocatrApi.Migrations
         {
             migrationBuilder.DropIndex(
                 name: "IX_AllocatProfiles_Availability",
-                table: "AllocatProfiles");
+                table: "AllocatProfiles"
+            );
 
             migrationBuilder.DropIndex(
                 name: "IX_AllocatProfiles_HourlyRate",
-                table: "AllocatProfiles");
+                table: "AllocatProfiles"
+            );
 
             migrationBuilder.DropIndex(
                 name: "IX_AllocatProfiles_IdNumber",
-                table: "AllocatProfiles");
+                table: "AllocatProfiles"
+            );
 
             migrationBuilder.DropIndex(
                 name: "IX_AllocatProfiles_IsVisible",
-                table: "AllocatProfiles");
+                table: "AllocatProfiles"
+            );
 
             migrationBuilder.DropIndex(
                 name: "IX_AllocatProfiles_IsVisible_Availability",
-                table: "AllocatProfiles");
+                table: "AllocatProfiles"
+            );
 
             migrationBuilder.DropCheckConstraint(
                 name: "CK_AllocatProfiles_Availability",
-                table: "AllocatProfiles");
+                table: "AllocatProfiles"
+            );
 
             migrationBuilder.DropCheckConstraint(
                 name: "CK_AllocatProfiles_AverageRating",
-                table: "AllocatProfiles");
+                table: "AllocatProfiles"
+            );
 
             migrationBuilder.DropCheckConstraint(
                 name: "CK_AllocatProfiles_HourlyRate",
-                table: "AllocatProfiles");
+                table: "AllocatProfiles"
+            );
 
             migrationBuilder.DropCheckConstraint(
                 name: "CK_AllocatProfiles_Level",
-                table: "AllocatProfiles");
+                table: "AllocatProfiles"
+            );
 
             migrationBuilder.DropCheckConstraint(
                 name: "CK_AllocatProfiles_RatingCount",
-                table: "AllocatProfiles");
+                table: "AllocatProfiles"
+            );
 
             migrationBuilder.DropCheckConstraint(
                 name: "CK_AllocatProfiles_ResponseTime",
-                table: "AllocatProfiles");
+                table: "AllocatProfiles"
+            );
 
             migrationBuilder.DropCheckConstraint(
                 name: "CK_AllocatProfiles_YearsExperience",
-                table: "AllocatProfiles");
+                table: "AllocatProfiles"
+            );
 
             migrationBuilder.DropColumn(
                 name: "AverageResponseTimeMinutes",
-                table: "AllocatProfiles");
+                table: "AllocatProfiles"
+            );
 
-            migrationBuilder.DropColumn(
-                name: "Currency",
-                table: "AllocatProfiles");
+            migrationBuilder.DropColumn(name: "Currency", table: "AllocatProfiles");
 
-            migrationBuilder.DropColumn(
-                name: "Headline",
-                table: "AllocatProfiles");
+            migrationBuilder.DropColumn(name: "Headline", table: "AllocatProfiles");
 
-            migrationBuilder.DropColumn(
-                name: "IsVerified",
-                table: "AllocatProfiles");
+            migrationBuilder.DropColumn(name: "IsVerified", table: "AllocatProfiles");
 
-            migrationBuilder.DropColumn(
-                name: "Level",
-                table: "AllocatProfiles");
+            migrationBuilder.DropColumn(name: "Level", table: "AllocatProfiles");
 
-            migrationBuilder.DropColumn(
-                name: "Title",
-                table: "AllocatProfiles");
+            migrationBuilder.DropColumn(name: "Title", table: "AllocatProfiles");
 
             migrationBuilder.AlterColumn<string>(
                 name: "Description",
@@ -277,7 +306,8 @@ namespace AllocatrApi.Migrations
                 nullable: false,
                 oldClrType: typeof(string),
                 oldType: "character varying(2000)",
-                oldMaxLength: 2000);
+                oldMaxLength: 2000
+            );
 
             migrationBuilder.AlterColumn<int>(
                 name: "RatingCount",
@@ -286,7 +316,8 @@ namespace AllocatrApi.Migrations
                 nullable: false,
                 oldClrType: typeof(int),
                 oldType: "integer",
-                oldDefaultValue: 0);
+                oldDefaultValue: 0
+            );
 
             migrationBuilder.AlterColumn<bool>(
                 name: "IsVisible",
@@ -295,7 +326,8 @@ namespace AllocatrApi.Migrations
                 nullable: false,
                 oldClrType: typeof(bool),
                 oldType: "boolean",
-                oldDefaultValue: true);
+                oldDefaultValue: true
+            );
 
             migrationBuilder.AlterColumn<string>(
                 name: "IdNumber",
@@ -305,7 +337,8 @@ namespace AllocatrApi.Migrations
                 oldClrType: typeof(string),
                 oldType: "character varying(50)",
                 oldMaxLength: 50,
-                oldNullable: true);
+                oldNullable: true
+            );
 
             migrationBuilder.AlterColumn<decimal>(
                 name: "HourlyRate",
@@ -316,7 +349,8 @@ namespace AllocatrApi.Migrations
                 oldType: "numeric(12,2)",
                 oldPrecision: 12,
                 oldScale: 2,
-                oldNullable: true);
+                oldNullable: true
+            );
 
             migrationBuilder.AlterColumn<string>(
                 name: "Bio",
@@ -326,7 +360,8 @@ namespace AllocatrApi.Migrations
                 oldClrType: typeof(string),
                 oldType: "character varying(500)",
                 oldMaxLength: 500,
-                oldNullable: true);
+                oldNullable: true
+            );
 
             migrationBuilder.AlterColumn<decimal>(
                 name: "AverageRating",
@@ -337,7 +372,8 @@ namespace AllocatrApi.Migrations
                 oldType: "numeric(3,2)",
                 oldPrecision: 3,
                 oldScale: 2,
-                oldDefaultValue: 0m);
+                oldDefaultValue: 0m
+            );
 
             migrationBuilder.AlterColumn<string>(
                 name: "Availability",
@@ -347,7 +383,8 @@ namespace AllocatrApi.Migrations
                 oldClrType: typeof(string),
                 oldType: "character varying(20)",
                 oldMaxLength: 20,
-                oldDefaultValue: "available");
+                oldDefaultValue: "available"
+            );
         }
     }
 }

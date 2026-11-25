@@ -401,7 +401,6 @@
 //     }
 // }
 
-
 using AllocatrApi.Constants;
 using AllocatrApi.Data;
 using AllocatrApi.Dtos;
@@ -426,11 +425,10 @@ public class ReviewService
 
     public async Task<IReadOnlyList<ProjectAllocatRatingDto>> GetProjectRatingsAsync(
         Guid projectId,
-        Guid reviewerId)
+        Guid reviewerId
+    )
     {
-        var project = await _db.Projects
-            .AsNoTracking()
-            .FirstOrDefaultAsync(p => p.Id == projectId);
+        var project = await _db.Projects.AsNoTracking().FirstOrDefaultAsync(p => p.Id == projectId);
 
         if (project == null)
         {
@@ -459,12 +457,9 @@ public class ReviewService
             );
         }
 
-        var reviews = await _db.Reviews
-            .AsNoTracking()
-            .Where(r =>
-                r.ProjectId == projectId &&
-                r.ReviewerId == reviewerId
-            )
+        var reviews = await _db
+            .Reviews.AsNoTracking()
+            .Where(r => r.ProjectId == projectId && r.ReviewerId == reviewerId)
             .OrderBy(r => r.CreatedAt)
             .ToListAsync();
 
@@ -478,23 +473,21 @@ public class ReviewService
             return Array.Empty<ProjectAllocatRatingDto>();
         }
 
-        var allocatIds = reviews
-            .Select(r => r.AllocatProfileId)
-            .ToHashSet();
+        var allocatIds = reviews.Select(r => r.AllocatProfileId).ToHashSet();
 
         /*
          * Return the latest aggregate rating information
          * alongside the client's project-specific rating.
          */
-        var summaries = await _db.Reviews
-            .AsNoTracking()
+        var summaries = await _db
+            .Reviews.AsNoTracking()
             .Where(r => allocatIds.Contains(r.AllocatProfileId))
             .GroupBy(r => r.AllocatProfileId)
             .Select(g => new
             {
                 AllocatId = g.Key,
                 RatingCount = g.Count(),
-                AverageRating = g.Average(r => (decimal)r.Rating)
+                AverageRating = g.Average(r => (decimal)r.Rating),
             })
             .ToDictionaryAsync(x => x.AllocatId);
 
@@ -525,7 +518,8 @@ public class ReviewService
     public async Task<IReadOnlyList<ProjectAllocatRatingDto>> SubmitProjectRatingsAsync(
         Guid projectId,
         Guid reviewerId,
-        SubmitProjectRatingsDto dto)
+        SubmitProjectRatingsDto dto
+    )
     {
         if (dto.Ratings == null || dto.Ratings.Count == 0)
         {
@@ -536,17 +530,15 @@ public class ReviewService
          * Prevent the same Allocat appearing twice
          * in one request.
          */
-        var duplicateAllocatIds = dto.Ratings
-            .GroupBy(r => r.AllocatId)
+        var duplicateAllocatIds = dto
+            .Ratings.GroupBy(r => r.AllocatId)
             .Where(g => g.Count() > 1)
             .Select(g => g.Key)
             .ToList();
 
         if (duplicateAllocatIds.Count > 0)
         {
-            throw new ArgumentException(
-                "An Allocat can only be rated once per request."
-            );
+            throw new ArgumentException("An Allocat can only be rated once per request.");
         }
 
         /*
@@ -556,23 +548,17 @@ public class ReviewService
         {
             if (rating.AllocatId == Guid.Empty)
             {
-                throw new ArgumentException(
-                    "A valid Allocat ID is required."
-                );
+                throw new ArgumentException("A valid Allocat ID is required.");
             }
 
             if (rating.Rating < 1 || rating.Rating > 5)
             {
-                throw new ArgumentException(
-                    "Rating must be between 1 and 5."
-                );
+                throw new ArgumentException("Rating must be between 1 and 5.");
             }
 
             if (rating.Comment != null && rating.Comment.Trim().Length > 1000)
             {
-                throw new ArgumentException(
-                    "Review comments cannot exceed 1,000 characters."
-                );
+                throw new ArgumentException("Review comments cannot exceed 1,000 characters.");
             }
         }
 
@@ -583,9 +569,7 @@ public class ReviewService
          * navigation collections here because the
          * queries below handle assignments separately.
          */
-        var project = await _db.Projects
-            .AsNoTracking()
-            .FirstOrDefaultAsync(p => p.Id == projectId);
+        var project = await _db.Projects.AsNoTracking().FirstOrDefaultAsync(p => p.Id == projectId);
 
         if (project == null)
         {
@@ -614,30 +598,26 @@ public class ReviewService
             );
         }
 
-        var requestedAllocatIds = dto.Ratings
-            .Select(r => r.AllocatId)
-            .ToHashSet();
+        var requestedAllocatIds = dto.Ratings.Select(r => r.AllocatId).ToHashSet();
 
         /*
          * Only accepted, currently active project
          * assignments are eligible for rating.
          */
-        var eligibleAllocatIds = await _db.ProjectAllocats
-            .AsNoTracking()
+        var eligibleAllocatIds = await _db
+            .ProjectAllocats.AsNoTracking()
             .Where(pa =>
-                pa.ProjectId == projectId &&
-                pa.Status == ProjectAllocatStatus.Accepted &&
-                pa.RemovedAt == null &&
-                requestedAllocatIds.Contains(pa.AllocatProfileId)
+                pa.ProjectId == projectId
+                && pa.Status == ProjectAllocatStatus.Accepted
+                && pa.RemovedAt == null
+                && requestedAllocatIds.Contains(pa.AllocatProfileId)
             )
             .Select(pa => pa.AllocatProfileId)
             .ToListAsync();
 
         var eligibleSet = eligibleAllocatIds.ToHashSet();
 
-        var invalidAllocatIds = requestedAllocatIds
-            .Where(id => !eligibleSet.Contains(id))
-            .ToList();
+        var invalidAllocatIds = requestedAllocatIds.Where(id => !eligibleSet.Contains(id)).ToList();
 
         if (invalidAllocatIds.Count > 0)
         {
@@ -657,11 +637,11 @@ public class ReviewService
              * Existing ratings are updated rather than
              * creating duplicate reviews.
              */
-            var existingReviews = await _db.Reviews
-                .Where(r =>
-                    r.ProjectId == projectId &&
-                    r.ReviewerId == reviewerId &&
-                    requestedAllocatIds.Contains(r.AllocatProfileId)
+            var existingReviews = await _db
+                .Reviews.Where(r =>
+                    r.ProjectId == projectId
+                    && r.ReviewerId == reviewerId
+                    && requestedAllocatIds.Contains(r.AllocatProfileId)
                 )
                 .ToDictionaryAsync(r => r.AllocatProfileId);
 
@@ -678,9 +658,7 @@ public class ReviewService
             {
                 var comment = NormalizeComment(input.Comment);
 
-                if (existingReviews.TryGetValue(
-                    input.AllocatId,
-                    out var existingReview))
+                if (existingReviews.TryGetValue(input.AllocatId, out var existingReview))
                 {
                     /*
                      * Existing review:
@@ -703,7 +681,7 @@ public class ReviewService
                         Rating = input.Rating,
                         Comment = comment,
                         CreatedAt = now,
-                        UpdatedAt = now
+                        UpdatedAt = now,
                     };
 
                     _db.Reviews.Add(review);
@@ -725,15 +703,15 @@ public class ReviewService
              * Calculate all affected Allocat summaries
              * in one query.
              */
-            var summaries = await _db.Reviews
-                .AsNoTracking()
+            var summaries = await _db
+                .Reviews.AsNoTracking()
                 .Where(r => requestedAllocatIds.Contains(r.AllocatProfileId))
                 .GroupBy(r => r.AllocatProfileId)
                 .Select(g => new
                 {
                     AllocatId = g.Key,
                     RatingCount = g.Count(),
-                    AverageRating = g.Average(r => (decimal)r.Rating)
+                    AverageRating = g.Average(r => (decimal)r.Rating),
                 })
                 .ToDictionaryAsync(x => x.AllocatId);
 
@@ -743,27 +721,20 @@ public class ReviewService
              * points to AllocatProfile.Id or
              * AllocatProfile.AllocatrUserId.
              */
-            var profiles = await _db.AllocatProfiles
-                .Where(a =>
-                    requestedAllocatIds.Contains(a.AllocatrUserId)
-                )
+            var profiles = await _db
+                .AllocatProfiles.Where(a => requestedAllocatIds.Contains(a.AllocatrUserId))
                 .ToListAsync();
 
             foreach (var profile in profiles)
             {
-                if (!summaries.TryGetValue(
-                    profile.AllocatrUserId,
-                    out var summary))
+                if (!summaries.TryGetValue(profile.AllocatrUserId, out var summary))
                 {
                     profile.AverageRating = 0m;
                     profile.RatingCount = 0;
                     continue;
                 }
 
-                profile.AverageRating = Math.Round(
-                    summary.AverageRating,
-                    2
-                );
+                profile.AverageRating = Math.Round(summary.AverageRating, 2);
 
                 profile.RatingCount = summary.RatingCount;
             }
@@ -774,8 +745,8 @@ public class ReviewService
             /*
              * Preserve the order sent by the frontend.
              */
-            return dto.Ratings
-                .Select(input =>
+            return dto
+                .Ratings.Select(input =>
                 {
                     var review = savedReviews[input.AllocatId];
                     var summary = summaries[input.AllocatId];
@@ -816,9 +787,7 @@ public class ReviewService
 
         if (normalized.Length > 1000)
         {
-            throw new ArgumentException(
-                "Review comments cannot exceed 1,000 characters."
-            );
+            throw new ArgumentException("Review comments cannot exceed 1,000 characters.");
         }
 
         return normalized;

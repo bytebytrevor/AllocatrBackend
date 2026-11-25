@@ -7,8 +7,7 @@ public class ApiExceptionHandler : IExceptionHandler
 {
     private readonly ILogger<ApiExceptionHandler> _logger;
 
-    public ApiExceptionHandler(
-        ILogger<ApiExceptionHandler> logger)
+    public ApiExceptionHandler(ILogger<ApiExceptionHandler> logger)
     {
         _logger = logger;
     }
@@ -16,65 +15,38 @@ public class ApiExceptionHandler : IExceptionHandler
     public async ValueTask<bool> TryHandleAsync(
         HttpContext httpContext,
         Exception exception,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         var (statusCode, title) = exception switch
         {
-            ArgumentException =>
-                (
-                    StatusCodes.Status400BadRequest,
-                    "Invalid request"
-                ),
+            ArgumentException => (StatusCodes.Status400BadRequest, "Invalid request"),
 
-            KeyNotFoundException =>
-                (
-                    StatusCodes.Status404NotFound,
-                    "Resource not found"
-                ),
+            KeyNotFoundException => (StatusCodes.Status404NotFound, "Resource not found"),
 
-            InvalidOperationException =>
-                (
-                    StatusCodes.Status409Conflict,
-                    "Request conflict"
-                ),
+            InvalidOperationException => (StatusCodes.Status409Conflict, "Request conflict"),
 
-            UnauthorizedAccessException =>
-                (
-                    StatusCodes.Status403Forbidden,
-                    "Access denied"
-                ),
+            UnauthorizedAccessException => (StatusCodes.Status403Forbidden, "Access denied"),
 
-            _ =>
-                (
-                    StatusCodes.Status500InternalServerError,
-                    "An unexpected error occurred"
-                )
+            _ => (StatusCodes.Status500InternalServerError, "An unexpected error occurred"),
         };
 
         if (statusCode >= 500)
         {
-            _logger.LogError(
-                exception,
-                "Unhandled API exception"
-            );
+            _logger.LogError(exception, "Unhandled API exception");
         }
 
         var problem = new ProblemDetails
         {
             Status = statusCode,
             Title = title,
-            Detail = statusCode >= 500
-                ? "The request could not be completed."
-                : exception.Message,
-            Instance = httpContext.Request.Path
+            Detail = statusCode >= 500 ? "The request could not be completed." : exception.Message,
+            Instance = httpContext.Request.Path,
         };
 
         httpContext.Response.StatusCode = statusCode;
 
-        await httpContext.Response.WriteAsJsonAsync(
-            problem,
-            cancellationToken
-        );
+        await httpContext.Response.WriteAsJsonAsync(problem, cancellationToken);
 
         return true;
     }

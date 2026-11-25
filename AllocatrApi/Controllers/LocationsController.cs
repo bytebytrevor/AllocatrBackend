@@ -62,17 +62,18 @@ public class LocationsController : ControllerBase
     {
         var normalizedCode = countryCode.Trim().ToUpperInvariant();
 
-        if (normalizedCode.Length != 2 ||
-            normalizedCode.Any(character => character < 'A' || character > 'Z'))
+        if (
+            normalizedCode.Length != 2
+            || normalizedCode.Any(character => character < 'A' || character > 'Z')
+        )
         {
-            return BadRequest(new
-            {
-                message = "Country must use a two-letter code such as GB, ZA or ZW."
-            });
+            return BadRequest(
+                new { message = "Country must use a two-letter code such as GB, ZA or ZW." }
+            );
         }
 
-        var country = await _dbContext.Countries
-            .AsNoTracking()
+        var country = await _dbContext
+            .Countries.AsNoTracking()
             .Where(country => country.Code == normalizedCode)
             .Select(country => new LocationCountryDto(
                 country.Code,
@@ -93,15 +94,11 @@ public class LocationsController : ControllerBase
             return Ok(new List<LocationCityDto>());
         }
 
-        var cities = await _dbContext.Cities
-            .AsNoTracking()
+        var cities = await _dbContext
+            .Cities.AsNoTracking()
             .Where(city => city.CountryCode == normalizedCode)
             .OrderBy(city => city.Name)
-            .Select(city => new LocationCityDto(
-                city.Id,
-                city.Name,
-                city.CountryCode
-            ))
+            .Select(city => new LocationCityDto(city.Id, city.Name, city.CountryCode))
             .ToListAsync(cancellationToken);
 
         return Ok(cities);

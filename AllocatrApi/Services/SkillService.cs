@@ -20,38 +20,28 @@ public class SkillService
 
         if (string.IsNullOrWhiteSpace(normalizedName))
         {
-            throw new ArgumentException(
-                "Skill name is required."
-            );
+            throw new ArgumentException("Skill name is required.");
         }
 
         if (normalizedName.Length > 80)
         {
-            throw new ArgumentException(
-                "Skill name cannot exceed 80 characters."
-            );
+            throw new ArgumentException("Skill name cannot exceed 80 characters.");
         }
 
-        var category = await _db.SkillCategories
-            .AsNoTracking()
-            .FirstOrDefaultAsync(c =>
-                c.Id == dto.SkillCategoryId
-            );
+        var category = await _db
+            .SkillCategories.AsNoTracking()
+            .FirstOrDefaultAsync(c => c.Id == dto.SkillCategoryId);
 
         if (category == null)
         {
-            throw new KeyNotFoundException(
-                "The selected skill category does not exist."
-            );
+            throw new KeyNotFoundException("The selected skill category does not exist.");
         }
 
         var normalizedNameLower = normalizedName.ToLowerInvariant();
 
-        var alreadyExists = await _db.Skills
-            .AnyAsync(s =>
-                s.SkillCategoryId == dto.SkillCategoryId &&
-                s.Name.ToLower() == normalizedNameLower
-            );
+        var alreadyExists = await _db.Skills.AnyAsync(s =>
+            s.SkillCategoryId == dto.SkillCategoryId && s.Name.ToLower() == normalizedNameLower
+        );
 
         if (alreadyExists)
         {
@@ -64,47 +54,32 @@ public class SkillService
         {
             Id = Guid.NewGuid(),
             Name = normalizedName,
-            SkillCategoryId = dto.SkillCategoryId
+            SkillCategoryId = dto.SkillCategoryId,
         };
 
         _db.Skills.Add(skill);
 
         await _db.SaveChangesAsync();
 
-        return new SkillDto(
-            skill.Id,
-            skill.Name,
-            category.Id,
-            category.Name
-        );
+        return new SkillDto(skill.Id, skill.Name, category.Id, category.Name);
     }
 
     public async Task<SkillDto?> GetSkillByIdAsync(Guid id)
     {
-        return await _db.Skills
-            .AsNoTracking()
+        return await _db
+            .Skills.AsNoTracking()
             .Where(s => s.Id == id)
-            .Select(s => new SkillDto(
-                s.Id,
-                s.Name,
-                s.SkillCategoryId,
-                s.SkillCategory.Name
-            ))
+            .Select(s => new SkillDto(s.Id, s.Name, s.SkillCategoryId, s.SkillCategory.Name))
             .FirstOrDefaultAsync();
     }
 
     public async Task<List<SkillOptionDto>> GetAllSkillsAsync()
     {
-        return await _db.Skills
-            .AsNoTracking()
+        return await _db
+            .Skills.AsNoTracking()
             .OrderBy(s => s.SkillCategory.DisplayOrder)
             .ThenBy(s => s.Name)
-            .Select(s => new SkillOptionDto(
-                s.Id,
-                s.Name,
-                s.SkillCategoryId,
-                s.SkillCategory.Name
-            ))
+            .Select(s => new SkillOptionDto(s.Id, s.Name, s.SkillCategoryId, s.SkillCategory.Name))
             .ToListAsync();
     }
 }

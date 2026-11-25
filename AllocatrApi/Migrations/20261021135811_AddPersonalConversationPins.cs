@@ -15,15 +15,14 @@ namespace AllocatrApi.Migrations
                 table: "ConversationParticipants",
                 type: "boolean",
                 nullable: false,
-                defaultValue: false);
+                defaultValue: false
+            );
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropColumn(
-                name: "IsPinned",
-                table: "ConversationParticipants");
+            migrationBuilder.DropColumn(name: "IsPinned", table: "ConversationParticipants");
         }
     }
 }

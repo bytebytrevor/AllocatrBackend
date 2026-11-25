@@ -15,26 +15,24 @@ namespace AllocatrApi.Migrations
                 table: "UserDocuments",
                 type: "character varying(200)",
                 maxLength: 200,
-                nullable: true);
+                nullable: true
+            );
 
             migrationBuilder.AddColumn<string>(
                 name: "Title",
                 table: "UserDocuments",
                 type: "character varying(200)",
                 maxLength: 200,
-                nullable: true);
+                nullable: true
+            );
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropColumn(
-                name: "IssuingInstitution",
-                table: "UserDocuments");
+            migrationBuilder.DropColumn(name: "IssuingInstitution", table: "UserDocuments");
 
-            migrationBuilder.DropColumn(
-                name: "Title",
-                table: "UserDocuments");
+            migrationBuilder.DropColumn(name: "Title", table: "UserDocuments");
         }
     }
 }

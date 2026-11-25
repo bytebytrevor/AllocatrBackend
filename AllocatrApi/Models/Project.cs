@@ -31,6 +31,11 @@ public class Project
     public DateOnly? StartDate { get; set; }
     public DateOnly? DueDate { get; set; }
 
+    // Cancellation is an audited state change, never a deletion.
+    public DateTime? CancelledAt { get; set; }
+    public Guid? CancelledByUserId { get; set; }
+    public string? CancellationReason { get; set; }
+
     // Completion request
     public Guid? CompletionRequestedByAllocatId { get; set; }
     public AllocatProfile? CompletionRequestedByAllocat { get; set; }
@@ -46,7 +51,8 @@ public class Project
     // Navigation collections
     public ICollection<ProjectTag> Tags { get; set; } = new List<ProjectTag>();
     public ICollection<ProjectSkill> ProjectSkills { get; set; } = new List<ProjectSkill>();
-    public ICollection<ProjectAllocat> AllocatAssignments { get; set; } = new List<ProjectAllocat>();
+    public ICollection<ProjectAllocat> AllocatAssignments { get; set; } =
+        new List<ProjectAllocat>();
     public ICollection<ProjectAttachment> Attachments { get; set; } = new List<ProjectAttachment>();
     public ICollection<TaskItem> Tasks { get; set; } = new List<TaskItem>();
     public ICollection<ProjectMessage> Messages { get; set; } = new List<ProjectMessage>();

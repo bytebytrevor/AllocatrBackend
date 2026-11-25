@@ -201,10 +201,27 @@ public class AllocatProfileController : ControllerBase
     [AllowAnonymous]
     [HttpGet]
     public async Task<ActionResult<PagedResultDto<AllocatProfileListItemDto>>>
-        GetAllAllocatProfiles([FromQuery] AllocatProfileSearchDto query)
+        GetAllAllocatProfiles(
+            [FromQuery] AllocatProfileSearchDto query,
+            CancellationToken cancellationToken)
     {
-        var profiles = await _allocatProfileService.GetAllAllocatProfilesAsync(query);
-        return Ok(profiles);
+        try
+        {
+            var profiles = await _allocatProfileService.GetAllAllocatProfilesAsync(query, cancellationToken);
+            return Ok(profiles);
+        }
+        catch (ArgumentException exception)
+        {
+            return BadRequest(new { message = exception.Message });
+        }
+    }
+
+    [AllowAnonymous]
+    [HttpGet("filters")]
+    public async Task<ActionResult<AllocatDirectoryFiltersDto>> GetDirectoryFilters(
+        CancellationToken cancellationToken)
+    {
+        return Ok(await _allocatProfileService.GetDirectoryFiltersAsync(cancellationToken));
     }
 
     private ObjectResult AllocatAccessRequired()

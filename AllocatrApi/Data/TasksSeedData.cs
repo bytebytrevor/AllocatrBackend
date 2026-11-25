@@ -3,7 +3,4 @@ using AllocatrApi.Dtos;
 
 namespace AllocatrApi.Data;
 
-public class TasksSeedData
-{
-    
-}
+public class TasksSeedData { }

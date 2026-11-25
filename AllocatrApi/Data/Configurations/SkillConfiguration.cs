@@ -1,6 +1,6 @@
-using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using AllocatrApi.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace AllocatrApi.Data.Configurations;
 
@@ -10,16 +10,13 @@ public class SkillConfiguration : IEntityTypeConfiguration<Skill>
     {
         builder.HasKey(s => s.Id);
 
-        builder.Property(s => s.Name)
-            .IsRequired()
-            .HasMaxLength(80);
+        builder.Property(s => s.Name).IsRequired().HasMaxLength(80);
 
-        builder.HasIndex(s => new { s.SkillCategoryId, s.Name })
-            .IsUnique();
+        builder.HasIndex(s => new { s.SkillCategoryId, s.Name }).IsUnique();
 
-        builder.HasOne(s => s.SkillCategory)
+        builder
+            .HasOne(s => s.SkillCategory)
             .WithMany(sc => sc.Skills)
             .HasForeignKey(s => s.SkillCategoryId);
-
     }
 }

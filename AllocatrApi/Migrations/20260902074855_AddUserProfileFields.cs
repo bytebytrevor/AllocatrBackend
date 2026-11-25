@@ -220,7 +220,6 @@
 //     }
 // }
 
-
 using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
@@ -239,7 +238,8 @@ namespace AllocatrApi.Migrations
                 nullable: false,
                 defaultValue: false,
                 oldClrType: typeof(bool),
-                oldType: "boolean");
+                oldType: "boolean"
+            );
 
             migrationBuilder.AlterColumn<string>(
                 name: "FullName",
@@ -249,7 +249,8 @@ namespace AllocatrApi.Migrations
                 nullable: false,
                 oldClrType: typeof(string),
                 oldType: "character varying(60)",
-                oldMaxLength: 60);
+                oldMaxLength: 60
+            );
 
             migrationBuilder.AlterColumn<string>(
                 name: "AvatarUrl",
@@ -259,32 +260,31 @@ namespace AllocatrApi.Migrations
                 nullable: true,
                 oldClrType: typeof(string),
                 oldType: "text",
-                oldNullable: true);
+                oldNullable: true
+            );
 
             migrationBuilder.AddColumn<DateTime>(
                 name: "CreatedAt",
                 table: "AspNetUsers",
                 type: "timestamp with time zone",
                 nullable: false,
-                defaultValueSql: "CURRENT_TIMESTAMP");
+                defaultValueSql: "CURRENT_TIMESTAMP"
+            );
 
             migrationBuilder.AddColumn<string>(
                 name: "Location",
                 table: "AspNetUsers",
                 type: "character varying(150)",
                 maxLength: 150,
-                nullable: true);
+                nullable: true
+            );
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropColumn(
-                name: "CreatedAt",
-                table: "AspNetUsers");
+            migrationBuilder.DropColumn(name: "CreatedAt", table: "AspNetUsers");
 
-            migrationBuilder.DropColumn(
-                name: "Location",
-                table: "AspNetUsers");
+            migrationBuilder.DropColumn(name: "Location", table: "AspNetUsers");
 
             migrationBuilder.AlterColumn<bool>(
                 name: "IsAllocat",
@@ -293,7 +293,8 @@ namespace AllocatrApi.Migrations
                 nullable: false,
                 oldClrType: typeof(bool),
                 oldType: "boolean",
-                oldDefaultValue: false);
+                oldDefaultValue: false
+            );
 
             migrationBuilder.AlterColumn<string>(
                 name: "FullName",
@@ -303,7 +304,8 @@ namespace AllocatrApi.Migrations
                 nullable: false,
                 oldClrType: typeof(string),
                 oldType: "character varying(150)",
-                oldMaxLength: 150);
+                oldMaxLength: 150
+            );
 
             migrationBuilder.AlterColumn<string>(
                 name: "AvatarUrl",
@@ -313,7 +315,8 @@ namespace AllocatrApi.Migrations
                 oldClrType: typeof(string),
                 oldType: "character varying(1000)",
                 oldMaxLength: 1000,
-                oldNullable: true);
+                oldNullable: true
+            );
         }
     }
 }

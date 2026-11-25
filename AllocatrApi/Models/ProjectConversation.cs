@@ -12,8 +12,10 @@ public class ProjectConversation
     public bool IsProjectWide { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
+
     // Optimistic concurrency prevents two replies receiving the same position.
     public long LastSequence { get; set; }
+
     // Retained only for compatibility with the previously supplied message-pin migration.
     public long PinVersion { get; set; }
     public Guid? TaskId { get; set; }
@@ -48,12 +50,14 @@ public class ConversationMessage
     public DateTime? DeletedAt { get; set; }
     public Guid? DeletedById { get; set; }
     public long Version { get; set; }
+
     // Snapshot attribution: forwarding never exposes the private source conversation ID.
     public string? ForwardedFromName { get; set; }
     public DateTime? ForwardedCreatedAt { get; set; }
     public string? ForwardNote { get; set; }
     public Guid ClientRequestId { get; set; }
     public string RequestHash { get; set; } = string.Empty;
+
     // Legacy individual-message pin columns; no longer exposed or used by Messaging.
     public DateTime? PinnedAt { get; set; }
     public Guid? PinnedById { get; set; }

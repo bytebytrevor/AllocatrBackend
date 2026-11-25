@@ -13,13 +13,14 @@ public class ProfileService
 {
     private const long MaxProfilePictureSize = 5 * 1024 * 1024;
 
-    private static readonly HashSet<string> AllowedImageTypes =
-        new(StringComparer.OrdinalIgnoreCase)
-        {
-            "image/jpeg",
-            "image/png",
-            "image/webp",
-        };
+    private static readonly HashSet<string> AllowedImageTypes = new(
+        StringComparer.OrdinalIgnoreCase
+    )
+    {
+        "image/jpeg",
+        "image/png",
+        "image/webp",
+    };
 
     private readonly UserManager<AllocatrUser> _userManager;
     private readonly UserFileService _userFiles;
@@ -51,9 +52,7 @@ public class ProfileService
 
     public async Task<ProfileDto?> GetProfileAsync(Guid userId)
     {
-        var user = await _userManager.FindByIdAsync(
-            userId.ToString()
-        );
+        var user = await _userManager.FindByIdAsync(userId.ToString());
 
         if (user == null)
         {
@@ -68,14 +67,9 @@ public class ProfileService
      * UPDATE
      * -------------------------------------------------------- */
 
-    public async Task<ProfileDto?> UpdateProfileAsync(
-        Guid userId,
-        UpdateProfileDto request
-    )
+    public async Task<ProfileDto?> UpdateProfileAsync(Guid userId, UpdateProfileDto request)
     {
-        var user = await _userManager.FindByIdAsync(
-            userId.ToString()
-        );
+        var user = await _userManager.FindByIdAsync(userId.ToString());
 
         if (user == null)
         {
@@ -86,16 +80,12 @@ public class ProfileService
 
         if (string.IsNullOrWhiteSpace(fullName))
         {
-            throw new ArgumentException(
-                "Full name is required."
-            );
+            throw new ArgumentException("Full name is required.");
         }
 
         if (fullName.Length > 150)
         {
-            throw new ArgumentException(
-                "Full name cannot exceed 150 characters."
-            );
+            throw new ArgumentException("Full name cannot exceed 150 characters.");
         }
 
         var phoneNumber = CleanOptionalValue(request.PhoneNumber);
@@ -119,13 +109,18 @@ public class ProfileService
             );
 
             // Changing country without sending a new city clears the old city.
-            cityName = request.CityNameProvided
-                ? CleanOptionalValue(request.CityName)
-                : countryChanged ? null : user.CityName;
+            cityName =
+                request.CityNameProvided ? CleanOptionalValue(request.CityName)
+                : countryChanged ? null
+                : user.CityName;
 
-            if (countryCode != null &&
-                (countryCode.Length != 2 ||
-                 countryCode.Any(character => character < 'A' || character > 'Z')))
+            if (
+                countryCode != null
+                && (
+                    countryCode.Length != 2
+                    || countryCode.Any(character => character < 'A' || character > 'Z')
+                )
+            )
             {
                 throw new ArgumentException(
                     "Country must use a two-letter code such as GB, ZA or ZW."
@@ -134,16 +129,12 @@ public class ProfileService
 
             if (cityName?.Length > 150)
             {
-                throw new ArgumentException(
-                    "City name cannot exceed 150 characters."
-                );
+                throw new ArgumentException("City name cannot exceed 150 characters.");
             }
 
             if (countryCode == null && cityName != null)
             {
-                throw new ArgumentException(
-                    "Select a country before adding a city."
-                );
+                throw new ArgumentException("Select a country before adding a city.");
             }
 
             // Residence accepts every seeded country, not just operating countries.
@@ -151,9 +142,7 @@ public class ProfileService
 
             if (countryCode != null && countryName == null)
             {
-                throw new ArgumentException(
-                    "Select a country from the country catalogue."
-                );
+                throw new ArgumentException("Select a country from the country catalogue.");
             }
 
             // The user has now explicitly supplied structured residence data.
@@ -173,9 +162,7 @@ public class ProfileService
 
                 if (legacyLocation?.Length > 150)
                 {
-                    throw new ArgumentException(
-                        "Location cannot exceed 150 characters."
-                    );
+                    throw new ArgumentException("Location cannot exceed 150 characters.");
                 }
             }
         }
@@ -191,9 +178,7 @@ public class ProfileService
 
         if (!result.Succeeded)
         {
-            throw new InvalidOperationException(
-                FormatIdentityErrors(result)
-            );
+            throw new InvalidOperationException(FormatIdentityErrors(result));
         }
 
         return MapToDto(user, countryName);
@@ -203,13 +188,9 @@ public class ProfileService
      * EMAIL VERIFICATION
      * -------------------------------------------------------- */
 
-    public async Task<bool> SendEmailVerificationAsync(
-        Guid userId
-    )
+    public async Task<bool> SendEmailVerificationAsync(Guid userId)
     {
-        var user = await _userManager.FindByIdAsync(
-            userId.ToString()
-        );
+        var user = await _userManager.FindByIdAsync(userId.ToString());
 
         if (user == null)
         {
@@ -218,47 +199,31 @@ public class ProfileService
 
         if (string.IsNullOrWhiteSpace(user.Email))
         {
-            throw new InvalidOperationException(
-                "This account does not have an email address."
-            );
+            throw new InvalidOperationException("This account does not have an email address.");
         }
 
         if (user.EmailConfirmed)
         {
-            throw new InvalidOperationException(
-                "Your email address is already verified."
-            );
+            throw new InvalidOperationException("Your email address is already verified.");
         }
 
-        var token =
-            await _userManager.GenerateEmailConfirmationTokenAsync(
-                user
-            );
+        var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
 
-        var encodedToken = WebEncoders.Base64UrlEncode(
-            Encoding.UTF8.GetBytes(token)
-        );
+        var encodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
 
-        var frontendUrl =
-            _configuration["Frontend:BaseUrl"];
+        var frontendUrl = _configuration["Frontend:BaseUrl"];
 
         if (string.IsNullOrWhiteSpace(frontendUrl))
         {
-            throw new InvalidOperationException(
-                "Frontend URL has not been configured."
-            );
+            throw new InvalidOperationException("Frontend URL has not been configured.");
         }
 
         var verificationUrl =
-            $"{frontendUrl.TrimEnd('/')}/verify-email" +
-            $"?userId={user.Id}" +
-            $"&token={encodedToken}";
+            $"{frontendUrl.TrimEnd('/')}/verify-email"
+            + $"?userId={user.Id}"
+            + $"&token={encodedToken}";
 
-        await _emailService.SendEmailVerificationAsync(
-            user.Email,
-            user.FullName,
-            verificationUrl
-        );
+        await _emailService.SendEmailVerificationAsync(user.Email, user.FullName, verificationUrl);
 
         return true;
     }
@@ -267,14 +232,9 @@ public class ProfileService
      * PROFILE PICTURE
      * -------------------------------------------------------- */
 
-    public async Task<string?> UploadProfilePictureAsync(
-        Guid userId,
-        IFormFile file
-    )
+    public async Task<string?> UploadProfilePictureAsync(Guid userId, IFormFile file)
     {
-        var user = await _userManager.FindByIdAsync(
-            userId.ToString()
-        );
+        var user = await _userManager.FindByIdAsync(userId.ToString());
 
         if (user == null)
         {
@@ -287,60 +247,38 @@ public class ProfileService
 
         if (user.AvatarFileId.HasValue)
         {
-            oldAvatar = await _dbContext.StoredFiles.FindAsync(
-                user.AvatarFileId.Value
-            );
+            oldAvatar = await _dbContext.StoredFiles.FindAsync(user.AvatarFileId.Value);
         }
 
-        var newAvatar =
-            await _userFiles.UploadAvatarAsync(
-                userId,
-                file
-            );
+        var newAvatar = await _userFiles.UploadAvatarAsync(userId, file);
 
-        var publicUrl =
-            _storage.GetPublicUrl(
-                newAvatar.Bucket,
-                newAvatar.StoragePath
-            );
+        var publicUrl = _storage.GetPublicUrl(newAvatar.Bucket, newAvatar.StoragePath);
 
-        var cacheVersion =
-            DateTimeOffset.UtcNow
-                .ToUnixTimeMilliseconds();
+        var cacheVersion = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
 
-        var avatarUrl =
-            $"{publicUrl}?v={cacheVersion}";
+        var avatarUrl = $"{publicUrl}?v={cacheVersion}";
 
         user.AvatarFileId = newAvatar.Id;
         user.AvatarUrl = avatarUrl;
 
-        var updateResult =
-            await _userManager.UpdateAsync(user);
+        var updateResult = await _userManager.UpdateAsync(user);
 
         if (!updateResult.Succeeded)
         {
-            await _userFiles.DeleteStoredFileAsync(
-                newAvatar
-            );
+            await _userFiles.DeleteStoredFileAsync(newAvatar);
 
-            throw new InvalidOperationException(
-                FormatIdentityErrors(updateResult)
-            );
+            throw new InvalidOperationException(FormatIdentityErrors(updateResult));
         }
 
         if (oldAvatar != null)
         {
             try
             {
-                await _userFiles.DeleteStoredFileAsync(
-                    oldAvatar
-                );
+                await _userFiles.DeleteStoredFileAsync(oldAvatar);
             }
             catch (Exception error)
             {
-                Console.Error.WriteLine(
-                    $"Could not delete old avatar {oldAvatar.Id}: {error}"
-                );
+                Console.Error.WriteLine($"Could not delete old avatar {oldAvatar.Id}: {error}");
             }
         }
 
@@ -351,29 +289,21 @@ public class ProfileService
      * VALIDATION
      * -------------------------------------------------------- */
 
-    private static void ValidateProfilePicture(
-        IFormFile file
-    )
+    private static void ValidateProfilePicture(IFormFile file)
     {
         if (file == null || file.Length == 0)
         {
-            throw new ArgumentException(
-                "No image was uploaded."
-            );
+            throw new ArgumentException("No image was uploaded.");
         }
 
         if (file.Length > MaxProfilePictureSize)
         {
-            throw new ArgumentException(
-                "The profile picture cannot exceed 5 MB."
-            );
+            throw new ArgumentException("The profile picture cannot exceed 5 MB.");
         }
 
         if (!AllowedImageTypes.Contains(file.ContentType))
         {
-            throw new ArgumentException(
-                "Profile pictures must be JPEG, PNG or WebP."
-            );
+            throw new ArgumentException("Profile pictures must be JPEG, PNG or WebP.");
         }
     }
 
@@ -388,25 +318,21 @@ public class ProfileService
             return null;
         }
 
-        return await _dbContext.Countries
-            .AsNoTracking()
+        return await _dbContext
+            .Countries.AsNoTracking()
             .Where(country => country.Code == countryCode)
             .Select(country => country.Name)
             .SingleOrDefaultAsync();
     }
 
-    private static ProfileDto MapToDto(
-        AllocatrUser user,
-        string? countryName
-    )
+    private static ProfileDto MapToDto(AllocatrUser user, string? countryName)
     {
         // Location remains a display-only compatibility field for existing readers.
         // Generate it rather than squeezing the full label into its old DB length.
-        var location = countryName == null
-            ? user.Location
-            : string.IsNullOrWhiteSpace(user.CityName)
-                ? countryName
-                : $"{user.CityName}, {countryName}";
+        var location =
+            countryName == null ? user.Location
+            : string.IsNullOrWhiteSpace(user.CityName) ? countryName
+            : $"{user.CityName}, {countryName}";
 
         return new ProfileDto(
             user.Id,
@@ -424,9 +350,7 @@ public class ProfileService
         );
     }
 
-    private static string? CleanOptionalValue(
-        string? value
-    )
+    private static string? CleanOptionalValue(string? value)
     {
         if (string.IsNullOrWhiteSpace(value))
         {
@@ -436,12 +360,9 @@ public class ProfileService
         return value.Trim();
     }
 
-    private static string FormatIdentityErrors(
-        IdentityResult result
-    )
+    private static string FormatIdentityErrors(IdentityResult result)
     {
-        var errors = result.Errors
-            .Select(error => error.Description);
+        var errors = result.Errors.Select(error => error.Description);
 
         return string.Join(" ", errors);
     }

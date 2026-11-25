@@ -18,7 +18,7 @@ public static class SkillCatalogSeeder
             "Plastering",
             "Roofing",
             "Tiling",
-            "Welding"
+            "Welding",
         ],
 
         ["Home Services"] =
@@ -30,7 +30,7 @@ public static class SkillCatalogSeeder
             "Solar Installation",
             "Furniture Assembly",
             "Appliance Installation",
-            "Home Maintenance"
+            "Home Maintenance",
         ],
 
         ["Repairs & Maintenance"] =
@@ -42,7 +42,7 @@ public static class SkillCatalogSeeder
             "Generator Repair",
             "General Repairs",
             "Plumbing Repairs",
-            "Pump Repair"
+            "Pump Repair",
         ],
 
         ["Technology"] =
@@ -58,7 +58,7 @@ public static class SkillCatalogSeeder
             "Computer Repair",
             "Network Installation",
             "Cybersecurity",
-            "Cloud Services"
+            "Cloud Services",
         ],
 
         ["Creative & Media"] =
@@ -75,7 +75,7 @@ public static class SkillCatalogSeeder
             "Content Creation",
             "Social Media Content",
             "UI Design",
-            "UX Design"
+            "UX Design",
         ],
 
         ["Professional Services"] =
@@ -89,7 +89,7 @@ public static class SkillCatalogSeeder
             "Research",
             "Data Analysis",
             "Human Resources",
-            "Recruitment"
+            "Recruitment",
         ],
 
         ["Business Support"] =
@@ -102,7 +102,7 @@ public static class SkillCatalogSeeder
             "Sales Support",
             "Marketing Support",
             "Procurement",
-            "Document Preparation"
+            "Document Preparation",
         ],
 
         ["Transport & Logistics"] =
@@ -113,7 +113,7 @@ public static class SkillCatalogSeeder
             "Courier Services",
             "Driver Services",
             "Logistics Coordination",
-            "Freight Handling"
+            "Freight Handling",
         ],
 
         ["Automotive"] =
@@ -125,7 +125,7 @@ public static class SkillCatalogSeeder
             "Panel Beating",
             "Spray Painting",
             "Tyre Services",
-            "Vehicle Detailing"
+            "Vehicle Detailing",
         ],
 
         ["Cleaning & Laundry"] =
@@ -137,7 +137,7 @@ public static class SkillCatalogSeeder
             "Window Cleaning",
             "Laundry",
             "Ironing",
-            "Upholstery Cleaning"
+            "Upholstery Cleaning",
         ],
 
         ["Agriculture & Gardening"] =
@@ -149,7 +149,7 @@ public static class SkillCatalogSeeder
             "Irrigation Installation",
             "Farm Labour",
             "Crop Production",
-            "Poultry Farming"
+            "Poultry Farming",
         ],
 
         ["Events & Entertainment"] =
@@ -162,7 +162,7 @@ public static class SkillCatalogSeeder
             "Lighting",
             "MC Services",
             "Event Photography",
-            "Event Videography"
+            "Event Videography",
         ],
 
         ["Hospitality & Food"] =
@@ -174,7 +174,7 @@ public static class SkillCatalogSeeder
             "Waitering",
             "Food Preparation",
             "Private Chef",
-            "Hospitality Service"
+            "Hospitality Service",
         ],
 
         ["Beauty & Grooming"] =
@@ -185,7 +185,7 @@ public static class SkillCatalogSeeder
             "Makeup",
             "Nail Services",
             "Skincare",
-            "Beauty Therapy"
+            "Beauty Therapy",
         ],
 
         ["Education & Training"] =
@@ -196,7 +196,7 @@ public static class SkillCatalogSeeder
             "Language Tutoring",
             "Mathematics Tutoring",
             "Science Tutoring",
-            "Skills Training"
+            "Skills Training",
         ],
 
         ["Security Services"] =
@@ -206,7 +206,7 @@ public static class SkillCatalogSeeder
             "Alarm Installation",
             "Access Control Installation",
             "Security System Maintenance",
-            "Event Security"
+            "Event Security",
         ],
 
         ["Health & Wellness"] =
@@ -215,7 +215,7 @@ public static class SkillCatalogSeeder
             "Personal Training",
             "Nutrition Coaching",
             "Wellness Coaching",
-            "Massage Therapy"
+            "Massage Therapy",
         ],
 
         ["Personal Services"] =
@@ -223,7 +223,7 @@ public static class SkillCatalogSeeder
             "Personal Assistance",
             "Errand Services",
             "Personal Shopping",
-            "House Sitting"
+            "House Sitting",
         ],
 
         ["Childcare & School Runs"] =
@@ -231,24 +231,18 @@ public static class SkillCatalogSeeder
             "Babysitting",
             "Childcare",
             "School Runs",
-            "After School Care"
+            "After School Care",
         ],
 
-        ["Pet & Animal Care"] =
-        [
-            "Pet Sitting",
-            "Dog Walking",
-            "Pet Grooming",
-            "Animal Care"
-        ],
+        ["Pet & Animal Care"] = ["Pet Sitting", "Dog Walking", "Pet Grooming", "Animal Care"],
 
         ["Other Services"] =
         [
             "General Labour",
             "Handyman Services",
             "Packing Services",
-            "Assembly Services"
-        ]
+            "Assembly Services",
+        ],
     };
 
     public static async Task SeedAsync(AllocatrDbContext db)
@@ -258,8 +252,9 @@ public static class SkillCatalogSeeder
 
         foreach (var (categoryName, skillNames) in Catalog)
         {
-            var category = await db.SkillCategories
-                .FirstOrDefaultAsync(c => c.Name == categoryName);
+            var category = await db.SkillCategories.FirstOrDefaultAsync(c =>
+                c.Name == categoryName
+            );
 
             if (category == null)
             {
@@ -269,7 +264,7 @@ public static class SkillCatalogSeeder
                     Name = categoryName,
                     DisplayOrder = displayOrder,
                     CreatedAt = now,
-                    UpdatedAt = now
+                    UpdatedAt = now,
                 };
 
                 db.SkillCategories.Add(category);
@@ -277,25 +272,26 @@ public static class SkillCatalogSeeder
                 await db.SaveChangesAsync();
             }
 
-            var existingSkillNames = await db.Skills
-                .Where(s => s.SkillCategoryId == category.Id)
+            var existingSkillNames = await db
+                .Skills.Where(s => s.SkillCategoryId == category.Id)
                 .Select(s => s.Name)
                 .ToListAsync();
 
-            var existingSkills = existingSkillNames
-                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+            var existingSkills = existingSkillNames.ToHashSet(StringComparer.OrdinalIgnoreCase);
 
             foreach (var skillName in skillNames)
             {
                 if (existingSkills.Contains(skillName))
                     continue;
 
-                db.Skills.Add(new Skill
-                {
-                    Id = Guid.NewGuid(),
-                    Name = skillName,
-                    SkillCategoryId = category.Id
-                });
+                db.Skills.Add(
+                    new Skill
+                    {
+                        Id = Guid.NewGuid(),
+                        Name = skillName,
+                        SkillCategoryId = category.Id,
+                    }
+                );
             }
 
             await db.SaveChangesAsync();

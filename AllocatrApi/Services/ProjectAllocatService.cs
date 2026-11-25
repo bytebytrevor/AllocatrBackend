@@ -16,81 +16,61 @@ public class ProjectAllocatService
         _db = db;
     }
 
-    /* =========================================================
-       INVITE ALLOCAT
-    ========================================================= */
-
     public async Task<ProjectAllocatDto> InviteAllocatAsync(
         Guid projectId,
         Guid allocatProfileId,
-        Guid currentUserId)
+        Guid currentUserId
+    )
     {
-        var project = await _db.Projects
-            .FirstOrDefaultAsync(p => p.Id == projectId);
-
+        await using var mutation = await ProjectMutationScope.BeginAsync(_db, projectId);
+        var project = await _db.Projects.FirstOrDefaultAsync(p => p.Id == projectId);
         if (project == null)
-        {
             throw new KeyNotFoundException("Project not found.");
-        }
-
         if (project.UserId != currentUserId)
-        {
             throw new UnauthorizedAccessException(
                 "You are not allowed to invite Allocats to this project."
             );
-        }
-
         if (
-            project.Status == ProjectStatuses.CompletionRequested ||
-            project.Status == ProjectStatuses.Completed
+            project.Status == ProjectStatuses.CompletionRequested
+            || project.Status == ProjectStatuses.Completed
+            || project.Status == ProjectStatuses.Cancelled
         )
-        {
             throw new InvalidOperationException(
-                "Allocats cannot be invited while this project is awaiting completion confirmation or has been completed."
+                "Allocats cannot be invited while this project is awaiting completion confirmation, completed or cancelled."
             );
-        }
-
-        var allocatExists = await _db.AllocatProfiles
-            .AnyAsync(a => a.AllocatrUserId == allocatProfileId);
-
+        var allocatExists = await _db.AllocatProfiles.AnyAsync(a =>
+            a.AllocatrUserId == allocatProfileId
+        );
         if (!allocatExists)
-        {
             throw new KeyNotFoundException("Allocat not found.");
-        }
-
-        var existingRelationship = await _db.ProjectAllocats
-            .FirstOrDefaultAsync(pa =>
-                pa.ProjectId == projectId &&
-                pa.AllocatProfileId == allocatProfileId
-            );
-
+        var existingRelationship = await _db.ProjectAllocats.FirstOrDefaultAsync(pa =>
+            pa.ProjectId == projectId && pa.AllocatProfileId == allocatProfileId
+        );
         if (existingRelationship != null)
         {
             switch (existingRelationship.Status)
             {
                 case ProjectAllocatStatus.Invited:
-                    throw new InvalidOperationException(
-                        "This Allocat has already been invited."
-                    );
-
+                    throw new InvalidOperationException("This Allocat has already been invited.");
                 case ProjectAllocatStatus.Accepted:
                     throw new InvalidOperationException(
                         "This Allocat is already part of the project."
                     );
-
                 case ProjectAllocatStatus.Declined:
                 case ProjectAllocatStatus.Removed:
+                case ProjectAllocatStatus.Left:
+                case ProjectAllocatStatus.Withdrawn:
                     existingRelationship.Status = ProjectAllocatStatus.Invited;
                     existingRelationship.InvitedAt = DateTime.UtcNow;
                     existingRelationship.RespondedAt = null;
                     existingRelationship.RemovedAt = null;
-
+                    existingRelationship.LeftAt = null;
+                    existingRelationship.LeaveReason = null;
                     await _db.SaveChangesAsync();
-
+                    await mutation.CommitAsync();
                     return ToDto(existingRelationship);
             }
         }
-
         var projectAllocat = new ProjectAllocat
         {
             ProjectId = projectId,
@@ -98,251 +78,150 @@ public class ProjectAllocatService
             Status = ProjectAllocatStatus.Invited,
             InvitedAt = DateTime.UtcNow,
             RespondedAt = null,
-            RemovedAt = null
+            RemovedAt = null,
         };
-
         _db.ProjectAllocats.Add(projectAllocat);
-
         await _db.SaveChangesAsync();
-
+        await mutation.CommitAsync();
         return ToDto(projectAllocat);
     }
 
-    /* =========================================================
-       ACCEPT INVITATION
-    ========================================================= */
-
-    public async Task<ProjectAllocatDto> AcceptInviteAsync(
-        Guid projectId,
-        Guid currentUserId)
+    public async Task<ProjectAllocatDto> AcceptInviteAsync(Guid projectId, Guid currentUserId)
     {
-        var allocatProfile = await _db.AllocatProfiles
-            .FirstOrDefaultAsync(a => a.AllocatrUserId == currentUserId);
-
+        await using var mutation = await ProjectMutationScope.BeginAsync(_db, projectId);
+        var allocatProfile = await _db.AllocatProfiles.FirstOrDefaultAsync(a =>
+            a.AllocatrUserId == currentUserId
+        );
         if (allocatProfile == null)
-        {
-            throw new UnauthorizedAccessException(
-                "You do not have an Allocat profile."
-            );
-        }
-
-        var relationship = await _db.ProjectAllocats
-            .Include(pa => pa.Project)
+            throw new UnauthorizedAccessException("You do not have an Allocat profile.");
+        var relationship = await _db
+            .ProjectAllocats.Include(pa => pa.Project)
             .FirstOrDefaultAsync(pa =>
-                pa.ProjectId == projectId &&
-                pa.AllocatProfileId == allocatProfile.AllocatrUserId
+                pa.ProjectId == projectId && pa.AllocatProfileId == allocatProfile.AllocatrUserId
             );
-
         if (relationship == null)
-        {
             throw new KeyNotFoundException("Invitation not found.");
-        }
-
-        if (relationship.Status != ProjectAllocatStatus.Invited)
-        {
-            throw new InvalidOperationException(
-                "This invitation is no longer pending."
-            );
-        }
-
+        if (relationship.Status != ProjectAllocatStatus.Invited || relationship.RemovedAt != null)
+            throw new InvalidOperationException("This invitation is no longer pending.");
         if (
-            relationship.Project.Status == ProjectStatuses.CompletionRequested ||
-            relationship.Project.Status == ProjectStatuses.Completed
+            relationship.Project.Status == ProjectStatuses.CompletionRequested
+            || relationship.Project.Status == ProjectStatuses.Completed
+            || relationship.Project.Status == ProjectStatuses.Cancelled
         )
-        {
             throw new InvalidOperationException(
-                "Invitations cannot be accepted while this project is awaiting completion confirmation or has been completed."
+                "Invitations cannot be accepted while this project is awaiting completion confirmation, completed or cancelled."
             );
-        }
-
         var now = DateTime.UtcNow;
-
         if (relationship.Project.Status == ProjectStatuses.Pending)
         {
             relationship.Project.Status = ProjectStatuses.Active;
             relationship.Project.UpdatedAt = now;
         }
-
         relationship.Status = ProjectAllocatStatus.Accepted;
         relationship.RespondedAt = now;
-
         await _db.SaveChangesAsync();
-
+        await mutation.CommitAsync();
         return ToDto(relationship);
     }
 
-    /* =========================================================
-       DECLINE INVITATION
-    ========================================================= */
-
-    public async Task<ProjectAllocatDto> DeclineInviteAsync(
-        Guid projectId,
-        Guid currentUserId)
+    public async Task<ProjectAllocatDto> DeclineInviteAsync(Guid projectId, Guid currentUserId)
     {
-        var allocatProfile = await _db.AllocatProfiles
-            .FirstOrDefaultAsync(a => a.AllocatrUserId == currentUserId);
-
+        await using var mutation = await ProjectMutationScope.BeginAsync(_db, projectId);
+        var allocatProfile = await _db.AllocatProfiles.FirstOrDefaultAsync(a =>
+            a.AllocatrUserId == currentUserId
+        );
         if (allocatProfile == null)
-        {
-            throw new UnauthorizedAccessException(
-                "You do not have an Allocat profile."
-            );
-        }
-
-        var relationship = await _db.ProjectAllocats
+            throw new UnauthorizedAccessException("You do not have an Allocat profile.");
+        var relationship = await _db
+            .ProjectAllocats.Include(pa => pa.Project)
             .FirstOrDefaultAsync(pa =>
-                pa.ProjectId == projectId &&
-                pa.AllocatProfileId == allocatProfile.AllocatrUserId
+                pa.ProjectId == projectId && pa.AllocatProfileId == allocatProfile.AllocatrUserId
             );
-
         if (relationship == null)
-        {
             throw new KeyNotFoundException("Invitation not found.");
-        }
-
-        if (relationship.Status != ProjectAllocatStatus.Invited)
-        {
-            throw new InvalidOperationException(
-                "This invitation is no longer pending."
-            );
-        }
-
+        if (
+            relationship.Status != ProjectAllocatStatus.Invited
+            || relationship.RemovedAt != null
+            || relationship.Project.Status == ProjectStatuses.Cancelled
+        )
+            throw new InvalidOperationException("This invitation is no longer pending.");
         relationship.Status = ProjectAllocatStatus.Declined;
         relationship.RespondedAt = DateTime.UtcNow;
-
         await _db.SaveChangesAsync();
-
+        await mutation.CommitAsync();
         return ToDto(relationship);
     }
-
-    /* =========================================================
-       REMOVE ALLOCAT
-    ========================================================= */
 
     public async Task<ProjectAllocatDto> RemoveAllocatAsync(
         Guid projectId,
         Guid allocatProfileId,
-        Guid currentUserId)
+        Guid currentUserId
+    )
     {
-        var project = await _db.Projects
-            .FirstOrDefaultAsync(p => p.Id == projectId);
-
+        await using var mutation = await ProjectMutationScope.BeginAsync(_db, projectId);
+        var project = await _db.Projects.FirstOrDefaultAsync(p => p.Id == projectId);
         if (project == null)
-        {
             throw new KeyNotFoundException("Project not found.");
-        }
-
         if (project.UserId != currentUserId)
-        {
             throw new UnauthorizedAccessException(
                 "You are not allowed to remove Allocats from this project."
             );
-        }
-
         if (
-            project.Status == ProjectStatuses.CompletionRequested ||
-            project.Status == ProjectStatuses.Completed
+            project.Status == ProjectStatuses.CompletionRequested
+            || project.Status == ProjectStatuses.Completed
+            || project.Status == ProjectStatuses.Cancelled
         )
-        {
             throw new InvalidOperationException(
-                "Allocats cannot be removed while this project is awaiting completion confirmation or has been completed."
+                "Allocats cannot be removed while this project is awaiting completion confirmation, completed or cancelled."
             );
-        }
-
-        var relationship = await _db.ProjectAllocats
-            .FirstOrDefaultAsync(pa =>
-                pa.ProjectId == projectId &&
-                pa.AllocatProfileId == allocatProfileId
-            );
-
+        var relationship = await _db.ProjectAllocats.FirstOrDefaultAsync(pa =>
+            pa.ProjectId == projectId && pa.AllocatProfileId == allocatProfileId
+        );
         if (relationship == null)
-        {
-            throw new KeyNotFoundException(
-                "Allocat is not attached to this project."
-            );
-        }
-
+            throw new KeyNotFoundException("Allocat is not attached to this project.");
         if (relationship.Status != ProjectAllocatStatus.Accepted)
-        {
-            throw new InvalidOperationException(
-                "Only accepted Allocats can be removed."
-            );
-        }
-
+            throw new InvalidOperationException("Only accepted Allocats can be removed.");
         relationship.Status = ProjectAllocatStatus.Removed;
         relationship.RemovedAt = DateTime.UtcNow;
-
         await _db.SaveChangesAsync();
-
+        await mutation.CommitAsync();
         return ToDto(relationship);
     }
-
-    /* =========================================================
-       GET PROJECT ALLOCAT
-    ========================================================= */
 
     public async Task<ProjectAllocatDto?> GetProjectAllocatAsync(
         Guid projectId,
         Guid allocatProfileId,
-        Guid currentUserId)
+        Guid currentUserId
+    )
     {
-        var project = await _db.Projects
-            .AsNoTracking()
-            .FirstOrDefaultAsync(p => p.Id == projectId);
-
+        var project = await _db.Projects.AsNoTracking().FirstOrDefaultAsync(p => p.Id == projectId);
         if (project == null)
-        {
             return null;
-        }
-
-        var canView =
-            project.UserId == currentUserId ||
-            allocatProfileId == currentUserId;
-
+        var canView = project.UserId == currentUserId || allocatProfileId == currentUserId;
         if (!canView)
-        {
             throw new UnauthorizedAccessException();
-        }
-
-        var projectAllocat = await _db.ProjectAllocats
-            .AsNoTracking()
+        var projectAllocat = await _db
+            .ProjectAllocats.AsNoTracking()
             .FirstOrDefaultAsync(pa =>
-                pa.ProjectId == projectId &&
-                pa.AllocatProfileId == allocatProfileId
+                pa.ProjectId == projectId && pa.AllocatProfileId == allocatProfileId
             );
-
-        return projectAllocat == null
-            ? null
-            : ToDto(projectAllocat);
+        return projectAllocat == null ? null : ToDto(projectAllocat);
     }
-
-    /* =========================================================
-       GET PROJECT ALLOCATS
-       OWNER MANAGEMENT VIEW
-    ========================================================= */
 
     public async Task<List<ProjectAllocatDto>> GetProjectAllocatsAsync(
         Guid projectId,
-        Guid currentUserId)
+        Guid currentUserId
+    )
     {
-        var project = await _db.Projects
-            .AsNoTracking()
-            .FirstOrDefaultAsync(p => p.Id == projectId);
-
+        var project = await _db.Projects.AsNoTracking().FirstOrDefaultAsync(p => p.Id == projectId);
         if (project == null)
-        {
             throw new KeyNotFoundException("Project not found.");
-        }
-
         if (project.UserId != currentUserId)
-        {
             throw new UnauthorizedAccessException(
                 "You do not have permission to view this project's Allocats."
             );
-        }
-
-        return await _db.ProjectAllocats
-            .AsNoTracking()
+        return await _db
+            .ProjectAllocats.AsNoTracking()
             .Where(pa => pa.ProjectId == projectId)
             .Select(pa => new ProjectAllocatDto(
                 pa.ProjectId,
@@ -355,83 +234,41 @@ public class ProjectAllocatService
             .ToListAsync();
     }
 
-    /* =========================================================
-       GET PROJECT MEMBERS
-
-       Owner:
-       - Accepted members
-       - Pending invitations
-
-       Accepted Allocat:
-       - Accepted members only
-
-       Invited / declined / removed / unrelated:
-       - No access
-    ========================================================= */
-
     public async Task<List<ProjectAllocatMemberDto>> GetProjectMembersAsync(
         Guid projectId,
-        Guid currentUserId)
+        Guid currentUserId
+    )
     {
-        var project = await _db.Projects
-            .AsNoTracking()
-            .FirstOrDefaultAsync(p => p.Id == projectId);
-
+        var project = await _db.Projects.AsNoTracking().FirstOrDefaultAsync(p => p.Id == projectId);
         if (project == null)
-        {
             throw new KeyNotFoundException("Project not found.");
-        }
-
         var isOwner = project.UserId == currentUserId;
-
         var isAcceptedAllocat = false;
-
         if (!isOwner)
-        {
-            isAcceptedAllocat = await _db.ProjectAllocats
-                .AsNoTracking()
+            isAcceptedAllocat = await _db
+                .ProjectAllocats.AsNoTracking()
                 .AnyAsync(pa =>
-                    pa.ProjectId == projectId &&
-                    pa.AllocatProfileId == currentUserId &&
-                    pa.Status == ProjectAllocatStatus.Accepted &&
-                    pa.RemovedAt == null
+                    pa.ProjectId == projectId
+                    && pa.AllocatProfileId == currentUserId
+                    && pa.Status == ProjectAllocatStatus.Accepted
+                    && pa.RemovedAt == null
                 );
-        }
-
         if (!isOwner && !isAcceptedAllocat)
-        {
             throw new UnauthorizedAccessException(
                 "You do not have permission to view this project's members."
             );
-        }
-
-        var query = _db.ProjectAllocats
-            .AsNoTracking()
-            .Where(pa =>
-                pa.ProjectId == projectId &&
-                pa.RemovedAt == null
-            );
-
+        var query = _db
+            .ProjectAllocats.AsNoTracking()
+            .Where(pa => pa.ProjectId == projectId && pa.RemovedAt == null);
         if (isOwner)
-        {
             query = query.Where(pa =>
-                pa.Status == ProjectAllocatStatus.Invited ||
-                pa.Status == ProjectAllocatStatus.Accepted
+                pa.Status == ProjectAllocatStatus.Invited
+                || pa.Status == ProjectAllocatStatus.Accepted
             );
-        }
         else
-        {
-            query = query.Where(pa =>
-                pa.Status == ProjectAllocatStatus.Accepted
-            );
-        }
-
+            query = query.Where(pa => pa.Status == ProjectAllocatStatus.Accepted);
         return await query
-            .OrderBy(pa =>
-                pa.Status == ProjectAllocatStatus.Accepted
-                    ? 0
-                    : 1
-            )
+            .OrderBy(pa => pa.Status == ProjectAllocatStatus.Accepted ? 0 : 1)
             .ThenBy(pa => pa.InvitedAt)
             .Select(pa => new ProjectAllocatMemberDto(
                 pa.AllocatProfileId,
@@ -444,33 +281,22 @@ public class ProjectAllocatService
             .ToListAsync();
     }
 
-    /* =========================================================
-       GET MY ALLOCAT WORK
-    ========================================================= */
-
-    public async Task<List<AllocatWorkProjectDto>> GetMyWorkProjectsAsync(
-        Guid currentUserId)
+    public async Task<List<AllocatWorkProjectDto>> GetMyWorkProjectsAsync(Guid currentUserId)
     {
-        var allocatExists = await _db.AllocatProfiles
-            .AsNoTracking()
+        var allocatExists = await _db
+            .AllocatProfiles.AsNoTracking()
             .AnyAsync(a => a.AllocatrUserId == currentUserId);
-
         if (!allocatExists)
-        {
-            throw new UnauthorizedAccessException(
-                "You do not have an Allocat profile."
-            );
-        }
-
-        return await _db.ProjectAllocats
-            .AsNoTracking()
+            throw new UnauthorizedAccessException("You do not have an Allocat profile.");
+        return await _db
+            .ProjectAllocats.AsNoTracking()
             .Where(pa =>
-                pa.AllocatProfileId == currentUserId &&
-                pa.Project.UserId != currentUserId &&
-                pa.RemovedAt == null &&
-                (
-                    pa.Status == ProjectAllocatStatus.Invited ||
-                    pa.Status == ProjectAllocatStatus.Accepted
+                pa.AllocatProfileId == currentUserId
+                && pa.Project.UserId != currentUserId
+                && pa.RemovedAt == null
+                && (
+                    pa.Status == ProjectAllocatStatus.Invited
+                    || pa.Status == ProjectAllocatStatus.Accepted
                 )
             )
             .OrderByDescending(pa => pa.InvitedAt)
@@ -488,24 +314,23 @@ public class ProjectAllocatService
                 pa.Project.Budget,
                 pa.Project.Currency,
                 pa.Project.AllocatAssignments.Any(a =>
-                    a.Status == ProjectAllocatStatus.Accepted &&
-                    a.RemovedAt == null
+                    a.Status == ProjectAllocatStatus.Accepted && a.RemovedAt == null
                 ),
                 pa.Project.CreatedAt,
                 pa.Status,
                 pa.InvitedAt,
                 pa.RespondedAt
-            ))
+            )
+            {
+                CancelledAt = pa.Project.CancelledAt,
+                CancelledByUserId = pa.Project.CancelledByUserId,
+                CancellationReason = pa.Project.CancellationReason,
+            })
             .ToListAsync();
     }
 
-    /* =========================================================
-       MAPPING
-    ========================================================= */
-
-    private static ProjectAllocatDto ToDto(ProjectAllocat projectAllocat)
-    {
-        return new ProjectAllocatDto(
+    private static ProjectAllocatDto ToDto(ProjectAllocat projectAllocat) =>
+        new(
             projectAllocat.ProjectId,
             projectAllocat.AllocatProfileId,
             projectAllocat.Status,
@@ -513,5 +338,4 @@ public class ProjectAllocatService
             projectAllocat.RespondedAt,
             projectAllocat.RemovedAt
         );
-    }
 }

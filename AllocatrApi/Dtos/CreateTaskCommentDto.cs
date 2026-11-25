@@ -4,4 +4,5 @@ public record CreateTaskCommentDto(
     string? Comment,
     IReadOnlyList<Guid>? FileIds = null,
     Guid? ClientRequestId = null,
-    Guid? ReplyToCommentId = null);
+    Guid? ReplyToCommentId = null
+);

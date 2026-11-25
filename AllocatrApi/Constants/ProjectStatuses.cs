@@ -6,4 +6,5 @@ public static class ProjectStatuses
     public const string Active = "active";
     public const string CompletionRequested = "completion_requested";
     public const string Completed = "completed";
+    public const string Cancelled = "cancelled";
 }

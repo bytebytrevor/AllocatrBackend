@@ -15,35 +15,25 @@ public class TaskService
     public TaskService(
         AllocatrDbContext db,
         ProjectAccessService projectAccess,
-        ProjectService projectService)
+        ProjectService projectService
+    )
     {
         _db = db;
         _projectAccess = projectAccess;
         _projectService = projectService;
     }
 
-    /* =====================================================
-       GET PROJECT TASKS
-    ===================================================== */
-
     public async Task<List<TaskDto>?> GetTasksByProjectIdAsync(
         Guid projectId,
         Guid userId,
-        bool isAllocat)
+        bool isAllocat
+    )
     {
-        var canView = await _projectAccess.CanViewProjectAsync(
-            projectId,
-            userId,
-            isAllocat
-        );
-
+        var canView = await _projectAccess.CanViewProjectAsync(projectId, userId, isAllocat);
         if (!canView)
-        {
             return null;
-        }
-
-        return await _db.TaskItems
-            .AsNoTracking()
+        return await _db
+            .TaskItems.AsNoTracking()
             .Where(t => t.ProjectId == projectId)
             .OrderBy(t => t.Order)
             .ThenBy(t => t.CreatedAt)
@@ -55,135 +45,63 @@ public class TaskService
                 t.Priority,
                 t.DueDate,
                 t.AssignedToId,
-                t.AssignedTo != null
-                    ? t.AssignedTo.FullName
-                    : null,
+                t.AssignedTo != null ? t.AssignedTo.FullName : null,
                 t.CreatedByUserId,
-                t.CreatedByUser != null
-                    ? t.CreatedByUser.FullName
-                    : null,
-                t.AssignedTo != null
-                    ? t.AssignedTo.AvatarUrl
-                    : null
+                t.CreatedByUser != null ? t.CreatedByUser.FullName : null,
+                t.AssignedTo != null ? t.AssignedTo.AvatarUrl : null
             ))
             .ToListAsync();
     }
 
-    /* =====================================================
-       GET TASK
-    ===================================================== */
-
-    public async Task<TaskDto?> GetTaskByIdAsync(
-        Guid taskId,
-        Guid userId,
-        bool isAllocat)
+    public async Task<TaskDto?> GetTaskByIdAsync(Guid taskId, Guid userId, bool isAllocat)
     {
         var projectId = await GetTaskProjectIdAsync(taskId);
-
         if (!projectId.HasValue)
-        {
             return null;
-        }
-
-        var canView = await _projectAccess.CanViewProjectAsync(
-            projectId.Value,
-            userId,
-            isAllocat
-        );
-
+        var canView = await _projectAccess.CanViewProjectAsync(projectId.Value, userId, isAllocat);
         if (!canView)
-        {
             return null;
-        }
-
         return await ReadTaskDtoAsync(taskId);
     }
-
-    /* =====================================================
-       CREATE TASK
-    ===================================================== */
 
     public async Task<TaskDto?> CreateTaskAsync(
         Guid projectId,
         Guid userId,
         bool isAllocat,
-        CreateTaskDto dto)
+        CreateTaskDto dto
+    )
     {
         if (!isAllocat)
-        {
             return null;
-        }
-
-        var canExecute = await _projectAccess.IsAcceptedAllocatAsync(
-            projectId,
-            userId
-        );
-
+        await using var mutation = await ProjectMutationScope.BeginAsync(_db, projectId);
+        var canExecute = await _projectAccess.IsAcceptedAllocatAsync(projectId, userId);
         if (!canExecute)
-        {
             return null;
-        }
-
         await EnsureProjectCanBeModifiedAsync(projectId);
-
         var title = dto.Title?.Trim() ?? string.Empty;
         var description = dto.Description?.Trim() ?? string.Empty;
-        var priority =
-            dto.Priority?.Trim().ToLowerInvariant() ?? string.Empty;
-
+        var priority = dto.Priority?.Trim().ToLowerInvariant() ?? string.Empty;
         if (string.IsNullOrWhiteSpace(title))
-        {
-            throw new ArgumentException(
-                "Task title is required."
-            );
-        }
-
+            throw new ArgumentException("Task title is required.");
         if (title.Length > 200)
-        {
-            throw new ArgumentException(
-                "Task title cannot exceed 200 characters."
-            );
-        }
-
+            throw new ArgumentException("Task title cannot exceed 200 characters.");
         if (description.Length > 2000)
-        {
-            throw new ArgumentException(
-                "Task description cannot exceed 2,000 characters."
-            );
-        }
-
-        if (
-            priority != "standard" &&
-            priority != "high" &&
-            priority != "urgent"
-        )
-        {
-            throw new ArgumentException(
-                "Priority must be standard, high or urgent."
-            );
-        }
-
+            throw new ArgumentException("Task description cannot exceed 2,000 characters.");
+        if (priority != "standard" && priority != "high" && priority != "urgent")
+            throw new ArgumentException("Priority must be standard, high or urgent.");
         if (dto.AssignedToId.HasValue)
         {
-            var validAssignee =
-                await _projectAccess.IsAcceptedAllocatAsync(
-                    projectId,
-                    dto.AssignedToId.Value
-                );
-
+            var validAssignee = await _projectAccess.IsAcceptedAllocatAsync(
+                projectId,
+                dto.AssignedToId.Value
+            );
             if (!validAssignee)
-            {
                 throw new ArgumentException(
                     "The selected user is not an accepted Allocat on this project."
                 );
-            }
         }
-
-        // The creator is already confirmed as an accepted Allocat.
-        // Explicit assignment wins; otherwise assign to the creator.
         var assignedToId = dto.AssignedToId ?? userId;
         var now = DateTime.UtcNow;
-
         var task = new TaskItem
         {
             Id = Guid.NewGuid(),
@@ -193,263 +111,137 @@ public class TaskService
             Priority = priority,
             Status = "pending",
             DueDate = dto.DueDate,
-
             AssignedToId = assignedToId,
             CreatedByUserId = userId,
-
             CreatedAt = now,
-            UpdatedAt = now
+            UpdatedAt = now,
         };
-
         _db.TaskItems.Add(task);
-
         await _db.SaveChangesAsync();
         await RecalculateProjectProgressAsync(projectId);
-
-        // Query the DTO so names are populated even when navigation
-        // properties were not loaded on the newly created entity.
+        await mutation.CommitAsync();
         return await ReadTaskDtoAsync(task.Id);
     }
-
-    /* =====================================================
-       UPDATE TASK STATUS
-    ===================================================== */
 
     public async Task<UpdateTaskStatusResultDto?> UpdateTaskStatusAsync(
         Guid taskId,
         Guid userId,
         bool isAllocat,
-        string status)
+        string status
+    )
     {
-        var normalizedStatus =
-            status?.Trim().ToLowerInvariant() ?? string.Empty;
-
+        var normalizedStatus = status?.Trim().ToLowerInvariant() ?? string.Empty;
         if (
-            normalizedStatus != "pending" &&
-            normalizedStatus != "active" &&
-            normalizedStatus != "complete" &&
-            normalizedStatus != "overdue"
+            normalizedStatus != "pending"
+            && normalizedStatus != "active"
+            && normalizedStatus != "complete"
+            && normalizedStatus != "overdue"
         )
-        {
-            throw new ArgumentException(
-                "Invalid task status."
-            );
-        }
-
+            throw new ArgumentException("Invalid task status.");
         var projectId = await GetTaskProjectIdAsync(taskId);
-
         if (!projectId.HasValue || !isAllocat)
-        {
             return null;
-        }
-
-        var canExecute = await _projectAccess.IsAcceptedAllocatAsync(
-            projectId.Value,
-            userId
-        );
-
+        await using var mutation = await ProjectMutationScope.BeginAsync(_db, projectId.Value);
+        var canExecute = await _projectAccess.IsAcceptedAllocatAsync(projectId.Value, userId);
         if (!canExecute)
-        {
             return null;
-        }
-
         await EnsureProjectCanBeModifiedAsync(projectId.Value);
-
-        var task = await _db.TaskItems
-            .FirstOrDefaultAsync(t =>
-                t.Id == taskId &&
-                t.ProjectId == projectId.Value
-            );
-
+        var task = await _db.TaskItems.FirstOrDefaultAsync(t =>
+            t.Id == taskId && t.ProjectId == projectId.Value
+        );
         if (task == null)
-        {
             return null;
-        }
-
         var now = DateTime.UtcNow;
-
         task.Status = normalizedStatus;
-
-        task.CompletedAt =
-            normalizedStatus == "complete"
-                ? now
-                : null;
-
+        task.CompletedAt = normalizedStatus == "complete" ? now : null;
         task.UpdatedAt = now;
-
         await _db.SaveChangesAsync();
         await RecalculateProjectProgressAsync(projectId.Value);
-
-        var project = await _projectService
-            .GetAccessibleProjectByIdAsync(
-                projectId.Value,
-                userId,
-                isAllocat
-            );
-
-        if (project == null)
-        {
-            return null;
-        }
-
-        var taskDto = await ReadTaskDtoAsync(taskId);
-
-        if (taskDto == null)
-        {
-            return null;
-        }
-
-        return new UpdateTaskStatusResultDto(
-            taskDto,
-            project
+        var project = await _projectService.GetAccessibleProjectByIdAsync(
+            projectId.Value,
+            userId,
+            isAllocat
         );
+        if (project == null)
+            return null;
+        var taskDto = await ReadTaskDtoAsync(taskId);
+        if (taskDto == null)
+            return null;
+        await mutation.CommitAsync();
+        return new UpdateTaskStatusResultDto(taskDto, project);
     }
 
-    /* =====================================================
-       DELETE TASK
-    ===================================================== */
-
-    public async Task<bool> DeleteTaskAsync(
-        Guid taskId,
-        Guid userId,
-        bool isAllocat)
+    public async Task<bool> DeleteTaskAsync(Guid taskId, Guid userId, bool isAllocat)
     {
         if (!isAllocat)
-        {
             return false;
-        }
-
         var projectId = await GetTaskProjectIdAsync(taskId);
-
         if (!projectId.HasValue)
-        {
             return false;
-        }
-
-        var canExecute = await _projectAccess.IsAcceptedAllocatAsync(
-            projectId.Value,
-            userId
-        );
-
+        await using var mutation = await ProjectMutationScope.BeginAsync(_db, projectId.Value);
+        var canExecute = await _projectAccess.IsAcceptedAllocatAsync(projectId.Value, userId);
         if (!canExecute)
-        {
             return false;
-        }
-
         await EnsureProjectCanBeModifiedAsync(projectId.Value);
-
-        var task = await _db.TaskItems
-            .FirstOrDefaultAsync(t =>
-                t.Id == taskId &&
-                t.ProjectId == projectId.Value
-            );
-
+        var task = await _db.TaskItems.FirstOrDefaultAsync(t =>
+            t.Id == taskId && t.ProjectId == projectId.Value
+        );
         if (task == null)
-        {
             return false;
-        }
-
         _db.TaskItems.Remove(task);
-
         await _db.SaveChangesAsync();
         await RecalculateProjectProgressAsync(projectId.Value);
-
+        await mutation.CommitAsync();
         return true;
     }
 
-    /* =====================================================
-       MARK COMPLETED
-    ===================================================== */
-
-    public async Task<bool> MarkTaskCompletedAsync(
-        Guid taskId,
-        Guid userId,
-        bool isAllocat)
+    public async Task<bool> MarkTaskCompletedAsync(Guid taskId, Guid userId, bool isAllocat)
     {
-        var result = await UpdateTaskStatusAsync(
-            taskId,
-            userId,
-            isAllocat,
-            "complete"
-        );
-
+        var result = await UpdateTaskStatusAsync(taskId, userId, isAllocat, "complete");
         return result != null;
     }
-
-    /* =====================================================
-       ASSIGN TASK
-    ===================================================== */
 
     public async Task<bool> AssignTaskAsync(
         Guid taskId,
         Guid userId,
         bool isAllocat,
-        Guid? assignedToId)
+        Guid? assignedToId
+    )
     {
         var projectId = await GetTaskProjectIdAsync(taskId);
-
         if (!projectId.HasValue || !isAllocat)
-        {
             return false;
-        }
-
-        var canExecute = await _projectAccess.IsAcceptedAllocatAsync(
-            projectId.Value,
-            userId
-        );
-
+        await using var mutation = await ProjectMutationScope.BeginAsync(_db, projectId.Value);
+        var canExecute = await _projectAccess.IsAcceptedAllocatAsync(projectId.Value, userId);
         if (!canExecute)
-        {
             return false;
-        }
-
         await EnsureProjectCanBeModifiedAsync(projectId.Value);
-
         if (assignedToId.HasValue)
         {
-            var validAssignee =
-                await _projectAccess.IsAcceptedAllocatAsync(
-                    projectId.Value,
-                    assignedToId.Value
-                );
-
+            var validAssignee = await _projectAccess.IsAcceptedAllocatAsync(
+                projectId.Value,
+                assignedToId.Value
+            );
             if (!validAssignee)
-            {
                 throw new ArgumentException(
                     "The selected user is not an accepted Allocat on this project."
                 );
-            }
         }
-
-        var task = await _db.TaskItems
-            .FirstOrDefaultAsync(t =>
-                t.Id == taskId &&
-                t.ProjectId == projectId.Value
-            );
-
+        var task = await _db.TaskItems.FirstOrDefaultAsync(t =>
+            t.Id == taskId && t.ProjectId == projectId.Value
+        );
         if (task == null)
-        {
             return false;
-        }
-
-        // Preserve existing reassignment behavior.
-        // Null explicitly clears an existing assignment.
         task.AssignedToId = assignedToId;
         task.UpdatedAt = DateTime.UtcNow;
-
         await _db.SaveChangesAsync();
-
+        await mutation.CommitAsync();
         return true;
     }
 
-    /* =====================================================
-       READ DTO WITH USER NAMES
-    ===================================================== */
-
-    private async Task<TaskDto?> ReadTaskDtoAsync(Guid taskId)
-    {
-        return await _db.TaskItems
-            .AsNoTracking()
+    private async Task<TaskDto?> ReadTaskDtoAsync(Guid taskId) =>
+        await _db
+            .TaskItems.AsNoTracking()
             .Where(t => t.Id == taskId)
             .Select(t => new TaskDto(
                 t.Id,
@@ -459,108 +251,57 @@ public class TaskService
                 t.Priority,
                 t.DueDate,
                 t.AssignedToId,
-                t.AssignedTo != null
-                    ? t.AssignedTo.FullName
-                    : null,
+                t.AssignedTo != null ? t.AssignedTo.FullName : null,
                 t.CreatedByUserId,
-                t.CreatedByUser != null
-                    ? t.CreatedByUser.FullName
-                    : null,
-                t.AssignedTo != null
-                    ? t.AssignedTo.AvatarUrl
-                    : null
+                t.CreatedByUser != null ? t.CreatedByUser.FullName : null,
+                t.AssignedTo != null ? t.AssignedTo.AvatarUrl : null
             ))
             .FirstOrDefaultAsync();
-    }
 
-    /* =====================================================
-       GET PROJECT ID
-    ===================================================== */
-
-    private async Task<Guid?> GetTaskProjectIdAsync(Guid taskId)
-    {
-        return await _db.TaskItems
-            .AsNoTracking()
+    private async Task<Guid?> GetTaskProjectIdAsync(Guid taskId) =>
+        await _db
+            .TaskItems.AsNoTracking()
             .Where(t => t.Id == taskId)
             .Select(t => (Guid?)t.ProjectId)
             .FirstOrDefaultAsync();
-    }
 
-    /* =====================================================
-       PROJECT MODIFICATION RULES
-    ===================================================== */
-
-    private async Task EnsureProjectCanBeModifiedAsync(
-        Guid projectId)
+    private async Task EnsureProjectCanBeModifiedAsync(Guid projectId)
     {
-        var projectState = await _db.Projects
-            .AsNoTracking()
+        var projectState = await _db
+            .Projects.AsNoTracking()
             .Where(p => p.Id == projectId)
-            .Select(p => new
-            {
-                p.Status
-            })
+            .Select(p => new { p.Status })
             .FirstOrDefaultAsync();
-
         if (projectState == null)
-        {
-            throw new KeyNotFoundException(
-                "Project not found."
-            );
-        }
-
+            throw new KeyNotFoundException("Project not found.");
         if (
-            projectState.Status == ProjectStatuses.CompletionRequested ||
-            projectState.Status == ProjectStatuses.Completed
+            projectState.Status == ProjectStatuses.CompletionRequested
+            || projectState.Status == ProjectStatuses.Completed
+            || projectState.Status == ProjectStatuses.Cancelled
         )
-        {
             throw new InvalidOperationException(
-                "Tasks cannot be modified while this project is awaiting completion confirmation or has been completed."
+                "Tasks cannot be modified while this project is awaiting completion confirmation, completed or cancelled."
             );
-        }
     }
 
-    /* =====================================================
-       PROJECT PROGRESS
-    ===================================================== */
-
-    private async Task RecalculateProjectProgressAsync(
-        Guid projectId)
+    private async Task RecalculateProjectProgressAsync(Guid projectId)
     {
-        var project = await _db.Projects
-            .FirstOrDefaultAsync(p => p.Id == projectId);
-
+        var project = await _db.Projects.FirstOrDefaultAsync(p => p.Id == projectId);
         if (project == null)
-        {
             return;
-        }
-
         if (
-            project.Status == ProjectStatuses.CompletionRequested ||
-            project.Status == ProjectStatuses.Completed
+            project.Status == ProjectStatuses.CompletionRequested
+            || project.Status == ProjectStatuses.Completed
+            || project.Status == ProjectStatuses.Cancelled
         )
-        {
             return;
-        }
-
-        var totalTasks = await _db.TaskItems
-            .CountAsync(t => t.ProjectId == projectId);
-
-        var completedTasks = await _db.TaskItems
-            .CountAsync(t =>
-                t.ProjectId == projectId &&
-                t.Status == "complete"
-            );
-
+        var totalTasks = await _db.TaskItems.CountAsync(t => t.ProjectId == projectId);
+        var completedTasks = await _db.TaskItems.CountAsync(t =>
+            t.ProjectId == projectId && t.Status == "complete"
+        );
         project.Progress =
-            totalTasks == 0
-                ? 0
-                : (int)Math.Round(
-                    completedTasks * 100.0 / totalTasks
-                );
-
+            totalTasks == 0 ? 0 : (int)Math.Round(completedTasks * 100.0 / totalTasks);
         project.UpdatedAt = DateTime.UtcNow;
-
         await _db.SaveChangesAsync();
     }
 }

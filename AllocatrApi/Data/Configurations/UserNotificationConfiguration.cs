@@ -16,7 +16,9 @@ public sealed class UserNotificationConfiguration : IEntityTypeConfiguration<Use
         b.Property(n => n.Text).HasMaxLength(500).IsRequired();
         b.Property(n => n.Href).HasMaxLength(400).IsRequired();
         b.Property(n => n.ItemCount).HasDefaultValue(1);
-        b.HasOne<AllocatrUser>().WithMany().HasForeignKey(n => n.RecipientId)
+        b.HasOne<AllocatrUser>()
+            .WithMany()
+            .HasForeignKey(n => n.RecipientId)
             .OnDelete(DeleteBehavior.Cascade);
         b.HasIndex(n => new { n.RecipientId, n.Id });
         b.HasIndex(n => new { n.RecipientId, n.ReadAt });

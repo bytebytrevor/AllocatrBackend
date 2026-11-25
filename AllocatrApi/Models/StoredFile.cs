@@ -16,8 +16,7 @@ public class StoredFile
 
     public long SizeBytes { get; set; }
 
-    public StoredFileStatus Status { get; set; } =
-        StoredFileStatus.Uploading;
+    public StoredFileStatus Status { get; set; } = StoredFileStatus.Uploading;
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 

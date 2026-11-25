@@ -22,9 +22,12 @@ public class AuthController : ControllerBase
     private readonly EmailVerificationSender _verification;
     private readonly ILogger<AuthController> _logger;
 
-    public AuthController(UserManager<AllocatrUser> users,
-        SignInManager<AllocatrUser> signIn, EmailVerificationSender verification,
-        ILogger<AuthController> logger)
+    public AuthController(
+        UserManager<AllocatrUser> users,
+        SignInManager<AllocatrUser> signIn,
+        EmailVerificationSender verification,
+        ILogger<AuthController> logger
+    )
     {
         _users = users;
         _signIn = signIn;
@@ -42,11 +45,14 @@ public class AuthController : ControllerBase
             return Conflict(new { message = "User already exists" });
         var user = new AllocatrUser
         {
-            FullName = dto.FullName.Trim(), Email = email,
-            UserName = email, IsAllocat = dto.IsAllocat,
+            FullName = dto.FullName.Trim(),
+            Email = email,
+            UserName = email,
+            IsAllocat = dto.IsAllocat,
         };
         var created = await _users.CreateAsync(user, dto.Password);
-        if (!created.Succeeded) return BadRequest(created.Errors);
+        if (!created.Succeeded)
+            return BadRequest(created.Errors);
 
         // Account creation and delivery are separate outcomes. Never make the
         // user register a second time after an SMTP failure.
@@ -58,13 +64,20 @@ public class AuthController : ControllerBase
         }
         catch (Exception exception)
         {
-            _logger.LogError(exception, "Initial verification delivery failed for user {UserId}", user.Id);
+            _logger.LogError(
+                exception,
+                "Initial verification delivery failed for user {UserId}",
+                user.Id
+            );
         }
-        return Ok(new
-        {
-            message = "Registered successfully", verificationEmailSent,
-            emailVerificationRequired = true,
-        });
+        return Ok(
+            new
+            {
+                message = "Registered successfully",
+                verificationEmailSent,
+                emailVerificationRequired = true,
+            }
+        );
     }
 
     [AllowAnonymous]
@@ -73,7 +86,8 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> Login(LoginRequest dto)
     {
         var user = await _users.FindByEmailAsync(dto.Email.Trim());
-        if (user == null) return Unauthorized(new { message = "Invalid credentials" });
+        if (user == null)
+            return Unauthorized(new { message = "Invalid credentials" });
         // Unverified users may obtain a session for /me, resend and logout.
         // RequireVerifiedEmailMiddleware protects the rest of the API.
         var result = await _signIn.PasswordSignInAsync(user, dto.Password, true, true);
@@ -95,19 +109,28 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> Me()
     {
         var user = await _users.GetUserAsync(User);
-        if (user == null) return Unauthorized();
+        if (user == null)
+            return Unauthorized();
         // Profile existence indicates that the first-time create step was saved.
         // This is deliberately distinct from the 100% account-completion badge.
-        var hasAllocatProfile = user.IsAllocat && await _users.Users
-            .Where(item => item.Id == user.Id)
-            .Select(item => item.AllocatProfile != null)
-            .SingleAsync();
-        return Ok(new
-        {
-            userId = user.Id, email = user.Email, fullName = user.FullName,
-            avatarUrl = user.AvatarUrl, isAllocat = user.IsAllocat,
-            emailConfirmed = user.EmailConfirmed, hasAllocatProfile,
-        });
+        var hasAllocatProfile =
+            user.IsAllocat
+            && await _users
+                .Users.Where(item => item.Id == user.Id)
+                .Select(item => item.AllocatProfile != null)
+                .SingleAsync();
+        return Ok(
+            new
+            {
+                userId = user.Id,
+                email = user.Email,
+                fullName = user.FullName,
+                avatarUrl = user.AvatarUrl,
+                isAllocat = user.IsAllocat,
+                emailConfirmed = user.EmailConfirmed,
+                hasAllocatProfile,
+            }
+        );
     }
 
     [Authorize, AllowUnverifiedEmail]
@@ -116,18 +139,32 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> ResendVerification()
     {
         var user = await _users.GetUserAsync(User);
-        if (user == null) return Unauthorized();
+        if (user == null)
+            return Unauthorized();
         if (user.EmailConfirmed)
             return Ok(new { alreadyVerified = true, message = "Your email is already verified." });
         try
         {
             await _verification.SendAsync(user);
-            return Ok(new { alreadyVerified = false, message = "Verification email sent.", retryAfterSeconds = 60 });
+            return Ok(
+                new
+                {
+                    alreadyVerified = false,
+                    message = "Verification email sent.",
+                    retryAfterSeconds = 60,
+                }
+            );
         }
         catch (Exception exception)
         {
             _logger.LogError(exception, "Verification delivery failed for user {UserId}", user.Id);
-            return StatusCode(503, new { message = "Your account is saved, but the verification email could not be sent. Please try again shortly." });
+            return StatusCode(
+                503,
+                new
+                {
+                    message = "Your account is saved, but the verification email could not be sent. Please try again shortly.",
+                }
+            );
         }
     }
 
@@ -142,9 +179,14 @@ public class AuthController : ControllerBase
         if (user == null)
             return BadRequest(new { message = "The verification link is invalid." });
         if (user.EmailConfirmed)
-            return Ok(new { message = "Your email address is already verified.", alreadyVerified = true });
+            return Ok(
+                new { message = "Your email address is already verified.", alreadyVerified = true }
+            );
         string token;
-        try { token = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(request.Token)); }
+        try
+        {
+            token = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(request.Token));
+        }
         catch (FormatException)
         {
             return BadRequest(new { message = "The verification link is invalid or malformed." });
@@ -152,6 +194,8 @@ public class AuthController : ControllerBase
         var result = await _users.ConfirmEmailAsync(user, token);
         if (!result.Succeeded)
             return BadRequest(new { message = "The verification link is invalid or has expired." });
-        return Ok(new { message = "Your email address has been verified.", alreadyVerified = false });
+        return Ok(
+            new { message = "Your email address has been verified.", alreadyVerified = false }
+        );
     }
 }

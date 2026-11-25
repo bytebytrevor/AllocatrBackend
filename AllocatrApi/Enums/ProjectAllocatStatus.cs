@@ -5,5 +5,7 @@ public enum ProjectAllocatStatus
     Invited,
     Accepted,
     Declined,
-    Removed
+    Removed,
+    Left,
+    Withdrawn,
 }

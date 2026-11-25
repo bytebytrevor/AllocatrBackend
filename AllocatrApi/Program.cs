@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using AllocatrApi.Configuration;
 using AllocatrApi.Data;
 using AllocatrApi.Data.Seed;
@@ -8,46 +9,60 @@ using AllocatrApi.Services;
 using AllocatrApi.Services.Storage;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
 /* =========================================================
    CORS
 ========================================================= */
-var allowedOrigins = builder.Configuration
-    .GetSection("Cors:AllowedOrigins").Get<string[]>();
+var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>();
 if (allowedOrigins == null || allowedOrigins.Length == 0)
 {
     if (builder.Environment.IsDevelopment())
         allowedOrigins = new[] { "http://localhost:5173" };
     else
         throw new InvalidOperationException(
-            "Configure Cors:AllowedOrigins with the production frontend origin.");
+            "Configure Cors:AllowedOrigins with the production frontend origin."
+        );
 }
 var validatedOrigins = allowedOrigins
     .Select(origin => origin?.Trim() ?? string.Empty)
     .Where(origin => !string.IsNullOrWhiteSpace(origin))
-    .Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
+    .Distinct(StringComparer.OrdinalIgnoreCase)
+    .ToArray();
 if (validatedOrigins.Length == 0)
     throw new InvalidOperationException(
-        "Cors:AllowedOrigins must contain at least one valid frontend origin.");
+        "Cors:AllowedOrigins must contain at least one valid frontend origin."
+    );
 foreach (var origin in validatedOrigins)
 {
-    if (!Uri.TryCreate(origin, UriKind.Absolute, out var uri) ||
-        (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps) ||
-        !string.IsNullOrEmpty(uri.UserInfo) || uri.AbsolutePath != "/" ||
-        !string.IsNullOrEmpty(uri.Query) || !string.IsNullOrEmpty(uri.Fragment) ||
-        origin.Contains('*') || origin.EndsWith('/'))
+    if (
+        !Uri.TryCreate(origin, UriKind.Absolute, out var uri)
+        || (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps)
+        || !string.IsNullOrEmpty(uri.UserInfo)
+        || uri.AbsolutePath != "/"
+        || !string.IsNullOrEmpty(uri.Query)
+        || !string.IsNullOrEmpty(uri.Fragment)
+        || origin.Contains('*')
+        || origin.EndsWith('/')
+    )
         throw new InvalidOperationException(
-            "Each Cors:AllowedOrigins value must be an exact HTTP or HTTPS origin without a path, wildcard or trailing slash.");
+            "Each Cors:AllowedOrigins value must be an exact HTTP or HTTPS origin without a path, wildcard or trailing slash."
+        );
     if (!builder.Environment.IsDevelopment() && uri.Scheme != Uri.UriSchemeHttps)
         throw new InvalidOperationException("Production frontend origins must use HTTPS.");
 }
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowFrontend", policy => policy.WithOrigins(validatedOrigins)
-        .AllowAnyMethod().AllowAnyHeader().AllowCredentials());
+    options.AddPolicy(
+        "AllowFrontend",
+        policy =>
+            policy
+                .WithOrigins(validatedOrigins)
+                .AllowAnyMethod()
+                .AllowAnyHeader()
+                .AllowCredentials()
+    );
 });
 
 /* =========================================================
@@ -55,25 +70,31 @@ builder.Services.AddCors(options =>
 ========================================================= */
 var connectionString = builder.Configuration.GetConnectionString("Migrations");
 if (string.IsNullOrWhiteSpace(connectionString))
-    throw new InvalidOperationException("The Migrations database connection string is not configured.");
+    throw new InvalidOperationException(
+        "The Migrations database connection string is not configured."
+    );
+
 // builder.Services.AddDbContext<AllocatrDbContext>(options => options.UseNpgsql(connectionString));
-builder.Services.AddDbContext<AllocatrDbContext>((services, options) =>
-{
-    options.UseNpgsql(connectionString);
-    options.AddInterceptors(services.GetRequiredService<TaskCreationNotificationInterceptor>());
-});
+builder.Services.AddDbContext<AllocatrDbContext>(
+    (services, options) =>
+    {
+        options.UseNpgsql(connectionString);
+        options.AddInterceptors(services.GetRequiredService<TaskCreationNotificationInterceptor>());
+    }
+);
 
 /* =========================================================
    IDENTITY
 ========================================================= */
-builder.Services.AddIdentity<AllocatrUser, IdentityRole<Guid>>(options =>
-{
-    options.Password.RequireDigit = true;
-    options.Password.RequireNonAlphanumeric = false;
-    options.Password.RequiredLength = 8;
-})
-.AddEntityFrameworkStores<AllocatrDbContext>()
-.AddDefaultTokenProviders();
+builder
+    .Services.AddIdentity<AllocatrUser, IdentityRole<Guid>>(options =>
+    {
+        options.Password.RequireDigit = true;
+        options.Password.RequireNonAlphanumeric = false;
+        options.Password.RequiredLength = 8;
+    })
+    .AddEntityFrameworkStores<AllocatrDbContext>()
+    .AddDefaultTokenProviders();
 
 /* =========================================================
    AUTHENTICATION COOKIE
@@ -85,7 +106,8 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.Cookie.HttpOnly = true;
     options.Cookie.SameSite = SameSiteMode.Lax;
     options.Cookie.SecurePolicy = builder.Environment.IsDevelopment()
-        ? CookieSecurePolicy.SameAsRequest : CookieSecurePolicy.Always;
+        ? CookieSecurePolicy.SameAsRequest
+        : CookieSecurePolicy.Always;
     options.Events.OnRedirectToLogin = context =>
     {
         context.Response.StatusCode = StatusCodes.Status401Unauthorized;
@@ -102,11 +124,13 @@ builder.Services.ConfigureApplicationCookie(options =>
    EMAIL VERIFICATION
 ========================================================= */
 builder.Services.Configure<EmailSettings>(
-    builder.Configuration.GetSection(EmailSettings.SectionName));
+    builder.Configuration.GetSection(EmailSettings.SectionName)
+);
 builder.Services.Configure<DataProtectionTokenProviderOptions>(options =>
 {
     options.TokenLifespan = TimeSpan.FromHours(24);
 });
+
 // Services, limited unverified sign-in, and named server-side cooldown policies.
 // Protected access is enforced below by RequireVerifiedEmailMiddleware.
 builder.Services.AddAllocatrEmailVerificationFlow();
@@ -114,10 +138,12 @@ builder.Services.AddAllocatrEmailVerificationFlow();
 /* =========================================================
    CONTROLLERS AND ERROR HANDLING
 ========================================================= */
-builder.Services.AddControllers().AddJsonOptions(options =>
-{
-    options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
-});
+builder
+    .Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+    });
 builder.Services.AddAuthorization();
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<ApiExceptionHandler>();
@@ -150,27 +176,35 @@ builder.Services.AddScoped<ProjectMessagingService>();
 builder.Services.AddScoped<NotificationService>();
 builder.Services.AddScoped<CollaborationNotificationService>();
 builder.Services.AddScoped<TaskCreationNotificationInterceptor>();
+builder.Services.AddScoped<ProjectLifecycleService>();
 builder.Services.Configure<AllocatrApi.Services.ProjectThumbnailOptions>(
-    builder.Configuration.GetSection("ProjectThumbnails"));
+    builder.Configuration.GetSection("ProjectThumbnails")
+);
 builder.Services.AddSingleton<AllocatrApi.Services.ProjectThumbnailCache>();
 builder.Services.AddSingleton<AllocatrApi.Services.ProjectThumbnailEncoder>();
 builder.Services.AddScoped<AllocatrApi.Services.ProjectThumbnailService>();
-builder.Services.AddHttpClient("ProjectThumbnailSource", client =>
-{
-    client.Timeout = TimeSpan.FromSeconds(30);
-}).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
-{
-    AllowAutoRedirect = false,
-    UseCookies = false,
-});
-builder.Services.AddHttpClient("MessagingAttachmentSource", client =>
-{
-    client.Timeout = TimeSpan.FromSeconds(60);
-}).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
-{
-    AllowAutoRedirect = false,
-    UseCookies = false,
-});
+builder
+    .Services.AddHttpClient(
+        "ProjectThumbnailSource",
+        client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(30);
+        }
+    )
+    .ConfigurePrimaryHttpMessageHandler(() =>
+        new HttpClientHandler { AllowAutoRedirect = false, UseCookies = false }
+    );
+builder
+    .Services.AddHttpClient(
+        "MessagingAttachmentSource",
+        client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(60);
+        }
+    )
+    .ConfigurePrimaryHttpMessageHandler(() =>
+        new HttpClientHandler { AllowAutoRedirect = false, UseCookies = false }
+    );
 
 /* =========================================================
    APPLICATION

@@ -10,6 +10,7 @@ public class TaskComment
     public TaskItem TaskItem { get; set; } = null!;
     public Guid CreatedById { get; set; }
     public AllocatrUser CreatedBy { get; set; } = null!;
+
     // Optional for older clients; newer clients reuse this ID when retrying a post.
     public Guid? ClientRequestId { get; set; }
     public Guid? ReplyToCommentId { get; set; }

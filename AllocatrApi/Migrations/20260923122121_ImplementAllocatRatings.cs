@@ -12,7 +12,8 @@ namespace AllocatrApi.Migrations
         {
             migrationBuilder.DropIndex(
                 name: "IX_Reviews_ProjectId_ReviewerId_AllocatProfileId",
-                table: "Reviews");
+                table: "Reviews"
+            );
 
             migrationBuilder.AlterColumn<int>(
                 name: "Rating",
@@ -22,18 +23,21 @@ namespace AllocatrApi.Migrations
                 oldClrType: typeof(decimal),
                 oldType: "numeric(2,1)",
                 oldPrecision: 2,
-                oldScale: 1);
+                oldScale: 1
+            );
 
             migrationBuilder.CreateIndex(
                 name: "IX_Reviews_ProjectId_AllocatProfileId",
                 table: "Reviews",
                 columns: new[] { "ProjectId", "AllocatProfileId" },
-                unique: true);
+                unique: true
+            );
 
             migrationBuilder.AddCheckConstraint(
                 name: "CK_Reviews_Rating",
                 table: "Reviews",
-                sql: "\"Rating\" >= 1 AND \"Rating\" <= 5");
+                sql: "\"Rating\" >= 1 AND \"Rating\" <= 5"
+            );
         }
 
         /// <inheritdoc />
@@ -41,11 +45,10 @@ namespace AllocatrApi.Migrations
         {
             migrationBuilder.DropIndex(
                 name: "IX_Reviews_ProjectId_AllocatProfileId",
-                table: "Reviews");
+                table: "Reviews"
+            );
 
-            migrationBuilder.DropCheckConstraint(
-                name: "CK_Reviews_Rating",
-                table: "Reviews");
+            migrationBuilder.DropCheckConstraint(name: "CK_Reviews_Rating", table: "Reviews");
 
             migrationBuilder.AlterColumn<decimal>(
                 name: "Rating",
@@ -55,13 +58,15 @@ namespace AllocatrApi.Migrations
                 scale: 1,
                 nullable: false,
                 oldClrType: typeof(int),
-                oldType: "integer");
+                oldType: "integer"
+            );
 
             migrationBuilder.CreateIndex(
                 name: "IX_Reviews_ProjectId_ReviewerId_AllocatProfileId",
                 table: "Reviews",
                 columns: new[] { "ProjectId", "ReviewerId", "AllocatProfileId" },
-                unique: true);
+                unique: true
+            );
         }
     }
 }

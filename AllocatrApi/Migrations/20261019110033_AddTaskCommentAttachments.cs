@@ -15,25 +15,29 @@ namespace AllocatrApi.Migrations
                 name: "ClientRequestId",
                 table: "TaskComments",
                 type: "uuid",
-                nullable: true);
+                nullable: true
+            );
 
             migrationBuilder.AddColumn<Guid>(
                 name: "CommentId",
                 table: "ProjectFiles",
                 type: "uuid",
-                nullable: true);
+                nullable: true
+            );
 
             migrationBuilder.CreateIndex(
                 name: "IX_TaskComments_CreatedById_ClientRequestId",
                 table: "TaskComments",
                 columns: new[] { "CreatedById", "ClientRequestId" },
                 unique: true,
-                filter: "\"ClientRequestId\" IS NOT NULL");
+                filter: "\"ClientRequestId\" IS NOT NULL"
+            );
 
             migrationBuilder.CreateIndex(
                 name: "IX_ProjectFiles_CommentId",
                 table: "ProjectFiles",
-                column: "CommentId");
+                column: "CommentId"
+            );
 
             migrationBuilder.AddForeignKey(
                 name: "FK_ProjectFiles_TaskComments_CommentId",
@@ -41,7 +45,8 @@ namespace AllocatrApi.Migrations
                 column: "CommentId",
                 principalTable: "TaskComments",
                 principalColumn: "Id",
-                onDelete: ReferentialAction.SetNull);
+                onDelete: ReferentialAction.SetNull
+            );
         }
 
         /// <inheritdoc />
@@ -49,23 +54,19 @@ namespace AllocatrApi.Migrations
         {
             migrationBuilder.DropForeignKey(
                 name: "FK_ProjectFiles_TaskComments_CommentId",
-                table: "ProjectFiles");
+                table: "ProjectFiles"
+            );
 
             migrationBuilder.DropIndex(
                 name: "IX_TaskComments_CreatedById_ClientRequestId",
-                table: "TaskComments");
+                table: "TaskComments"
+            );
 
-            migrationBuilder.DropIndex(
-                name: "IX_ProjectFiles_CommentId",
-                table: "ProjectFiles");
+            migrationBuilder.DropIndex(name: "IX_ProjectFiles_CommentId", table: "ProjectFiles");
 
-            migrationBuilder.DropColumn(
-                name: "ClientRequestId",
-                table: "TaskComments");
+            migrationBuilder.DropColumn(name: "ClientRequestId", table: "TaskComments");
 
-            migrationBuilder.DropColumn(
-                name: "CommentId",
-                table: "ProjectFiles");
+            migrationBuilder.DropColumn(name: "CommentId", table: "ProjectFiles");
         }
     }
 }

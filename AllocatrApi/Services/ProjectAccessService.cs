@@ -8,8 +8,7 @@ public class ProjectAccessService
 {
     private readonly AllocatrDbContext _db;
 
-    public ProjectAccessService(
-        AllocatrDbContext db)
+    public ProjectAccessService(AllocatrDbContext db)
     {
         _db = db;
     }
@@ -27,23 +26,20 @@ public class ProjectAccessService
           non-removed assignment.
     ===================================================== */
 
-    public async Task<bool> CanViewProjectAsync(
-        Guid projectId,
-        Guid userId,
-        bool isAllocat)
+    public async Task<bool> CanViewProjectAsync(Guid projectId, Guid userId, bool isAllocat)
     {
-        return await _db.Projects
-            .AsNoTracking()
+        return await _db
+            .Projects.AsNoTracking()
             .AnyAsync(p =>
-                p.Id == projectId &&
-                (
-                    p.UserId == userId ||
-                    (
-                        isAllocat &&
-                        p.AllocatAssignments.Any(pa =>
-                            pa.AllocatProfile.AllocatrUserId == userId &&
-                            pa.Status == ProjectAllocatStatus.Accepted &&
-                            pa.RemovedAt == null
+                p.Id == projectId
+                && (
+                    p.UserId == userId
+                    || (
+                        isAllocat
+                        && p.AllocatAssignments.Any(pa =>
+                            pa.AllocatProfile.AllocatrUserId == userId
+                            && pa.Status == ProjectAllocatStatus.Accepted
+                            && pa.RemovedAt == null
                         )
                     )
                 )
@@ -61,16 +57,11 @@ public class ProjectAccessService
        - ownership-level management
     ===================================================== */
 
-    public async Task<bool> IsProjectOwnerAsync(
-        Guid projectId,
-        Guid userId)
+    public async Task<bool> IsProjectOwnerAsync(Guid projectId, Guid userId)
     {
-        return await _db.Projects
-            .AsNoTracking()
-            .AnyAsync(p =>
-                p.Id == projectId &&
-                p.UserId == userId
-            );
+        return await _db
+            .Projects.AsNoTracking()
+            .AnyAsync(p => p.Id == projectId && p.UserId == userId);
     }
 
     /* =====================================================
@@ -83,19 +74,17 @@ public class ProjectAccessService
        semantically separate.
     ===================================================== */
 
-    public async Task<bool> IsAcceptedAllocatAsync(
-        Guid projectId,
-        Guid userId)
+    public async Task<bool> IsAcceptedAllocatAsync(Guid projectId, Guid userId)
     {
-        return await _db.Projects
-            .AsNoTracking()
+        return await _db
+            .Projects.AsNoTracking()
             .AnyAsync(p =>
-                p.Id == projectId &&
-                p.UserId != userId &&
-                p.AllocatAssignments.Any(pa =>
-                    pa.AllocatProfile.AllocatrUserId == userId &&
-                    pa.Status == ProjectAllocatStatus.Accepted &&
-                    pa.RemovedAt == null
+                p.Id == projectId
+                && p.UserId != userId
+                && p.AllocatAssignments.Any(pa =>
+                    pa.AllocatProfile.AllocatrUserId == userId
+                    && pa.Status == ProjectAllocatStatus.Accepted
+                    && pa.RemovedAt == null
                 )
             );
     }

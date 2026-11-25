@@ -8,7 +8,6 @@ namespace AllocatrApi.Migrations
     /// <inheritdoc />
     public partial class NormalizeProjectLifecycle : Migration
     {
-
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -26,15 +25,14 @@ namespace AllocatrApi.Migrations
                 name: "CompletedAt",
                 table: "Projects",
                 type: "timestamp with time zone",
-                nullable: true);
+                nullable: true
+            );
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropColumn(
-                name: "CompletedAt",
-                table: "Projects");
+            migrationBuilder.DropColumn(name: "CompletedAt", table: "Projects");
         }
     }
 }

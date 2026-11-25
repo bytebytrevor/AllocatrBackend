@@ -1,6 +1,3 @@
 namespace AllocatrApi.Dtos;
 
-public record class Record
-{
-
-}
+public record class Record { }

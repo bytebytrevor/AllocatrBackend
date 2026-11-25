@@ -11,20 +11,16 @@ public class SkillCategoryConfiguration : IEntityTypeConfiguration<SkillCategory
     {
         builder.HasKey(sc => sc.Id);
 
-        builder.Property(sc => sc.Name)
-            .IsRequired()
-            .HasMaxLength(80);
+        builder.Property(sc => sc.Name).IsRequired().HasMaxLength(80);
 
-        builder.HasIndex(sc => sc.Name)
-            .IsUnique();
+        builder.HasIndex(sc => sc.Name).IsUnique();
 
-        builder.Property(sc => sc.CreatedAt)
-            .IsRequired();
+        builder.Property(sc => sc.CreatedAt).IsRequired();
 
-        builder.Property(sc => sc.UpdatedAt)
-            .IsRequired();
+        builder.Property(sc => sc.UpdatedAt).IsRequired();
 
-        builder.HasMany(sc => sc.Skills)
+        builder
+            .HasMany(sc => sc.Skills)
             .WithOne(s => s.SkillCategory)
             .HasForeignKey(s => s.SkillCategoryId);
     }

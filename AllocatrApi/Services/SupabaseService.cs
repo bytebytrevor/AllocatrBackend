@@ -9,9 +9,6 @@ public class SupabaseService
 
     public SupabaseService(IConfiguration config)
     {
-        Client = new Client(
-            config["Supabase:Url"]!,
-            config["Supabase:ServiceRoleKey"]!
-        );
+        Client = new Client(config["Supabase:Url"]!, config["Supabase:ServiceRoleKey"]!);
     }
 }
