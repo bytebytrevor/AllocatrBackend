@@ -92,6 +92,35 @@ public class TaskController : ControllerBase
         }
     }
 
+    [HttpPatch("task/{taskId:guid}/due-date")]
+    public async Task<IActionResult> UpdateTaskDueDate(
+        Guid taskId,
+        [FromBody] UpdateTaskDueDateDto dto
+    )
+    {
+        var user = await _userManager.GetUserAsync(User);
+        if (user == null)
+            return Unauthorized();
+        if (!dto.DueDate.HasValue)
+            return BadRequest(new { message = "Choose a task due date and time." });
+        try
+        {
+            var task = await _taskService.UpdateTaskDueDateAsync(
+                taskId,
+                user.Id,
+                user.IsAllocat,
+                dto.DueDate.Value
+            );
+            if (task == null)
+                return NotFound(new { message = "Task not found or not editable." });
+            return Ok(task);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
     [HttpDelete("task/{taskId:guid}")]
     public async Task<IActionResult> DeleteTask(Guid taskId)
     {

@@ -181,9 +181,31 @@ public class CalendarPlanningService
             throw new ArgumentException("Task not found.");
         }
 
+        // Serialize against project cancellation before checking mutable project state.
+        await using var mutation = await ProjectMutationScope.BeginAsync(_db, task.ProjectId);
+
         if (!await CanAccessProjectAsync(userId, isAllocat, task.ProjectId))
         {
             throw new ArgumentException("Task is not available to your account.");
+        }
+
+        var projectStatus = await _db
+            .TaskItems.AsNoTracking()
+            .Where(item => item.Id == taskId && item.ProjectId == task.ProjectId)
+            .Select(item => item.Project.Status)
+            .FirstOrDefaultAsync();
+
+        if (projectStatus == null)
+        {
+            throw new ArgumentException("Task not found.");
+        }
+
+        var normalizedProjectStatus = projectStatus.Trim().ToLowerInvariant();
+        if (normalizedProjectStatus == "cancelled" || normalizedProjectStatus == "canceled")
+        {
+            throw new ArgumentException(
+                "Tasks from cancelled projects cannot be added to weekly focus."
+            );
         }
 
         var alreadyFocused = await _db.CalendarFocusTasks.AnyAsync(focus =>
@@ -192,7 +214,9 @@ public class CalendarPlanningService
 
         if (alreadyFocused)
         {
-            return await GetFocusTasksAsync(userId, weekStart);
+            var existingTasks = await GetFocusTasksAsync(userId, weekStart);
+            await mutation.CommitAsync();
+            return existingTasks;
         }
 
         var focusCount = await _db.CalendarFocusTasks.CountAsync(focus =>
@@ -218,7 +242,9 @@ public class CalendarPlanningService
 
         await _db.SaveChangesAsync();
 
-        return await GetFocusTasksAsync(userId, weekStart);
+        var tasks = await GetFocusTasksAsync(userId, weekStart);
+        await mutation.CommitAsync();
+        return tasks;
     }
 
     public async Task<List<CalendarFocusTaskDto>> RemoveFocusTaskAsync(

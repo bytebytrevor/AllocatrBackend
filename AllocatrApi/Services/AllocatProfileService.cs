@@ -13,7 +13,7 @@ public class AllocatProfileService
     [
         "available",
         "busy",
-        "unavailable"
+        "unavailable",
     ];
 
     private readonly AllocatrDbContext _db;
@@ -25,30 +25,24 @@ public class AllocatProfileService
 
     public async Task<MyAllocatProfileDto> CreateAllocatProfileAsync(
         Guid userId,
-        CreateAllocatProfileDto dto)
+        CreateAllocatProfileDto dto
+    )
     {
-        var user = await _db.Users
-            .AsNoTracking()
-            .FirstOrDefaultAsync(u => u.Id == userId);
+        var user = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == userId);
 
         if (user == null)
             throw new KeyNotFoundException("User not found.");
 
         if (!user.IsAllocat)
         {
-            throw new InvalidOperationException(
-                "The user is not registered as an Allocat."
-            );
+            throw new InvalidOperationException("The user is not registered as an Allocat.");
         }
 
-        var profileExists = await _db.AllocatProfiles
-            .AnyAsync(a => a.AllocatrUserId == userId);
+        var profileExists = await _db.AllocatProfiles.AnyAsync(a => a.AllocatrUserId == userId);
 
         if (profileExists)
         {
-            throw new InvalidOperationException(
-                "An Allocat profile already exists for this user."
-            );
+            throw new InvalidOperationException("An Allocat profile already exists for this user.");
         }
 
         var input = await NormalizeAndValidateAsync(
@@ -92,13 +86,13 @@ public class AllocatProfileService
             IsVisible = true,
             CreatedAt = now,
             UpdatedAt = now,
-            Skills = input.SkillIds
-                .Select(skillId => new AllocatProfileSkill
+            Skills = input
+                .SkillIds.Select(skillId => new AllocatProfileSkill
                 {
                     AllocatProfileId = userId,
-                    SkillId = skillId
+                    SkillId = skillId,
                 })
-                .ToList()
+                .ToList(),
         };
 
         _db.AllocatProfiles.Add(profile);
@@ -116,8 +110,7 @@ public class AllocatProfileService
         return data == null ? null : ToMyProfileDto(data);
     }
 
-    public async Task<AllocatProfileDto?> GetPublicAllocatProfileAsync(
-        Guid allocatUserId)
+    public async Task<AllocatProfileDto?> GetPublicAllocatProfileAsync(Guid allocatUserId)
     {
         var data = await GetProfileDataAsync(allocatUserId, publicView: true);
         if (data == null)
@@ -126,22 +119,32 @@ public class AllocatProfileService
         // Query only after confirming that the professional profile is public.
         // Project metadata, identity files and owner-only document DTOs are not
         // used for qualification claims.
-        var qualifications = await _db.UserDocuments
-            .AsNoTracking()
+        var qualifications = await _db
+            .UserDocuments.AsNoTracking()
             .Where(document =>
-                document.UserId == allocatUserId &&
-                (document.DocumentType == UserDocumentType.Qualification ||
-                 document.DocumentType == UserDocumentType.Certification ||
-                 document.DocumentType == UserDocumentType.ProfessionalLicense ||
-                 document.DocumentType == UserDocumentType.Training ||
-                 document.DocumentType == UserDocumentType.Other) &&
-                document.StoredFile.Status == StoredFileStatus.Ready &&
-                (document.ReviewStatus == UserDocumentReviewStatus.Pending ||
-                 document.ReviewStatus == UserDocumentReviewStatus.Approved) &&
-                document.Title != null && document.Title.Trim() != "" &&
-                (document.DocumentType != UserDocumentType.Qualification ||
-                 (document.IssuingInstitution != null &&
-                  document.IssuingInstitution.Trim() != "")))
+                document.UserId == allocatUserId
+                && (
+                    document.DocumentType == UserDocumentType.Qualification
+                    || document.DocumentType == UserDocumentType.Certification
+                    || document.DocumentType == UserDocumentType.ProfessionalLicense
+                    || document.DocumentType == UserDocumentType.Training
+                    || document.DocumentType == UserDocumentType.Other
+                )
+                && document.StoredFile.Status == StoredFileStatus.Ready
+                && (
+                    document.ReviewStatus == UserDocumentReviewStatus.Pending
+                    || document.ReviewStatus == UserDocumentReviewStatus.Approved
+                )
+                && document.Title != null
+                && document.Title.Trim() != ""
+                && (
+                    document.DocumentType != UserDocumentType.Qualification
+                    || (
+                        document.IssuingInstitution != null
+                        && document.IssuingInstitution.Trim() != ""
+                    )
+                )
+            )
             .OrderByDescending(document => document.CreatedAt)
             .ThenBy(document => document.Id)
             .Select(document => new PublicQualificationDto(
@@ -152,23 +155,26 @@ public class AllocatProfileService
                     : "UnderReview"
             )
             {
-                DocumentType = document.DocumentType == UserDocumentType.Qualification ? "Qualification"
+                DocumentType =
+                    document.DocumentType == UserDocumentType.Qualification ? "Qualification"
                     : document.DocumentType == UserDocumentType.Certification ? "Certification"
-                    : document.DocumentType == UserDocumentType.ProfessionalLicense ? "ProfessionalLicense"
+                    : document.DocumentType == UserDocumentType.ProfessionalLicense
+                        ? "ProfessionalLicense"
                     : document.DocumentType == UserDocumentType.Training ? "Training"
-                    : "Other"
+                    : "Other",
             })
             .ToListAsync();
 
         return ToPublicProfileDto(data) with
         {
-            Qualifications = qualifications
+            Qualifications = qualifications,
         };
     }
 
-    public async Task<PagedResultDto<AllocatProfileListItemDto>>
-        GetAllAllocatProfilesAsync(AllocatProfileSearchDto request,
-        CancellationToken cancellationToken = default)
+    public async Task<PagedResultDto<AllocatProfileListItemDto>> GetAllAllocatProfilesAsync(
+        AllocatProfileSearchDto request,
+        CancellationToken cancellationToken = default
+    )
     {
         var page = Math.Max(request.Page, 1);
         var pageSize = Math.Clamp(request.PageSize, 1, 50);
@@ -176,7 +182,10 @@ public class AllocatProfileService
             throw new ArgumentException("Page is outside the supported range.");
 
         var sort = CleanOptional(request.SortBy, 20)?.ToLowerInvariant();
-        if (sort != null && sort is not ("relevance" or "rating" or "experience" or "rate-low" or "recent"))
+        if (
+            sort != null
+            && sort is not ("relevance" or "rating" or "experience" or "rate-low" or "recent")
+        )
             throw new ArgumentException("Invalid directory sort order.");
 
         var skillIds = (request.SkillIds ?? []).Distinct().ToArray();
@@ -195,8 +204,8 @@ public class AllocatProfileService
             cancellationToken
         );
 
-        var query = _db.AllocatProfiles
-            .TagWith("Allocatr: public Allocat directory")
+        var query = _db
+            .AllocatProfiles.TagWith("Allocatr: public Allocat directory")
             .AsNoTracking()
             .Where(a => a.IsVisible && a.AllocatrUser.IsAllocat);
 
@@ -219,13 +228,13 @@ public class AllocatProfileService
             // account residence as a substitute for an operating location.
             var locationPattern = $"%{EscapeLikePattern(location)}%";
             query = query.Where(a =>
-                a.OperatingCity != null &&
-                a.OperatingCountry != null &&
-                (
-                    EF.Functions.ILike(a.OperatingCity.Name, locationPattern, "\\") ||
-                    EF.Functions.ILike(a.OperatingCountry.Name, locationPattern, "\\") ||
-                    EF.Functions.ILike(a.OperatingCountry.Code, locationPattern, "\\") ||
-                    EF.Functions.ILike(
+                a.OperatingCity != null
+                && a.OperatingCountry != null
+                && (
+                    EF.Functions.ILike(a.OperatingCity.Name, locationPattern, "\\")
+                    || EF.Functions.ILike(a.OperatingCountry.Name, locationPattern, "\\")
+                    || EF.Functions.ILike(a.OperatingCountry.Code, locationPattern, "\\")
+                    || EF.Functions.ILike(
                         a.OperatingCity.Name + ", " + a.OperatingCountry.Name,
                         locationPattern,
                         "\\"
@@ -241,13 +250,18 @@ public class AllocatProfileService
         if (category != null)
         {
             var categoryPattern = EscapeLikePattern(category);
-            query = query.Where(a => a.Skills.Any(link =>
-                EF.Functions.ILike(link.Skill.SkillCategory.Name, categoryPattern, "\\")));
+            query = query.Where(a =>
+                a.Skills.Any(link =>
+                    EF.Functions.ILike(link.Skill.SkillCategory.Name, categoryPattern, "\\")
+                )
+            );
         }
 
         // Every selected canonical skill must match. Aliases never replace skill IDs.
         if (skillIds.Length > 0)
-            query = query.Where(a => a.Skills.Count(link => skillIds.Contains(link.SkillId)) == skillIds.Length);
+            query = query.Where(a =>
+                a.Skills.Count(link => skillIds.Contains(link.SkillId)) == skillIds.Length
+            );
 
         if (request.VerifiedOnly == true)
             query = query.Where(a => a.IsVerified);
@@ -255,16 +269,16 @@ public class AllocatProfileService
         if (request.MaxHourlyRate.HasValue)
         {
             query = query.Where(a =>
-                (request.IncludeUnpriced == true && !a.HourlyRate.HasValue) ||
-                (a.HourlyRate.HasValue && a.HourlyRate.Value <= request.MaxHourlyRate.Value)
+                (request.IncludeUnpriced == true && !a.HourlyRate.HasValue)
+                || (a.HourlyRate.HasValue && a.HourlyRate.Value <= request.MaxHourlyRate.Value)
             );
         }
 
         if (request.MinYearsExperience.HasValue)
         {
             query = query.Where(a =>
-                a.YearsExperience.HasValue &&
-                a.YearsExperience.Value >= request.MinYearsExperience.Value
+                a.YearsExperience.HasValue
+                && a.YearsExperience.Value >= request.MinYearsExperience.Value
             );
         }
 
@@ -277,23 +291,38 @@ public class AllocatProfileService
         // Omitted SortBy retains the existing endpoint's ordering for other callers.
         IOrderedQueryable<AllocatProfile> orderedQuery = sort switch
         {
-            "rating" => query.OrderByDescending(a => a.AverageRating)
-                .ThenByDescending(a => a.RatingCount).ThenByDescending(a => a.IsVerified)
+            "rating" => query
+                .OrderByDescending(a => a.AverageRating)
+                .ThenByDescending(a => a.RatingCount)
+                .ThenByDescending(a => a.IsVerified)
                 .ThenByDescending(a => a.UpdatedAt),
-            "experience" => query.OrderByDescending(a => a.YearsExperience ?? 0)
-                .ThenByDescending(a => a.AverageRating).ThenByDescending(a => a.RatingCount)
+            "experience" => query
+                .OrderByDescending(a => a.YearsExperience ?? 0)
+                .ThenByDescending(a => a.AverageRating)
+                .ThenByDescending(a => a.RatingCount)
                 .ThenByDescending(a => a.UpdatedAt),
-            "rate-low" => query.OrderBy(a => !a.HourlyRate.HasValue)
-                .ThenBy(a => a.HourlyRate).ThenByDescending(a => a.AverageRating)
-                .ThenByDescending(a => a.RatingCount).ThenByDescending(a => a.UpdatedAt),
-            "recent" => query.OrderByDescending(a => a.UpdatedAt)
-                .ThenByDescending(a => a.AverageRating).ThenByDescending(a => a.RatingCount),
+            "rate-low" => query
+                .OrderBy(a => !a.HourlyRate.HasValue)
+                .ThenBy(a => a.HourlyRate)
+                .ThenByDescending(a => a.AverageRating)
+                .ThenByDescending(a => a.RatingCount)
+                .ThenByDescending(a => a.UpdatedAt),
+            "recent" => query
+                .OrderByDescending(a => a.UpdatedAt)
+                .ThenByDescending(a => a.AverageRating)
+                .ThenByDescending(a => a.RatingCount),
             _ => searchPlan == null
-                ? query.OrderByDescending(a => a.IsVerified).ThenByDescending(a => a.AverageRating)
-                    .ThenByDescending(a => a.RatingCount).ThenByDescending(a => a.UpdatedAt)
-                : query.OrderByDescending(searchPlan.Rank).ThenByDescending(a => a.IsVerified)
-                    .ThenByDescending(a => a.AverageRating).ThenByDescending(a => a.RatingCount)
+                ? query
+                    .OrderByDescending(a => a.IsVerified)
+                    .ThenByDescending(a => a.AverageRating)
+                    .ThenByDescending(a => a.RatingCount)
                     .ThenByDescending(a => a.UpdatedAt)
+                : query
+                    .OrderByDescending(searchPlan.Rank)
+                    .ThenByDescending(a => a.IsVerified)
+                    .ThenByDescending(a => a.AverageRating)
+                    .ThenByDescending(a => a.RatingCount)
+                    .ThenByDescending(a => a.UpdatedAt),
         };
 
         var profiles = await orderedQuery
@@ -305,9 +334,10 @@ public class AllocatProfileService
                 AllocatrUserId = a.AllocatrUserId,
                 FullName = a.AllocatrUser.FullName,
                 AvatarUrl = a.AllocatrUser.AvatarUrl,
-                Location = a.OperatingCity != null && a.OperatingCountry != null
-                    ? a.OperatingCity.Name + ", " + a.OperatingCountry.Name
-                    : null,
+                Location =
+                    a.OperatingCity != null && a.OperatingCountry != null
+                        ? a.OperatingCity.Name + ", " + a.OperatingCountry.Name
+                        : null,
                 JoinedAt = a.AllocatrUser.CreatedAt,
                 HasIdNumber = a.IdNumber != null && a.IdNumber != "",
                 Title = a.Title,
@@ -321,8 +351,8 @@ public class AllocatProfileService
                 RatingCount = a.RatingCount,
                 IsVerified = a.IsVerified,
                 Level = a.Level,
-                Skills = a.Skills
-                    .OrderBy(s => s.Skill.Name)
+                Skills = a
+                    .Skills.OrderBy(s => s.Skill.Name)
                     .Select(s => new SkillOptionDto(
                         s.SkillId,
                         s.Skill.Name,
@@ -331,30 +361,38 @@ public class AllocatProfileService
                     ))
                     .ToList(),
                 CompletedProjects = a.ProjectAssignments.Count(pa =>
-                    pa.Status == ProjectAllocatStatus.Accepted &&
-                    pa.RemovedAt == null &&
-                    pa.Project.Status == ProjectStatuses.Completed
-                )
+                    pa.Status == ProjectAllocatStatus.Accepted
+                    && pa.RemovedAt == null
+                    && pa.Project.Status == ProjectStatuses.Completed
+                ),
             })
             .ToListAsync(cancellationToken);
 
         var items = profiles.Select(ToListItemDto).ToList();
-        return new PagedResultDto<AllocatProfileListItemDto>(
-            items, page, pageSize, totalCount
-        );
+        return new PagedResultDto<AllocatProfileListItemDto>(items, page, pageSize, totalCount);
     }
 
     public async Task<AllocatDirectoryFiltersDto> GetDirectoryFiltersAsync(
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
-        var visible = _db.AllocatProfiles.AsNoTracking()
+        var visible = _db
+            .AllocatProfiles.AsNoTracking()
             .Where(a => a.IsVisible && a.AllocatrUser.IsAllocat);
 
-        var skills = await _db.Skills.AsNoTracking()
-            .Where(skill => visible.Any(profile => profile.Skills.Any(link => link.SkillId == skill.Id)))
-            .OrderBy(skill => skill.Name).ThenBy(skill => skill.Id)
-            .Select(skill => new SkillOptionDto(skill.Id, skill.Name,
-                skill.SkillCategoryId, skill.SkillCategory.Name))
+        var skills = await _db
+            .Skills.AsNoTracking()
+            .Where(skill =>
+                visible.Any(profile => profile.Skills.Any(link => link.SkillId == skill.Id))
+            )
+            .OrderBy(skill => skill.Name)
+            .ThenBy(skill => skill.Id)
+            .Select(skill => new SkillOptionDto(
+                skill.Id,
+                skill.Name,
+                skill.SkillCategoryId,
+                skill.SkillCategory.Name
+            ))
             .ToListAsync(cancellationToken);
 
         // This scalar aggregate does not download the public directory.
@@ -364,10 +402,11 @@ public class AllocatProfileService
 
     public async Task<MyAllocatProfileDto?> UpdateAllocatProfileAsync(
         Guid userId,
-        UpdateAllocatProfileDto dto)
+        UpdateAllocatProfileDto dto
+    )
     {
-        var profile = await _db.AllocatProfiles
-            .Include(a => a.Skills)
+        var profile = await _db
+            .AllocatProfiles.Include(a => a.Skills)
             .FirstOrDefaultAsync(a => a.AllocatrUserId == userId);
 
         if (profile == null)
@@ -387,8 +426,8 @@ public class AllocatProfileService
         );
 
         OperatingLocationInput? operatingLocation = null;
-        var updateOperatingLocation = dto.OperatingCountryCodeProvided ||
-            dto.OperatingCityIdProvided;
+        var updateOperatingLocation =
+            dto.OperatingCountryCodeProvided || dto.OperatingCityIdProvided;
 
         if (updateOperatingLocation)
         {
@@ -429,8 +468,9 @@ public class AllocatProfileService
 
     public async Task<bool> SetVisibilityAsync(Guid userId, bool isVisible)
     {
-        var profile = await _db.AllocatProfiles
-            .FirstOrDefaultAsync(a => a.AllocatrUserId == userId);
+        var profile = await _db.AllocatProfiles.FirstOrDefaultAsync(a =>
+            a.AllocatrUserId == userId
+        );
         if (profile == null)
             return false;
         profile.IsVisible = isVisible;
@@ -442,8 +482,9 @@ public class AllocatProfileService
     public async Task<bool> SetAvailabilityAsync(Guid userId, string availability)
     {
         var normalizedAvailability = NormalizeAvailability(availability);
-        var profile = await _db.AllocatProfiles
-            .FirstOrDefaultAsync(a => a.AllocatrUserId == userId);
+        var profile = await _db.AllocatProfiles.FirstOrDefaultAsync(a =>
+            a.AllocatrUserId == userId
+        );
         if (profile == null)
             return false;
         profile.Availability = normalizedAvailability;
@@ -454,13 +495,14 @@ public class AllocatProfileService
 
     public async Task<bool> RefreshRatingAsync(Guid allocatUserId)
     {
-        var profile = await _db.AllocatProfiles
-            .FirstOrDefaultAsync(a => a.AllocatrUserId == allocatUserId);
+        var profile = await _db.AllocatProfiles.FirstOrDefaultAsync(a =>
+            a.AllocatrUserId == allocatUserId
+        );
         if (profile == null)
             return false;
 
-        var ratings = _db.Reviews
-            .AsNoTracking()
+        var ratings = _db
+            .Reviews.AsNoTracking()
             .Where(r => r.AllocatProfileId == allocatUserId)
             .Select(r => (decimal)r.Rating);
 
@@ -474,8 +516,8 @@ public class AllocatProfileService
 
     private async Task<ProfileData?> GetProfileDataAsync(Guid allocatUserId, bool publicView)
     {
-        var query = _db.AllocatProfiles
-            .AsNoTracking()
+        var query = _db
+            .AllocatProfiles.AsNoTracking()
             .Where(a => a.AllocatrUserId == allocatUserId && a.AllocatrUser.IsAllocat);
 
         if (publicView)
@@ -488,17 +530,14 @@ public class AllocatProfileService
                 FullName = a.AllocatrUser.FullName,
                 AvatarUrl = a.AllocatrUser.AvatarUrl,
                 Email = a.AllocatrUser.Email ?? string.Empty,
-                Location = a.OperatingCity != null && a.OperatingCountry != null
-                    ? a.OperatingCity.Name + ", " + a.OperatingCountry.Name
-                    : null,
+                Location =
+                    a.OperatingCity != null && a.OperatingCountry != null
+                        ? a.OperatingCity.Name + ", " + a.OperatingCountry.Name
+                        : null,
                 OperatingCountryCode = a.OperatingCountryCode,
                 OperatingCityId = a.OperatingCityId,
-                OperatingCountryName = a.OperatingCountry != null
-                    ? a.OperatingCountry.Name
-                    : null,
-                OperatingCityName = a.OperatingCity != null
-                    ? a.OperatingCity.Name
-                    : null,
+                OperatingCountryName = a.OperatingCountry != null ? a.OperatingCountry.Name : null,
+                OperatingCityName = a.OperatingCity != null ? a.OperatingCity.Name : null,
                 JoinedAt = a.AllocatrUser.CreatedAt,
                 IdNumber = a.IdNumber,
                 HasIdNumber = a.IdNumber != null && a.IdNumber != "",
@@ -517,8 +556,8 @@ public class AllocatProfileService
                 IsVisible = a.IsVisible,
                 CreatedAt = a.CreatedAt,
                 UpdatedAt = a.UpdatedAt,
-                SkillOptions = a.Skills
-                    .OrderBy(s => s.Skill.Name)
+                SkillOptions = a
+                    .Skills.OrderBy(s => s.Skill.Name)
                     .Select(s => new SkillOptionDto(
                         s.SkillId,
                         s.Skill.Name,
@@ -527,16 +566,16 @@ public class AllocatProfileService
                     ))
                     .ToList(),
                 CompletedProjects = a.ProjectAssignments.Count(pa =>
-                    pa.Status == ProjectAllocatStatus.Accepted &&
-                    pa.RemovedAt == null &&
-                    pa.Project.Status == ProjectStatuses.Completed
+                    pa.Status == ProjectAllocatStatus.Accepted
+                    && pa.RemovedAt == null
+                    && pa.Project.Status == ProjectStatuses.Completed
                 ),
-                Projects = a.ProjectAssignments
-                    .Where(pa =>
-                        pa.Status == ProjectAllocatStatus.Accepted &&
-                        pa.RemovedAt == null &&
-                        pa.Project.Status == ProjectStatuses.Completed &&
-                        (!publicView || pa.Project.IsPublic)
+                Projects = a
+                    .ProjectAssignments.Where(pa =>
+                        pa.Status == ProjectAllocatStatus.Accepted
+                        && pa.RemovedAt == null
+                        && pa.Project.Status == ProjectStatuses.Completed
+                        && (!publicView || pa.Project.IsPublic)
                     )
                     .OrderByDescending(pa => pa.Project.UpdatedAt ?? pa.Project.CreatedAt)
                     .Take(6)
@@ -547,14 +586,15 @@ public class AllocatProfileService
                         pa.Project.Category,
                         pa.Project.Status
                     ))
-                    .ToList()
+                    .ToList(),
             })
             .FirstOrDefaultAsync();
     }
 
     private async Task<OperatingLocationInput> ValidateOperatingLocationAsync(
         string? countryCode,
-        int? cityId)
+        int? cityId
+    )
     {
         var normalizedCode = NormalizeCountryCode(countryCode);
 
@@ -564,14 +604,10 @@ public class AllocatProfileService
         if (!cityId.HasValue)
             throw new ArgumentException("Select an operating city.");
 
-        var country = await _db.Countries
-            .AsNoTracking()
+        var country = await _db
+            .Countries.AsNoTracking()
             .Where(country => country.Code == normalizedCode)
-            .Select(country => new
-            {
-                country.Code,
-                country.SupportsAllocatOperations
-            })
+            .Select(country => new { country.Code, country.SupportsAllocatOperations })
             .SingleOrDefaultAsync();
 
         if (country == null)
@@ -585,8 +621,8 @@ public class AllocatProfileService
         }
 
         // Seed IDs are negative; existence and country membership validate the ID.
-        var cityExists = await _db.Cities
-            .AsNoTracking()
+        var cityExists = await _db
+            .Cities.AsNoTracking()
             .AnyAsync(city => city.Id == cityId.Value && city.CountryCode == normalizedCode);
 
         if (!cityExists)
@@ -602,14 +638,15 @@ public class AllocatProfileService
     private async Task<string?> ValidateSearchLocationAsync(
         string? countryCode,
         int? cityId,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         var normalizedCode = NormalizeCountryCode(countryCode);
 
         if (normalizedCode != null)
         {
-            var countryExists = await _db.Countries
-                .AsNoTracking()
+            var countryExists = await _db
+                .Countries.AsNoTracking()
                 .AnyAsync(country => country.Code == normalizedCode, cancellationToken);
 
             if (!countryExists)
@@ -618,8 +655,8 @@ public class AllocatProfileService
 
         if (cityId.HasValue)
         {
-            var cityCountryCode = await _db.Cities
-                .AsNoTracking()
+            var cityCountryCode = await _db
+                .Cities.AsNoTracking()
                 .Where(city => city.Id == cityId.Value)
                 .Select(city => city.CountryCode)
                 .SingleOrDefaultAsync(cancellationToken);
@@ -650,10 +687,10 @@ public class AllocatProfileService
         string? currency,
         string? availability,
         int? yearsExperience,
-        IReadOnlyCollection<Guid>? skillIds)
+        IReadOnlyCollection<Guid>? skillIds
+    )
     {
-        var normalizedIdNumber = NormalizeRequired(idNumber, "ID number", 50)
-            .ToUpperInvariant();
+        var normalizedIdNumber = NormalizeRequired(idNumber, "ID number", 50).ToUpperInvariant();
         var normalizedTitle = CleanOptional(title, 120);
         var normalizedHeadline = CleanOptional(headline, 180);
         var normalizedBio = CleanOptional(bio, 500);
@@ -666,16 +703,12 @@ public class AllocatProfileService
         if (hourlyRate.HasValue && hourlyRate.Value > 1_000_000m)
             throw new ArgumentException("Hourly rate is outside the supported range.");
 
-        if (yearsExperience.HasValue &&
-            (yearsExperience.Value < 0 || yearsExperience.Value > 80))
+        if (yearsExperience.HasValue && (yearsExperience.Value < 0 || yearsExperience.Value > 80))
         {
             throw new ArgumentException("Years of experience must be between 0 and 80.");
         }
 
-        var normalizedSkillIds = (skillIds ?? [])
-            .Where(id => id != Guid.Empty)
-            .Distinct()
-            .ToList();
+        var normalizedSkillIds = (skillIds ?? []).Where(id => id != Guid.Empty).Distinct().ToList();
 
         if (normalizedSkillIds.Count == 0)
             throw new ArgumentException("At least one skill is required.");
@@ -683,8 +716,9 @@ public class AllocatProfileService
         if (normalizedSkillIds.Count > 20)
             throw new ArgumentException("A profile cannot contain more than 20 skills.");
 
-        var existingSkillCount = await _db.Skills
-            .CountAsync(s => normalizedSkillIds.Contains(s.Id));
+        var existingSkillCount = await _db.Skills.CountAsync(s =>
+            normalizedSkillIds.Contains(s.Id)
+        );
 
         if (existingSkillCount != normalizedSkillIds.Count)
             throw new ArgumentException("One or more selected skills do not exist.");
@@ -732,11 +766,13 @@ public class AllocatProfileService
         {
             if (existingSkillIds.Contains(skillId))
                 continue;
-            profile.Skills.Add(new AllocatProfileSkill
-            {
-                AllocatProfileId = profile.AllocatrUserId,
-                SkillId = skillId
-            });
+            profile.Skills.Add(
+                new AllocatProfileSkill
+                {
+                    AllocatProfileId = profile.AllocatrUserId,
+                    SkillId = skillId,
+                }
+            );
         }
     }
 
@@ -749,9 +785,7 @@ public class AllocatProfileService
 
         if (value.Length != 2 || value.Any(character => character < 'A' || character > 'Z'))
         {
-            throw new ArgumentException(
-                "Country must use a two-letter code such as GB, ZA or ZW."
-            );
+            throw new ArgumentException("Country must use a two-letter code such as GB, ZA or ZW.");
         }
 
         return value;
@@ -759,10 +793,7 @@ public class AllocatProfileService
 
     private static string EscapeLikePattern(string value)
     {
-        return value
-            .Replace("\\", "\\\\")
-            .Replace("%", "\\%")
-            .Replace("_", "\\_");
+        return value.Replace("\\", "\\\\").Replace("%", "\\%").Replace("_", "\\_");
     }
 
     private static string NormalizeAvailability(string? availability)
@@ -773,9 +804,7 @@ public class AllocatProfileService
 
         if (!AllowedAvailability.Contains(value))
         {
-            throw new ArgumentException(
-                "Availability must be available, busy or unavailable."
-            );
+            throw new ArgumentException("Availability must be available, busy or unavailable.");
         }
 
         return value;
@@ -826,7 +855,8 @@ public class AllocatProfileService
         int? yearsExperience,
         string? avatarUrl,
         string? location,
-        int skillCount)
+        int skillCount
+    )
     {
         var score = 0;
         if (hasIdNumber)
@@ -843,7 +873,7 @@ public class AllocatProfileService
             >= 3 => 20,
             2 => 14,
             1 => 7,
-            _ => 0
+            _ => 0,
         };
 
         if (hourlyRate.HasValue && hourlyRate.Value > 0)
@@ -862,9 +892,15 @@ public class AllocatProfileService
     {
         var skillNames = data.SkillOptions.Select(skill => skill.Name).ToList();
         var professionalScore = CalculateProfessionalScore(
-            data.HasIdNumber, data.Title, data.Headline, data.Bio,
-            data.HourlyRate, data.YearsExperience, data.AvatarUrl,
-            data.Location, skillNames.Count
+            data.HasIdNumber,
+            data.Title,
+            data.Headline,
+            data.Bio,
+            data.HourlyRate,
+            data.YearsExperience,
+            data.AvatarUrl,
+            data.Location,
+            skillNames.Count
         );
 
         return new AllocatProfileDto(
@@ -896,9 +932,15 @@ public class AllocatProfileService
     private static MyAllocatProfileDto ToMyProfileDto(ProfileData data)
     {
         var professionalScore = CalculateProfessionalScore(
-            data.HasIdNumber, data.Title, data.Headline, data.Bio,
-            data.HourlyRate, data.YearsExperience, data.AvatarUrl,
-            data.Location, data.SkillOptions.Count
+            data.HasIdNumber,
+            data.Title,
+            data.Headline,
+            data.Bio,
+            data.HourlyRate,
+            data.YearsExperience,
+            data.AvatarUrl,
+            data.Location,
+            data.SkillOptions.Count
         );
 
         return new MyAllocatProfileDto(
@@ -939,9 +981,15 @@ public class AllocatProfileService
     private static AllocatProfileListItemDto ToListItemDto(ProfileListData data)
     {
         var professionalScore = CalculateProfessionalScore(
-            data.HasIdNumber, data.Title, data.Headline, data.Bio,
-            data.HourlyRate, data.YearsExperience, data.AvatarUrl,
-            data.Location, data.Skills.Count
+            data.HasIdNumber,
+            data.Title,
+            data.Headline,
+            data.Bio,
+            data.HourlyRate,
+            data.YearsExperience,
+            data.AvatarUrl,
+            data.Location,
+            data.Skills.Count
         );
 
         return new AllocatProfileListItemDto(
@@ -965,7 +1013,7 @@ public class AllocatProfileService
             data.JoinedAt
         )
         {
-            Bio = data.Bio
+            Bio = data.Bio,
         };
     }
 

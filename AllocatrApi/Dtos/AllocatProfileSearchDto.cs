@@ -14,6 +14,7 @@ public class AllocatProfileSearchDto
     public int? CityId { get; set; }
 
     public string? Category { get; set; }
+
     [MaxLength(50)]
     public List<Guid>? SkillIds { get; set; }
     public bool? VerifiedOnly { get; set; }

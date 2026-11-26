@@ -171,6 +171,38 @@ public class TaskService
         return new UpdateTaskStatusResultDto(taskDto, project);
     }
 
+    public async Task<TaskDto?> UpdateTaskDueDateAsync(
+        Guid taskId,
+        Guid userId,
+        bool isAllocat,
+        DateTime dueDate
+    )
+    {
+        if (dueDate.Kind != DateTimeKind.Utc)
+            throw new ArgumentException(
+                "The due date must include a UTC time (for example, an ISO timestamp ending in Z)."
+            );
+        var projectId = await GetTaskProjectIdAsync(taskId);
+        if (!projectId.HasValue || !isAllocat)
+            return null;
+        await using var mutation = await ProjectMutationScope.BeginAsync(_db, projectId.Value);
+        var canExecute = await _projectAccess.IsAcceptedAllocatAsync(projectId.Value, userId);
+        if (!canExecute)
+            return null;
+        await EnsureProjectCanBeModifiedAsync(projectId.Value);
+        var task = await _db.TaskItems.FirstOrDefaultAsync(t =>
+            t.Id == taskId && t.ProjectId == projectId.Value
+        );
+        if (task == null)
+            return null;
+        task.DueDate = dueDate;
+        task.UpdatedAt = DateTime.UtcNow;
+        await _db.SaveChangesAsync();
+        var taskDto = await ReadTaskDtoAsync(taskId);
+        await mutation.CommitAsync();
+        return taskDto;
+    }
+
     public async Task<bool> DeleteTaskAsync(Guid taskId, Guid userId, bool isAllocat)
     {
         if (!isAllocat)
